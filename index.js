@@ -4,7 +4,7 @@ var io = require('socket.io')(app);
 var fs = require('fs');
 var config = require('./config');
 
-app.listen(3000);
+app.listen(5432);
 
 function handler (req, res) {
 	fs.readFile(__dirname + '/index.html', function (err, data) {
