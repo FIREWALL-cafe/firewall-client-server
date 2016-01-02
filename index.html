@@ -1,5 +1,9 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
-	var socket = io('http://localhost:3000');
-	
+	var socket = io('http://' + location.host);
+	function translate(query) {
+		socket.emit('translate', query, function(response) {
+			console.log(response);
+		});
+	}
 </script>
