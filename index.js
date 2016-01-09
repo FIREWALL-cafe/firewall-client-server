@@ -20,8 +20,13 @@ io.on('connection', function(socket) {
 			if (err) {
 				console.log(err);
 			} else {
-				console.log('Translation (' + search.langTo + '): ' + translation);
-				io.emit('translation-' + search.langTo, translation);
+				console.log('Translation (' + search.langFrom + '-' + search.langTo + '): ' + translation);
+				io.emit('translation', {
+					query: search.query,
+					langFrom: search.langFrom,
+					langTo: search.langTo,
+					result: translation
+				});
 			}
 		});
   });

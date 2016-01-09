@@ -1,20 +1,29 @@
-<script src="/socket.io/socket.io.js"></script>
-<script>
-	var socket = io('http://' + location.host);
-	function translate(query, langFrom, langTo) {
-		var translate = {
-			query: query,
-			langFrom: langFrom,
-			langTo: langTo
-		};
-		socket.emit('translate', translate, function(response) {
-			console.log(response);
-		});
-	}
-	socket.on('translation-en', function(response) {
-		console.log(response);
-	});
-	socket.on('translation-zh', function(response) {
-		console.log(response);
-	});
-</script>
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Boxian</title>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		Open your JavaScript console: <code>translate(<i>query</i>, <i>langFrom</i>, <i>langTo</i>)</code>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			var socket = io('http://' + location.host);
+			function translate(query, langFrom, langTo) {
+				var translate = {
+					query: query,
+					langFrom: langFrom,
+					langTo: langTo
+				};
+				socket.emit('translate', translate, function(response) {
+					console.log(response);
+				});
+			}
+			socket.on('translation', function(response) {
+				console.log('Translation of “' + response.query + '” (' +
+				            response.langFrom + '-' +
+				            response.langTo + '): ' + response.result);
+			});
+		</script>
+	</body>
+</html>
