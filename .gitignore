@@ -1,4 +1,4 @@
 .DS_Store
-/config.js
-/service-key.json
-/node_modules/
+/server/config.js
+/server/service-key.json
+/server/node_modules/

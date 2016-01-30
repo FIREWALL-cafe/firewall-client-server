@@ -23,3 +23,10 @@ The translation service is written in [node.js](http://nodejs.org/) and translat
 	* One tab called `images` with columns: `query_en`, `query_zh`, `featured` (for integration with the blog), `google`, `baidu`
 3. Open `service-key.json` and share the Google Spreadsheet with `client_email`
 4. Copy `config-example.js` to `config.js` and edit the `apiKey` and `spreadsheetId` values
+
+### Usage
+
+```
+cd firewall-cafe/server/
+node index.js
+```
