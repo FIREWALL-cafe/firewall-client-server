@@ -5,15 +5,17 @@ var mime = require('mime');
 var url = require('url');
 var path = require('path');
 var https = require('https');
-var io = require('socket.io')(app);
+var GoogleSpreadsheet = require('google-spreadsheet');
 
 var options = {
 	key: fs.readFileSync(config.sslKey),
 	cert: fs.readFileSync(config.sslCert)
 };
 var app = https.createServer(options, httpRequest);
-var GoogleSpreadsheet = require('google-spreadsheet');
+var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
+
+// Stores a locally cached copy of the Google Spreadsheet
 var doc = {};
 
 console.log('Starting translation server on port ' + config.port);
