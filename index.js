@@ -3,14 +3,17 @@ var spreadsheetServiceKey = require('./service-key.json');
 
 var fs = require('fs');
 var app = require('http').createServer(httpRequest);
+var mime = require('mime');
+var url = require('url');
+var path = require('path');
 var https = require('https');
 var io = require('socket.io')(app);
 
 var GoogleSpreadsheet = require('google-spreadsheet');
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
-var babelFish = {};
+var doc = {};
 
-console.log('Starting Boxian on port ' + config.port);
+console.log('Starting translation server on port ' + config.port);
 app.listen(config.port);
 spreadsheet.useServiceAccountAuth(spreadsheetServiceKey, loadSpreadsheet);
 
@@ -20,12 +23,14 @@ io.on('connection', function(socket) {
 			if (err) {
 				console.log(err);
 			} else {
-				console.log('Translation (' + search.langFrom + '-' + search.langTo + '): ' + translation);
+				console.log('Found ' + translation.source + ' translation ' +
+				            '(' + search.langFrom + ' to ' + search.langTo + '): ' +
+				            translation.value);
 				io.emit('translation', {
 					query: search.query,
 					langFrom: search.langFrom,
 					langTo: search.langTo,
-					result: translation
+					result: translation.value
 				});
 			}
 		});
@@ -49,14 +54,14 @@ function loadSpreadsheet(err) {
 }
 
 function loadWorksheet(worksheet) {
-	var langMode = worksheet.title;
-	if (!babelFish[langMode]) {
-		babelFish[langMode] = {
+	var tab = worksheet.title.trim();
+	if (!doc[tab]) {
+		doc[tab] = {
 			lookup: {},
 			worksheet: worksheet
 		};
 	}
-	var langLookup = babelFish[langMode].lookup;
+	var tabLookup = doc[tab].lookup;
 	worksheet.getRows(function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -64,41 +69,30 @@ function loadWorksheet(worksheet) {
 		var query;
 		for (var i = 0; i < rows.length; i++) {
 			query = rows[i].query;
-			langLookup[query] = rows[i];
+			tabLookup[query] = rows[i];
 		}
-		console.log('Loaded ' + rows.length + ' records from ' + langMode);
-	});
-}
-
-function updateSpreadsheet(search, translation) {
-	var query = search.query.toLowerCase();
-	var langFrom = search.langFrom;
-	var langTo   = search.langTo;
-	var langMode = langFrom + '-' + langTo;
-	if (!babelFish[langMode]) {
-		// TODO: create new worksheet
-	}
-	babelFish[langMode].worksheet.addRow({
-		query: query,
-		google: translation,
-		override: ''
+		console.log('Loaded ' + rows.length + ' records from ' + tab);
 	});
 }
 
 function getTranslation(search, callback) {
-	var query = search.query.toLowerCase();
-	var langFrom = search.langFrom;
-	var langTo   = search.langTo;
-	var langMode = langFrom + '-' + langTo;
-	console.log('Translate “' + query + '” ' + langMode);
-	if (babelFish[langMode] &&
-	    babelFish[langMode].lookup[query]) {
-		var translations = babelFish[langMode].lookup[query];
+	var query = getNormalizedQuery(search);
+	var tab = getSearchTab(search);
+	console.log('Translate “' + query + '” (' + tab + ')');
+	if (doc[tab] &&
+	    doc[tab].lookup[query]) {
+		var translations = doc[tab].lookup[query];
 		if (translations.override) {
-			callback(null, translations.override);
+			callback(null, {
+				source: 'override',
+				value: translations.override
+			});
 			return true;
 		} else if (translations.google) {
-			callback(null, translations.google);
+			callback(null, {
+				source: 'cached Google',
+				value: translations.google
+			});
 			return true;
 		}
 	}
@@ -107,51 +101,101 @@ function getTranslation(search, callback) {
 			console.log(err);
 		} else {
 			setTranslation(search, translation);
-			callback(null, translation);
+			callback(null, {
+				source: 'Google API',
+				value: translation
+			});
 		}
 	});
 	return false;
 }
 
 function setTranslation(search, translation) {
-	var query = search.query.toLowerCase();
-	var langFrom = search.langFrom;
-	var langTo = search.langTo;
-	var langMode = langFrom + '-' + langTo;
-	if (!babelFish[langMode]) {
-		babelFish[langMode] = {
+	var query = getNormalizedQuery(search);
+	var tab = getSearchTab(search);
+	if (!doc[tab]) {
+		console.log('Warning: no worksheet for ' + tab + '.');
+		doc[tab] = {
 			lookup: {}
 		};
 	}
-	if (!babelFish[langMode].lookup[query]) {
-		babelFish[langMode].lookup[query] = {
+	if (!doc[tab].lookup[query]) {
+		doc[tab].lookup[query] = {
 			query: query,
 			google: translation,
-			override: ''
+			override: null
 		};
 	} else {
-		babelFish[langMode].lookup[query].google = translation;
+		console.log('Warning: updating Google Translation for “' + query + '”');
+		doc[tab].lookup[query].google = translation;
 	}
-	updateSpreadsheet(search, translation);
+	saveTranslation(search, translation);
+}
+
+function saveTranslation(search, translation) {
+	var query = getNormalizedQuery(search);
+	var tab = getSearchTab(search);
+	if (!doc[tab] ||
+	    !doc[tab].worksheet) {
+		console.log('Warning: no worksheet for ' + tab);
+		return;
+	}
+	doc[tab].worksheet.addRow({
+		query: query,
+		google: translation,
+		override: ''
+	});
+}
+
+function getNormalizedQuery(search) {
+	return search.query.toLowerCase().trim();
+}
+
+function getSearchTab(search) {
+	var langFrom = search.langFrom;
+	var langTo   = search.langTo;
+	return langFrom + ' to ' + langTo;
 }
 
 function httpRequest(req, res) {
-	fs.readFile(__dirname + '/index.html', function (err, data) {
-		if (err) {
-			res.writeHead(500);
-			return res.end('Error loading index.html');
+	var uri = url.parse(req.url).pathname,
+	    filename = path.join(process.cwd(), uri);
+
+	fs.exists(filename, function(exists) {
+		if (!exists) {
+			res.writeHead(404, {"Content-Type": "text/plain"});
+			res.write("404 Not Found\n");
+			res.end();
+			return;
 		}
-		res.writeHead(200);
-		res.end(data);
+
+		if (fs.statSync(filename).isDirectory()) {
+			filename += '/index.html';
+		}
+
+		fs.readFile(filename, "binary", function(err, file) {
+			if (err) {
+				res.writeHead(500, {"Content-Type": "text/plain"});
+				res.write(err + "\n");
+				res.end();
+				return;
+			}
+
+			res.writeHead(200, {
+				"Content-Type": mime.lookup(filename)
+			});
+			res.write(file, "binary");
+			res.end();
+		});
 	});
 }
 
 function googleTranslate(search, callback) {
-	var query = search.query.toLowerCase();
+	var query = getNormalizedQuery(search);
 	var langFrom = search.langFrom;
 	var langTo = search.langTo;
 	var url = 'https://www.googleapis.com/language/translate/v2' +
-	          '?key=' + config.key +
+	          '?key=' + config.apiKey +
 	          '&q=' + encodeURIComponent(query) +
 	          '&source=' + langFrom +
 	          '&target=' + langTo;
@@ -163,6 +207,7 @@ function googleTranslate(search, callback) {
 		});
 		res.on('end', function() {
 			var response = JSON.parse(data);
+			console.log(response.data.translations);
 			if (response &&
 			    response.data &&
 			    response.data.translations) {

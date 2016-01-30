@@ -1,29 +1,16 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Boxian</title>
+		<title>Firewall Cafe</title>
 		<meta charset="utf-8">
+		<link rel="stylesheet" href="dashboard.css">
 	</head>
 	<body>
-		Open your JavaScript console: <code>translate(<i>query</i>, <i>langFrom</i>, <i>langTo</i>)</code>
+		<div id="images">
+
+		</div>
 		<script src="/socket.io/socket.io.js"></script>
-		<script>
-			var socket = io('http://' + location.host);
-			function translate(query, langFrom, langTo) {
-				var translate = {
-					query: query,
-					langFrom: langFrom,
-					langTo: langTo
-				};
-				socket.emit('translate', translate, function(response) {
-					console.log(response);
-				});
-			}
-			socket.on('translation', function(response) {
-				console.log('Translation of “' + response.query + '” (' +
-				            response.langFrom + '-' +
-				            response.langTo + '): ' + response.result);
-			});
-		</script>
+		<script src="/js/jquery-2.2.0.min.js"></script>
+		<script src="/js/dashboard.js"></script>
 	</body>
 </html>
