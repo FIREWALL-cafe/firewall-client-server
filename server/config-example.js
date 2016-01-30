@@ -8,6 +8,10 @@ module.exports = {
 	apiKey: '...',
 
 	// The long string of letters & numbers in the Google Doc URL
-	spreadsheetId: '...'
+	spreadsheetId: '...',
+
+	// For SSL
+	sslKey: '...',
+	sslCert: '...'
 
 };

@@ -1,14 +1,17 @@
 var config = require('./config');
 var spreadsheetServiceKey = require('./service-key.json');
-
 var fs = require('fs');
-var app = require('http').createServer(httpRequest);
 var mime = require('mime');
 var url = require('url');
 var path = require('path');
 var https = require('https');
 var io = require('socket.io')(app);
 
+var options = {
+	key: fs.readFileSync(config.sslKey),
+	cert: fs.readFileSync(config.sslCert)
+};
+var app = https.createServer(options, httpRequest);
 var GoogleSpreadsheet = require('google-spreadsheet');
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
 var doc = {};
