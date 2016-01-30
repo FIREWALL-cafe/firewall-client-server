@@ -1,4 +1,4 @@
-var socket = io('http://' + location.host);
+var socket = io('https://' + location.host);
 function translate(query, langFrom, langTo) {
 	var translate = {
 		query: query,
