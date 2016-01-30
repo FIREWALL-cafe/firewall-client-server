@@ -1,0 +1,69 @@
+#firewall {
+	position: relative;
+	display: inline-block;
+}
+
+#firewall-show {
+	display: inline-block;
+	padding-left: 27px;
+}
+
+#firewall-form {
+	display: none;
+	position: absolute;
+	bottom: 43px;
+	right: 0;
+	width: 200px;
+	padding: 10px;
+	background: #f2f2f2;
+	z-index: 200;
+	cursor: auto;
+}
+
+#firewall-form label {
+	display: block;
+	line-height: 30px;
+}
+
+#firewall-form label span {
+	display: inline-block;
+	margin-right: 10px;
+	text-align: right;
+	width: 50px;
+}
+
+#firewall-form input[type=text] {
+	font: 14px "helvetica neue", sans-serif;
+	display: inline-block;
+	width: 100px;
+	padding: 5px 10px;
+	border: 1px solid #4F80F0;
+}
+
+#firewall-form input[type=submit] {
+	margin-left: 60px;
+	border: none;
+	border-radius: 5px;
+	padding: 5px 10px;
+	color: #fff;
+	background: #4F80F0;
+	cursor: pointer;
+}
+
+#firewall-form.visible {
+	display: block;
+}
+
+/* Baidu-specific overrides */
+
+#ftCon, .ftCon-Wrapper, .wrapper_footer_box {
+	overflow: visible !important;
+}
+
+#ft {
+	width: 500px;
+}
+
+#ft .firewall-show {
+	padding-left: 5px;
+}

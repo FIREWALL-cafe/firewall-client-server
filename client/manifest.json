@@ -1,0 +1,20 @@
+{
+	"manifest_version": 3,
+	"name": "Firewall Cafe",
+	"description": "Synchronizes and translates search queries between browsers",
+	"version": "0.2",
+	"icons": {
+		"16": "icons/firewall-16.png",
+		"48": "icons/firewall-48.png",
+		"128": "icons/firewall-128.png"
+	},
+	"permissions": [
+		"activeTab",
+		"storage"
+	],
+	"content_scripts": [{
+		"matches": ["https://www.google.com/*", "http://image.baidu.com/*"],
+		"css": ["firewall-client.css"],
+		"js": ["jquery-2.2.0.min.js", "socket.io.js", "firewall-client.js"]
+	}]
+}
