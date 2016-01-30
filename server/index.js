@@ -212,7 +212,6 @@ function googleTranslate(search, callback) {
 		});
 		res.on('end', function() {
 			var response = JSON.parse(data);
-			console.log(response.data.translations);
 			if (response &&
 			    response.data &&
 			    response.data.translations) {
