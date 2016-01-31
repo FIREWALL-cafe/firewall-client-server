@@ -26,11 +26,11 @@ $.get('/index.json', function(index) {
 socket.on('images-received', function(images) {
 	console.log('Image records for query ' + images.query + ' from ' + images.source);
 	var urls = JSON.parse(images.images);
-	setupImagesContainer(images.query);
+	setupImagesContainer(images.query, images.query_cn);
 	addSourceImages(images.query, images.source, urls);
 });
 
-function setupImagesContainer(query) {
+function setupImagesContainer(query, query_cn) {
 	var id = getImageContainerId(query);
 	if ($('#' + id).length == 0) {
 		$('#images').prepend(
@@ -41,7 +41,7 @@ function setupImagesContainer(query) {
 						'<div class="images"></div>' +
 					'</div>' +
 					'<div class="baidu">' +
-						'<h2>Baidu: ' + query + '</h2>' +
+						'<h2>Baidu: ' + query_cn + '</h2>' +
 						'<div class="images"></div>' +
 					'</div>' +
 				'</div>' +

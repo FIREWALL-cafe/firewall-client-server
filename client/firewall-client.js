@@ -103,13 +103,15 @@ setInterval(function() {
 			query: query
 		});
 		if (config.langFrom == 'en') {
-			getImages(query);
+			setTimeout(function() {
+				getImages(query);
+			}, 2500);
 		}
 	}
 	if (config.queryEn) {
 		var queryEn = config.queryEn;
 		setTimeout(function() {
-			getImages(queryEn);
+			getImages(queryEn, query);
 		}, 5000);
 		config.queryEn = null;
 		chrome.storage.local.set({
@@ -118,7 +120,7 @@ setInterval(function() {
 	}
 }, 100);
 
-function getImages(queryEn) {
+function getImages(queryEn, queryCn) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
@@ -139,9 +141,13 @@ function getImages(queryEn) {
 	var source = location.hostname.replace('www.', '')
 	                              .replace('image.', '')
 	                              .replace('.com', '');
-	socket.emit('images', {
+	var images = {
 		query: queryEn,
 		source: source,
 		images: images
-	});
+	};
+	if (queryCn) {
+		images.query_cn = queryCn;
+	}
+	socket.emit('images', images);
 }
