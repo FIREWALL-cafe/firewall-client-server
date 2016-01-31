@@ -29,8 +29,8 @@ io.on('connection', function(socket) {
 				console.log(err);
 			} else {
 				console.log('Found ' + translation.source + ' translation ' +
-				            '(' + search.langFrom + ' to ' + search.langTo + '): ' +
-				            translation.value);
+				            '(' + search.langFrom + ' to ' + search.langTo + ') ' +
+				            'for “' + translation.query + '”: ' + translation.value);
 				io.emit('translation', {
 					query: search.query,
 					langFrom: search.langFrom,

@@ -12,9 +12,12 @@ body {
 
 .image-set {
 	border-top: 1px solid #808080;
+	width: 100%;
+	overflow-x: hidden;
 }
 
-.google, .baidu {
+.google,
+.baidu {
 	padding: 10px;
 }
 
