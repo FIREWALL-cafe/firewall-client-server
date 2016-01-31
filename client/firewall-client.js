@@ -117,7 +117,7 @@ setInterval(function() {
 function getImages(queryEn) {
 	var images = [];
 	$('.imglist img, #rg img').each(function(i, img) {
-		if (i < 10) {
+		if (i < 5) {
 			images.push(img.src);
 		}
 	});
@@ -125,7 +125,7 @@ function getImages(queryEn) {
 	                              .replace('.com', '');
 	socket.emit('images', {
 		query: queryEn,
-		from: source
+		from: source,
 		urls: images
 	});
 }
