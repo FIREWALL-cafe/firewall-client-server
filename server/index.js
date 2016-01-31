@@ -52,14 +52,15 @@ io.on('connection', function(socket) {
 			console.log('No record found, creating one now');
 			record = {
 				query: images.query,
-				featured: 0,
 				google: '',
-				baidu: ''
+				baidu: '',
+				featured: 0
 			};
 			record[images.from] = JSON.stringify(images.urls);
 			console.log(record);
-			var cell = doc.images.worksheet.addRow(record);
-			console.log(cell);
+			var cell = doc[tab].worksheet.addRow(record, function(cell) {
+				console.log(Object.keys(cell));
+			});
 		}
 	});
 });
