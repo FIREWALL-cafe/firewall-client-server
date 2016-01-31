@@ -16,7 +16,8 @@ socket.on('translation', function(response) {
 });
 
 socket.on('images-received', function(images) {
-	console.log('Image record for query ' + images.query + ' from + ' + images.source);
+	console.log('Image records for query ' + images.query + ' from ' + images.source);
+	console.log(images);
 	setupImagesContainer(images);
 	addSourceImages(images);
 });
@@ -25,9 +26,14 @@ function setupImagesContainer(images) {
 	if ($('#images-' + images.query).length == 0) {
 		$('#images').prepend(
 			'<div id="images-' + images.query + '">' +
-				'Query: ' + images.query +
-				'<div class="google"></div>' +
-				'<div class="baidu"></div>' +
+				'<div class="google">' +
+					'<div class="label">Google: ' + images.query + '</div>' +
+					'<div class="images"></div>' +
+				'</div>' +
+				'<div class="baidu">' +
+					'<div class="label">Baidu: ' + images.query + '</div>' +
+					'<div class="images"></div>' +
+				'</div>' +
 			'</div>'
 		);
 	}
@@ -38,7 +44,7 @@ function addSourceImages(images) {
 	var urls = JSON.parse(images.images);
 	$.each(urls, function(i, url) {
 		var alt = images.query + ' ' + (i + 1);
-		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
+		imagesHTML += '<img src="' + encodeURIComponent(url) + '" alt="' + alt.replace(/"/g, '&quot;') + '">';
 	});
-	$('#images-' + images.query + ' .' + images.source).html(imagesHTML);
+	$('#images-' + images.query + ' .' + images.source + ' .images').html(imagesHTML);
 }

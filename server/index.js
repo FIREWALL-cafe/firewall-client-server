@@ -15,7 +15,7 @@ var app = https.createServer(options, httpRequest);
 var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
 
-// Stores a locally cached copy of the Google Spreadsheet
+// Store a locally cached copy of the Google Spreadsheet
 var doc = {};
 
 console.log('Starting translation server on port ' + config.port);
