@@ -57,8 +57,7 @@ function setupImagesContainer(query_en, query_zh, appendHTML) {
 						'<div class="images"></div>' +
 					'</div>' +
 				'</div>' +
-			'</div>'
-		);
+			'</div>';
 		if (appendHTML) {
 			$('#images').append(html);
 		} else {
