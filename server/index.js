@@ -211,7 +211,7 @@ function outputIndex(req, res, headers) {
 			_.each(rows, function(row) {
 				var query = row.query;
 				var imageSet;
-				if (queryLookup[query]) {
+				if (typeof queryLookup[query] != 'undefined') {
 					var index = queryLookup[query];
 					imageSet = images[index];
 				} else {
