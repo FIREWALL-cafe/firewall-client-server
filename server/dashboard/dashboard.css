@@ -46,12 +46,18 @@ h2 {
 	margin-top: 15px;
 }
 
+.hidden {
+	display: none;
+}
+
 .images img {
 	display: inline-block;
 	height: 220px;
 	width: auto;
 	margin-right: 1px;
 	vertical-align: top;
+  opacity: 0;
+  transition: opacity .3s ease-in;
 }
 
 .images {

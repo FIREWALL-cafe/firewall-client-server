@@ -17,7 +17,11 @@ $.get('/index.json', function(index) {
 				addSourceImages(imageSet.query, 'baidu', imageSet.baidu);
 			}
 		});
-		$('img').unveil();
+		$("img").unveil(200, function() {
+			$(this).load(function() {
+				this.style.opacity = 1;
+			});
+		});
 	} else if (index.error) {
 		console.log(index.error);
 	}
@@ -26,21 +30,26 @@ $.get('/index.json', function(index) {
 socket.on('images-received', function(images) {
 	console.log('Image records for query ' + images.query + ' from ' + images.source);
 	var urls = JSON.parse(images.images);
-	setupImagesContainer(images.query, images.query_cn);
+	var $container = setupImagesContainer(images.query, images.query_cn);
 	addSourceImages(images.query, images.source, urls);
+	$container.find('img').unveil(200, function() {
+		$(this).load(function() {
+			this.style.opacity = 1;
+		});
+	});
 });
 
 function setupImagesContainer(query, query_cn) {
 	var id = getImageContainerId(query);
 	if ($('#' + id).length == 0) {
 		$('#images').prepend(
-			'<div id="' + getImageContainerId(query) + '" class="image-set">' +
+			'<div id="' + id + '" class="image-set">' +
 				'<div class="container">' +
-					'<div class="google">' +
+					'<div class="google hidden">' +
 						'<h2>Google: ' + query + '</h2>' +
 						'<div class="images"></div>' +
 					'</div>' +
-					'<div class="baidu">' +
+					'<div class="baidu hidden">' +
 						'<h2>Baidu: ' + query_cn + '</h2>' +
 						'<div class="images"></div>' +
 					'</div>' +
@@ -48,6 +57,7 @@ function setupImagesContainer(query, query_cn) {
 			'</div>'
 		);
 	}
+	return $('#' + id);
 }
 
 function getImageContainerId(query) {
@@ -64,4 +74,5 @@ function addSourceImages(query, source, urls) {
 	});
 	var containerId = getImageContainerId(query);
 	$('#' + containerId + ' .' + source + ' .images').html(imagesHTML);
+	$('#' + containerId + ' .' + source).removeClass('hidden');
 }
