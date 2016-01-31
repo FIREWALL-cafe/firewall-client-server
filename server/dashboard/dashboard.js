@@ -44,6 +44,9 @@ socket.on('images-received', function(images) {
 
 function setupImagesContainer(query_en, query_zh, appendHTML) {
 	var id = getImageContainerId(query_en);
+	if (!query_zh) {
+		query_zh = query_en;
+	}
 	if ($('#' + id).length == 0) {
 		var html =
 			'<div id="' + id + '" class="image-set">' +
@@ -63,6 +66,8 @@ function setupImagesContainer(query_en, query_zh, appendHTML) {
 		} else {
 			$('#images').prepend(html);
 		}
+	} else if (query_zh) {
+		$('#' + id).find('.baidu h2').html('Baidu: ' + query_zh);
 	}
 	return $('#' + id);
 }
