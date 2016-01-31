@@ -23,9 +23,10 @@ socket.on('images-received', function(images) {
 });
 
 function setupImagesContainer(images) {
-	if ($('#images-' + images.query).length == 0) {
+	var id = getImageContainerId(images.query);
+	if ($('#' + id).length == 0) {
 		$('#images').prepend(
-			'<div id="images-' + images.query + '">' +
+			'<div id="images-' + getImageContainerId(images.query) + '">' +
 				'<div class="google">' +
 					'<div class="label">Google: ' + images.query + '</div>' +
 					'<div class="images"></div>' +
@@ -39,6 +40,10 @@ function setupImagesContainer(images) {
 	}
 }
 
+function getImageContainerId(query) {
+	var id = 'images-' + query.replace(/\W+/g, '-');
+}
+
 function addSourceImages(images) {
 	var imagesHTML = '';
 	var urls = JSON.parse(images.images);
@@ -48,5 +53,6 @@ function addSourceImages(images) {
 		url = url.replace(/^http:/, '');
 		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
 	});
-	$('#images-' + images.query + ' .' + images.source + ' .images').html(imagesHTML);
+	var containerId = getImageContainerId(images.query);
+	$('#' + containerId + ' .' + images.source + ' .images').html(imagesHTML);
 }
