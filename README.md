@@ -9,9 +9,37 @@ A month-long Pop-Up Internet Cafe, FIREWALL is a socially engaged research and i
 
 This software is composed of a server and client.
 
+## Clone the repository
+
+If you're okay with using the command line, and using `git` commands, use this method:
+
+```
+cd path/to/somewhere/cool
+git clone https://github.com/dphiffer/firewall-cafe.git
+```
+
+Then if you want to download updates, you can do this:
+
+```
+cd path/to/somewhere/cool/firewall-cafe
+git pull
+```
+
+## Download the zip file
+
+Alternatively, if you'd prefer to avoid using `git`, just download and unzip the [latest archive](https://github.com/dphiffer/firewall-cafe/archive/master.zip).
+
 ## Client
 
+The client is implemented as a browser extension for Google Chrome.
 
+1. Go to Chrome's __Settings__ pane (under the hamburger menu, or with `cmd-comma`)
+2. Choose the __Extensions__ tab
+3. Enable the __Developer__ checkbox
+4. Click the __Load unpacked extension__ button
+5. Choose the `firewall-cafe/client` folder
+
+Any time you update the code from GitHub, be sure to click the __Reload__ link to update the extension.
 
 ## Server
 
