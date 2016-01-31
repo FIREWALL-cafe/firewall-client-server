@@ -29,6 +29,9 @@ $.get('/index.json', function(index) {
 
 socket.on('images-received', function(images) {
 	console.log('Image records for query ' + images.query + ' from ' + images.source);
+	if (images.source == 'baidu') {
+		console.log('query_cn = ' + images.query_cn);
+	}
 	var urls = JSON.parse(images.images);
 	var $container = setupImagesContainer(images.query, images.query_cn);
 	addSourceImages(images.query, images.source, urls);
@@ -39,14 +42,14 @@ socket.on('images-received', function(images) {
 	});
 });
 
-function setupImagesContainer(query, query_cn) {
-	var id = getImageContainerId(query);
+function setupImagesContainer(query_en, query_cn) {
+	var id = getImageContainerId(query_en);
 	if ($('#' + id).length == 0) {
 		$('#images').prepend(
 			'<div id="' + id + '" class="image-set">' +
 				'<div class="container">' +
 					'<div class="google hidden">' +
-						'<h2>Google: ' + query + '</h2>' +
+						'<h2>Google: ' + query_en + '</h2>' +
 						'<div class="images"></div>' +
 					'</div>' +
 					'<div class="baidu hidden">' +
