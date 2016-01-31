@@ -26,7 +26,7 @@ function setupImagesContainer(images) {
 	var id = getImageContainerId(images.query);
 	if ($('#' + id).length == 0) {
 		$('#images').prepend(
-			'<div id="' + getImageContainerId(images.query) + '">' +
+			'<div id="' + getImageContainerId(images.query) + '" class="image-set">' +
 				'<div class="google">' +
 					'<div class="label">Google: ' + images.query + '</div>' +
 					'<div class="images"></div>' +
@@ -51,7 +51,10 @@ function addSourceImages(images) {
 	$.each(urls, function(i, url) {
 		var alt = images.query + ' ' + (i + 1);
 		alt = alt.replace(/"/g, '&quot;');
-		url = url.replace(/^http:/, '');
+		if (url.match(/^http:/)) {
+			// Only use HTTPS images for now
+			return;
+		}
 		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
 	});
 	var containerId = getImageContainerId(images.query);

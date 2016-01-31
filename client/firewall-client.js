@@ -107,7 +107,9 @@ setInterval(function() {
 		}
 	}
 	if (config.queryEn) {
-		getImages(config.queryEn);
+		setTimeout(function() {
+			getImages(config.queryEn);
+		}, 2000);
 		config.queryEn = null;
 		chrome.storage.local.set({
 			firewall: config

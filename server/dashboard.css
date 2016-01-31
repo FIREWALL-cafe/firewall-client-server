@@ -10,9 +10,11 @@ body {
 	padding: 10px;
 }
 
+.image-set {
+	border-top: 1px solid #808080;
+}
+
 .google, .baidu {
-	display: inline-block;
-	width: 50%;
 	padding: 10px;
 }
 
@@ -24,6 +26,5 @@ body {
 }
 
 .images {
-	width: 100%;
-	overflow: auto;
+	width: 10000px;
 }
