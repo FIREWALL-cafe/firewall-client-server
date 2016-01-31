@@ -222,6 +222,9 @@ function outputIndex(req, res, headers) {
 					queryLookup[query] = index;
 				}
 				imageSet[row.source] = JSON.parse(row.images);
+				if (row.source == 'baidu') {
+					imageSet.query_zh = row.query_zh;
+				}
 				images[index] = imageSet;
 			});
 			output.images = images;

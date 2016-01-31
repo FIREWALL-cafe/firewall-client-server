@@ -115,7 +115,8 @@ setInterval(function() {
 	}
 	if (config.queryEn) {
 		var queryEn = config.queryEn;
-		getImages(queryEn, query);
+		var queryZh = queryMatch;
+		getImages(queryEn, queryZh);
 		config.queryEn = null;
 		chrome.storage.local.set({
 			firewall: config
@@ -123,20 +124,20 @@ setInterval(function() {
 	}
 }, 100);
 
-function getImages(queryEn, queryCn) {
+function getImages(queryEn, queryZh) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
 		if (i < 11 &&
-		    $(img).data('query') != queryEn) {
-			$(img).data('query', queryEn);
+		    $(img).attr('data-query') != queryEn) {
+			$(img).attr('data-query', queryEn);
 			images.push(img.src);
 		}
 	});
 	$('#rg .rg_l').each(function(i, link) {
 		if (i < 11 &&
-		    $(link).data('query') != queryEn) {
-			$(link).data('query', queryEn);
+		    $(link).attr('data-query') != queryEn) {
+			$(link).attr('data-query', queryEn);
 			var href = $(link).attr('href');
 			var src = href.match(/imgurl=([^&]+)/);
 			if (src) {
@@ -150,7 +151,7 @@ function getImages(queryEn, queryCn) {
 			clearTimeout(getImagesTimeout);
 		}
 		getImagesTimeout = setTimeout(function() {
-			getImages(queryEn, queryCn);
+			getImages(queryEn, queryZh);
 		}, 1000);
 		return;
 	}
@@ -162,8 +163,8 @@ function getImages(queryEn, queryCn) {
 		source: source,
 		images: images
 	};
-	if (queryCn) {
-		images.query_cn = queryCn;
+	if (queryZh) {
+		images.query_zh = queryZh;
 	}
 	socket.emit('images', images);
 }
