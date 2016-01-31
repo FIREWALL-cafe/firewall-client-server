@@ -53,7 +53,7 @@ function addSourceImages(images) {
 		alt = alt.replace(/"/g, '&quot;');
 		if (url.match(/^http:/)) {
 			// Only use HTTPS images for now
-			return;
+			console.log('Uh oh, this image isn\'t HTTPS: ' + url);
 		}
 		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
 	});
