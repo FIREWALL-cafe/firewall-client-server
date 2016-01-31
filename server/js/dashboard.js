@@ -49,13 +49,11 @@ function addSourceImages(images) {
 	var imagesHTML = '';
 	var urls = JSON.parse(images.images);
 	$.each(urls, function(i, url) {
-		var alt = images.query + ' ' + (i + 1);
-		alt = alt.replace(/"/g, '&quot;');
 		if (url.match(/^http:/)) {
 			// Only use HTTPS images for now
 			console.log('Uh oh, this image isn\'t HTTPS: ' + url);
 		}
-		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
+		imagesHTML += '<img src="' + url + '" alt="">';
 	});
 	var containerId = getImageContainerId(images.query);
 	$('#' + containerId + ' .' + images.source + ' .images').html(imagesHTML);
