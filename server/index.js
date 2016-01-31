@@ -1,5 +1,7 @@
 var config = require('./config');
 var spreadsheetServiceKey = require('./service-key.json');
+
+var _ = require('lodash');
 var fs = require('fs');
 var mime = require('mime');
 var url = require('url');
@@ -61,9 +63,7 @@ function loadSpreadsheet(err) {
 			if (err) {
 				console.log(err);
 			} else {
-				for (var i = 0; i < info.worksheets.length; i++) {
-					loadWorksheet(info.worksheets[i]);
-				}
+				_.each(info.worksheets, loadWorksheet);
 			}
 		});
 	}
@@ -73,6 +73,7 @@ function loadWorksheet(worksheet) {
 	var tab = worksheet.title.trim();
 	if (!doc[tab]) {
 		doc[tab] = {
+			id: worksheet.id,
 			lookup: {},
 			worksheet: worksheet
 		};
@@ -81,13 +82,13 @@ function loadWorksheet(worksheet) {
 	worksheet.getRows(function(err, rows) {
 		if (err) {
 			console.log(err);
+		} else {
+			_.each(rows, function(row) {
+				var query = rows.query;
+				tabLookup[query] = row;
+			});
+			console.log('Loaded ' + rows.length + ' records from ' + tab);
 		}
-		var query;
-		for (var i = 0; i < rows.length; i++) {
-			query = rows[i].query;
-			tabLookup[query] = rows[i];
-		}
-		console.log('Loaded ' + rows.length + ' records from ' + tab);
 	});
 }
 
@@ -174,9 +175,51 @@ function getSearchTab(search) {
 }
 
 function httpRequest(req, res) {
-	var uri = url.parse(req.url).pathname,
-	    filename = path.join(process.cwd(), uri);
+	var uri = url.parse(req.url).pathname;
+	if (uri == '/index.json') {
+		outputIndex(req, res);
+	} else {
+		outputDashboard(req, res);
+	}
+}
 
+function outputIndex(req, res) {
+	spreadsheet.getRows(doc.images.id, function(err, rows) {
+		var output = {};
+		if (err) {
+			res.writeHead(500, {"Content-Type": "application/json"});
+			output.ok = 0;
+			output.error = err.getMessage();
+		} else {
+			res.writeHead(200, {"Content-Type": "application/json"});
+			output.ok = 1;
+			var images = [];
+			var queryLookup = {};
+			_.each(rows, function(row) {
+				var query = row.query;
+				var imageSet;
+				if (queryLookup[query]) {
+					var index = queryLookup[query];
+					imageSet = images[index];
+				} else {
+					var index = images.length;
+					imageSet = {
+						query: query
+					};
+					queryLookup[query] = index;
+				}
+				imageSet[row.source] = JSON.parse(row.images);
+				images[index] = imageSet;
+			});
+			output.images = images;
+		}
+		res.end(JSON.stringify(output));
+	});
+}
+
+function outputDashboard(req, res) {
+	var uri = url.parse(req.url).pathname;
+	var filename = path.join(process.cwd() + '/dashboard', uri);
 	fs.exists(filename, function(exists) {
 		if (!exists) {
 			res.writeHead(404, {"Content-Type": "text/plain"});
@@ -184,11 +227,9 @@ function httpRequest(req, res) {
 			res.end();
 			return;
 		}
-
 		if (fs.statSync(filename).isDirectory()) {
 			filename += '/index.html';
 		}
-
 		fs.readFile(filename, "binary", function(err, file) {
 			if (err) {
 				res.writeHead(500, {"Content-Type": "text/plain"});
@@ -196,7 +237,6 @@ function httpRequest(req, res) {
 				res.end();
 				return;
 			}
-
 			res.writeHead(200, {
 				"Content-Type": mime.lookup(filename)
 			});
