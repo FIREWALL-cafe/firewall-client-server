@@ -101,12 +101,14 @@ function getTranslation(search, callback) {
 		var translations = doc[tab].lookup[query];
 		if (translations.override) {
 			callback(null, {
+				query: search.query,
 				source: 'override',
 				value: translations.override
 			});
 			return true;
 		} else if (translations.google) {
 			callback(null, {
+				query: search.query,
 				source: 'cached Google',
 				value: translations.google
 			});
@@ -119,6 +121,7 @@ function getTranslation(search, callback) {
 		} else {
 			setTranslation(search, translation);
 			callback(null, {
+				query: search.query,
 				source: 'Google API',
 				value: translation
 			});
