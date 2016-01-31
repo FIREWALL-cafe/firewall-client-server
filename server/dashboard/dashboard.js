@@ -49,7 +49,7 @@ function setupImagesContainer(query_en, query_zh, appendHTML) {
 	}
 	if ($('#' + id).length == 0) {
 		var html =
-			'<div id="' + id + '" class="image-set">' +
+			'<div id="' + id + '" class="image-set hidden">' +
 				'<div class="container">' +
 					'<div class="google hidden">' +
 						'<h2>Google: ' + query_en + '</h2>' +
@@ -87,4 +87,8 @@ function addSourceImages(query, source, urls) {
 	var containerId = getImageContainerId(query);
 	$('#' + containerId + ' .' + source + ' .images').html(imagesHTML);
 	$('#' + containerId + ' .' + source).removeClass('hidden');
+	if (!$('#' + containerId + ' .google').hasClass('hidden') &&
+	    !$('#' + containerId + ' .baidu').hasClass('hidden')) {
+		$('#' + containerId).removeClass('hidden');
+	}
 }

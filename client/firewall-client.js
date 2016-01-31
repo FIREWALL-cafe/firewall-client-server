@@ -129,21 +129,21 @@ function getImages(queryEn, queryZh) {
 	var images = [];
 	$('.imglist img').each(function(i, img) {
 		if (images.length < 10 &&
-		    typeof $(img).data('query') == 'undefined') {
-			$(img).data('query', queryEn);
+		    typeof $(img).data('query') != 'string') {
 			images.push(img.src);
 		}
+		$(img).data('query', queryEn);
 	});
 	$('#rg .rg_l').each(function(i, link) {
 		if (images.length < 10 &&
-		    typeof $(link).data('query') == 'undefined') {
-			$(link).data('query', queryEn);
+		    typeof $(link).data('query') != 'string') {
 			var href = $(link).attr('href');
 			var src = href.match(/imgurl=([^&]+)/);
 			if (src) {
 				images.push(src[1]);
 			}
 		}
+		$(link).data('query', queryEn);
 	});
 	if (images.length == 0) {
 		console.log('No images found, waiting...');
