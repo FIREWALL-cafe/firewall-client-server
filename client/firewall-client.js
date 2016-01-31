@@ -119,6 +119,7 @@ function getImages(queryEn) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
+		console.log(img);
 		if (i < 11) {
 			images.push(img.src);
 		}

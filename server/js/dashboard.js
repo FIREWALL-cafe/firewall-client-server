@@ -26,7 +26,7 @@ function setupImagesContainer(images) {
 	var id = getImageContainerId(images.query);
 	if ($('#' + id).length == 0) {
 		$('#images').prepend(
-			'<div id="images-' + getImageContainerId(images.query) + '">' +
+			'<div id="' + getImageContainerId(images.query) + '">' +
 				'<div class="google">' +
 					'<div class="label">Google: ' + images.query + '</div>' +
 					'<div class="images"></div>' +
@@ -42,6 +42,7 @@ function setupImagesContainer(images) {
 
 function getImageContainerId(query) {
 	var id = 'images-' + query.replace(/\W+/g, '-');
+	return id;
 }
 
 function addSourceImages(images) {
