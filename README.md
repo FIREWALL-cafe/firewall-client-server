@@ -47,8 +47,6 @@ Any time you update the code from GitHub, be sure to click the __Reload__ link t
 
 The translation service is written in [node.js](http://nodejs.org/) and translates search queries from English to Chinese, and from Chinese to English using the [Google Translate API](https://cloud.google.com/translate/docs). These translations are stored in a Google Spreadsheet where the machine-generated translations can be overridden by human translators, and where resulting images from Google's and Baidu's image search can be stored by the client.
 
-### Setup
-
 1. Go to the [Google Cloud credentials](https://console.cloud.google.com/apis/credentials) page  
 	* Download a service account key JSON file for the Google Spreadsheet API and save it as `translation/service-key.json`
 	* Register an Translation API key, with your server's IP address
@@ -60,7 +58,7 @@ The translation service is written in [node.js](http://nodejs.org/) and translat
 
 If you use a Mac, [this article](http://brianflove.com/2014/12/01/self-signed-ssl-certificate-on-mac-yosemite/) might be helpful for generating a self-signed SSL certificate for testing purposes.
 
-### Usage
+## Usage
 
 If you're using a port number below 1024, you will need to use `sudo` on the node command.
 
