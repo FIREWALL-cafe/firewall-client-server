@@ -23,7 +23,7 @@ app.listen(config.port);
 spreadsheet.useServiceAccountAuth(spreadsheetServiceKey, loadSpreadsheet);
 
 io.on('connection', function(socket) {
-	socket.on('translate', function(search) {
+	socket.on('search', function(search) {
 		getTranslation(search, function(err, translation) {
 			if (err) {
 				console.log(err);
@@ -40,6 +40,28 @@ io.on('connection', function(socket) {
 			}
 		});
   });
+	socket.on('images', function(images) {
+		console.log('Received images from ' + images.from + ' for ' + images.query);
+		var record = null;
+		if (doc.images.lookup[images.query]) {
+			record = doc.images.lookup[images.query];
+			record[images.from] = JSON.stringify(images.urls);
+			console.log('Already cached record (not saving yet)');
+			console.log(record);
+		} else {
+			console.log('No record found, creating one now');
+			record = {
+				query: images.query,
+				featured: 0,
+				google: '',
+				baidu: ''
+			};
+			record[images.from] = JSON.stringify(images.urls);
+			console.log(record);
+			var cell = doc[tab].worksheet.addRow(record);
+			console.log(cell);
+		}
+	});
 });
 
 function loadSpreadsheet(err) {

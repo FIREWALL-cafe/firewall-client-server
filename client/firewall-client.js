@@ -1,4 +1,5 @@
 var query = null;
+var queryEn = null;
 var socket = null;
 var config = null;
 var ignoreSubmit = false;
@@ -10,7 +11,7 @@ chrome.storage.local.get('firewall', function(storedConfig) {
 		config = {
 			langFrom: 'en',
 			langTo: 'zh-CN',
-			server: 'https://translate-local.firewallcafe.com/'
+			server: 'https://translate.firewallcafe.com/'
 		}
 	}
 	setupUI();
@@ -57,6 +58,9 @@ function setupSocket() {
 		if (translation.langTo == config.langFrom) {
 			query = translation.result.toLowerCase().trim();
 			config.query = query;
+			if (translation.langFrom == 'en') {
+				config.queryEn = translation.query;
+			}
 			chrome.storage.local.set({
 				firewall: config
 			});
@@ -93,10 +97,35 @@ setInterval(function() {
 	if (queryMatch != query && queryMatch != config.query) {
 		query = queryMatch;
 		console.log('Search for ' + query);
-		socket.emit('translate', {
+		socket.emit('search', {
 			langFrom: config.langFrom,
 			langTo: config.langTo,
 			query: query
 		});
+		if (config.langFrom == 'en') {
+			getImages(query);
+		}
+	} else if (config.queryEn) {
+		getImages(config.queryEn);
+		config.queryEn = null;
+		chrome.storage.local.set({
+			firewall: config
+		});
 	}
 }, 100);
+
+function getImages(queryEn) {
+	var images = [];
+	$('.imglist img, #rg img').each(function(i, img) {
+		if (i < 10) {
+			images.push(img.src);
+		}
+	});
+	var source = location.hostname.replace('www.', '')
+	                              .replace('.com', '');
+	socket.emit('images', {
+		query: queryEn,
+		from: source
+		urls: images
+	});
+}

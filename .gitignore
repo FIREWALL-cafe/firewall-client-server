@@ -2,3 +2,4 @@
 /server/config.js
 /server/service-key.json
 /server/node_modules/
+/server/ssl/

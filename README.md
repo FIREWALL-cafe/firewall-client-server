@@ -9,6 +9,10 @@ A month-long Pop-Up Internet Cafe, FIREWALL is a socially engaged research and i
 
 This software is composed of a server and client.
 
+## Client
+
+
+
 ## Server
 
 The translation service is written in [node.js](http://nodejs.org/) and translates search queries from English to Chinese, and from Chinese to English using the [Google Translate API](https://cloud.google.com/translate/docs). These translations are stored in a Google Spreadsheet where the machine-generated translations can be overridden by human translators, and where resulting images from Google's and Baidu's image search can be stored by the client.
