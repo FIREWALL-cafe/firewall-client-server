@@ -41,37 +41,15 @@ io.on('connection', function(socket) {
 		});
   });
 	socket.on('images', function(images) {
-		console.log('Received images from ' + images.from + ' for ' + images.query);
-		var record = null;
-		if (doc.images.lookup[images.query]) {
-			record = doc.images.lookup[images.query];
-			record[images.from] = JSON.stringify(images.urls);
-			if (record.cell) {
-				record.cell.setValue(record);
-				io.emit('image-record', record);
+		console.log('Received images from ' + images.source + ' for ' + images.query);
+		images.images = JSON.stringify(images.images);
+		doc.images.worksheet.addRow(images, function(err) {
+			if (err) {
+				console.log(err);
 			} else {
-				console.log('Already saved this record but not saving it (no cell)');
+				io.emit('images-received', images);
 			}
-		} else {
-			console.log('No record found, creating one now');
-			record = {
-				query: images.query,
-				google: '',
-				baidu: '',
-				featured: 0
-			};
-			record[images.from] = JSON.stringify(images.urls);
-			doc.images.worksheet.addRow(record, function(err, cells) {
-				if (err) {
-					console.log(err);
-				} else {
-					var cell = cells[cells.length - 1];
-					record.cell = cell;
-					doc.images.lookup[images.query] = record;
-					console.log('Saved record and stored to lookup');
-				}
-			});
-		}
+		});
 	});
 });
 

@@ -15,27 +15,30 @@ socket.on('translation', function(response) {
 	            response.langTo + '): ' + response.result);
 });
 
-socket.on('image-record', function(images) {
-	console.log('Image record for query ' + images.query);
+socket.on('images-received', function(images) {
+	console.log('Image record for query ' + images.query + ' from + ' + images.source);
+	setupImagesContainer(images);
+	addSourceImages(images);
+});
+
+function setupImagesContainer(images) {
 	if ($('#images-' + images.query).length == 0) {
-		var googleImages = getImages(images, 'google');
-		var baiduImages = getImages(images, 'baidu');
-		$('#images').append(
+		$('#images').prepend(
 			'<div id="images-' + images.query + '">' +
 				'Query: ' + images.query +
-				'<div class="google">' + googleImages + '</div>' +
-				'<div class="baidu">' + baiduImages + '</div>' +
+				'<div class="google"></div>' +
+				'<div class="baidu"></div>' +
 			'</div>'
 		);
 	}
-});
+}
 
-function getImages(images, id) {
+function addSourceImages(images) {
 	var imagesHTML = '';
-	var urls = JSON.parse(images[id]);
+	var urls = JSON.parse(images.images);
 	$.each(urls, function(i, url) {
 		var alt = images.query + ' ' + (i + 1);
 		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
 	});
-	return imagesHTML;
+	$('#images-' + images.query + ' .' + images.source).html(imagesHTML);
 }

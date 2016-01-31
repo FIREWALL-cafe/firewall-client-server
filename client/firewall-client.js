@@ -105,7 +105,8 @@ setInterval(function() {
 		if (config.langFrom == 'en') {
 			getImages(query);
 		}
-	} else if (config.queryEn) {
+	}
+	if (config.queryEn) {
 		getImages(config.queryEn);
 		config.queryEn = null;
 		chrome.storage.local.set({
@@ -115,17 +116,28 @@ setInterval(function() {
 }, 100);
 
 function getImages(queryEn) {
+	console.log('Gathering images for ' + queryEn);
 	var images = [];
-	$('.imglist img, #rg img').each(function(i, img) {
-		if (i < 5) {
+	$('.imglist img').each(function(i, img) {
+		if (i < 11) {
 			images.push(img.src);
 		}
 	});
+	$('#rg .rg_l').each(function(i, link) {
+		if (i < 11) {
+			var href = $(link).attr('href');
+			var src = href.match(/imgurl=([^&]+)/);
+			if (src) {
+				images.push(src[1]);
+			}
+		}
+	});
 	var source = location.hostname.replace('www.', '')
+	                              .replace('image.', '')
 	                              .replace('.com', '');
 	socket.emit('images', {
 		query: queryEn,
-		from: source,
-		urls: images
+		source: source,
+		images: images
 	});
 }
