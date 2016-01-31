@@ -44,7 +44,9 @@ function addSourceImages(images) {
 	var urls = JSON.parse(images.images);
 	$.each(urls, function(i, url) {
 		var alt = images.query + ' ' + (i + 1);
-		imagesHTML += '<img src="' + encodeURIComponent(url) + '" alt="' + alt.replace(/"/g, '&quot;') + '">';
+		alt = alt.replace(/"/g, '&quot;');
+		url = url.replace(/^http:/, '');
+		imagesHTML += '<img src="' + url + '" alt="' + alt + '">';
 	});
 	$('#images-' + images.query + ' .' + images.source + ' .images').html(imagesHTML);
 }
