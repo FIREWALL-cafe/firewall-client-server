@@ -9,6 +9,8 @@ A month-long Pop-Up Internet Cafe, FIREWALL is a socially engaged research and i
 
 This software is composed of a server and client, and currently relies on a uProxy Cloud service hosted from the China side of the [Great Firewall](https://en.wikipedia.org/wiki/Great_Firewall).
 
+![Screenshot](https://raw.githubusercontent.com/dphiffer/firewall-cafe/master/screenshot.png)
+
 ## Clone the repository
 
 If you're okay with the command line and `git` commands, use this method:
