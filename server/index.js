@@ -46,8 +46,12 @@ io.on('connection', function(socket) {
 		if (doc.images.lookup[images.query]) {
 			record = doc.images.lookup[images.query];
 			record[images.from] = JSON.stringify(images.urls);
-			console.log('Already cached record (not saving yet)');
-			console.log(record);
+			if (record.cell) {
+				record.cell.setValue(record);
+				io.emit('image-record', record);
+			} else {
+				console.log('Already saved this record but not saving it (no cell)');
+			}
 		} else {
 			console.log('No record found, creating one now');
 			record = {
@@ -57,9 +61,15 @@ io.on('connection', function(socket) {
 				featured: 0
 			};
 			record[images.from] = JSON.stringify(images.urls);
-			console.log(record);
-			var cell = doc.images.worksheet.addRow(record, function(cell) {
-				console.log(Object.keys(cell));
+			doc.images.worksheet.addRow(record, function(err, cells) {
+				if (err) {
+					console.log(err);
+				} else {
+					var cell = cells[cells.length - 1];
+					record.cell = cell;
+					doc.images.lookup[images.query] = record;
+					console.log('Saved record and stored to lookup');
+				}
 			});
 		}
 	});
