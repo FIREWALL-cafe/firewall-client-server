@@ -168,7 +168,9 @@ function saveTranslation(search, translation) {
 }
 
 function getNormalizedQuery(search) {
-	return search.query.toLowerCase().trim();
+	var normalized = search.query.toLowerCase().trim();
+	normalized = normalized.replace(/\s+/g, ' ');
+	return normalized;
 }
 
 function getSearchTab(search) {
@@ -283,7 +285,13 @@ function googleTranslate(search, callback) {
 			if (response &&
 			    response.data &&
 			    response.data.translations) {
-				callback(null, response.data.translations[0].translatedText);
+				var translation = response.data.translations[0].translatedText;
+				if (langTo == 'en') {
+					translation = translation.toLowerCase();
+				}
+				translation.trim();
+				translation.replace(/\s+/g, ' ');
+				callback(null, translation);
 			} else if (response &&
 			           response.error) {
 				callback(new Error('[' + response.error.code + '] ' + response.error.message));

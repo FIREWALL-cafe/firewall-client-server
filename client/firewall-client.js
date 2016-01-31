@@ -75,8 +75,16 @@ function setupSocket() {
 				return;
 			}
 			ignoreSubmit = true;
-			$(inputQuery).first().val(translation.result);
+			$(inputQuery).first().val(query);
 			$(inputQuery).first().closest('form').submit();
+		} else if (config.queryZh) {
+			var queryZh = config.queryZh;
+			var queryEn = translation.result;
+			getImages(queryEn, queryZh);
+			config.queryZh = null;
+			chrome.storage.local.set({
+				firewall: config
+			});
 		}
 	});
 }
@@ -111,13 +119,25 @@ setInterval(function() {
 		});
 		if (config.langFrom == 'en') {
 			getImages(query);
+		} else {
+			config.queryZh = query;
+			chrome.storage.local.set({
+				firewall: config
+			});
 		}
 	}
-	if (config.queryEn) {
+	if (config.queryEn && config.langFrom != 'en') {
 		var queryEn = config.queryEn;
 		var queryZh = queryMatch;
 		getImages(queryEn, queryZh);
 		config.queryEn = null;
+		chrome.storage.local.set({
+			firewall: config
+		});
+	} else if (config.query && config.langFrom == 'en') {
+		var queryEn = config.query;
+		getImages(queryEn);
+		config.query = null;
 		chrome.storage.local.set({
 			firewall: config
 		});
