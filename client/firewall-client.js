@@ -3,6 +3,7 @@ var queryEn = null;
 var socket = null;
 var config = null;
 var ignoreSubmit = false;
+var getImagesTimeout = null;
 
 chrome.storage.local.get('firewall', function(storedConfig) {
 	if (storedConfig && storedConfig.firewall) {
@@ -97,22 +98,24 @@ setInterval(function() {
 	if (queryMatch != query && queryMatch != config.query) {
 		query = queryMatch;
 		console.log('Search for ' + query);
+
+		if (getImagesTimeout) {
+			clearTimeout(getImagesTimeout);
+			getImagesTimeout = null;
+		}
+
 		socket.emit('search', {
 			langFrom: config.langFrom,
 			langTo: config.langTo,
 			query: query
 		});
 		if (config.langFrom == 'en') {
-			setTimeout(function() {
-				getImages(query);
-			}, 2500);
+			getImages(query);
 		}
 	}
 	if (config.queryEn) {
 		var queryEn = config.queryEn;
-		setTimeout(function() {
-			getImages(queryEn, query);
-		}, 5000);
+		getImages(queryEn, query);
 		config.queryEn = null;
 		chrome.storage.local.set({
 			firewall: config
@@ -124,13 +127,16 @@ function getImages(queryEn, queryCn) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
-		console.log(img);
-		if (i < 11) {
+		if (i < 11 &&
+		    $(img).data('query') != queryEn) {
+			$(img).data('query', queryEn);
 			images.push(img.src);
 		}
 	});
 	$('#rg .rg_l').each(function(i, link) {
-		if (i < 11) {
+		if (i < 11 &&
+		    $(link).data('query') != queryEn) {
+			$(link).data('query', queryEn);
 			var href = $(link).attr('href');
 			var src = href.match(/imgurl=([^&]+)/);
 			if (src) {
@@ -138,6 +144,16 @@ function getImages(queryEn, queryCn) {
 			}
 		}
 	});
+	if (images.length == 0) {
+		console.log('No images found, trying again...');
+		if (getImagesTimeout) {
+			clearTimeout(getImagesTimeout);
+		}
+		getImagesTimeout = setTimeout(function() {
+			getImages(queryEn, queryCn);
+		}, 1000);
+		return;
+	}
 	var source = location.hostname.replace('www.', '')
 	                              .replace('image.', '')
 	                              .replace('.com', '');
