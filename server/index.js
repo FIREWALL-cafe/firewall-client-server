@@ -227,7 +227,7 @@ function outputIndex(req, res, headers) {
 				}
 				images[index] = imageSet;
 			});
-			output.images = images;
+			output.images = images.reverse();
 		}
 		res.end(JSON.stringify(output));
 	});

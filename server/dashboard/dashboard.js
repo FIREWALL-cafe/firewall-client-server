@@ -9,7 +9,7 @@ $.get('/index.json', function(index) {
 	if (index.ok && index.images) {
 		console.log(index.images);
 		$.each(index.images, function(i, imageSet) {
-			setupImagesContainer(imageSet.query);
+			setupImagesContainer(imageSet.query, imageSet.query_zh, true);
 			if (imageSet.google) {
 				addSourceImages(imageSet.query, 'google', imageSet.google);
 			}
@@ -42,10 +42,10 @@ socket.on('images-received', function(images) {
 	});
 });
 
-function setupImagesContainer(query_en, query_zh) {
+function setupImagesContainer(query_en, query_zh, appendHTML) {
 	var id = getImageContainerId(query_en);
 	if ($('#' + id).length == 0) {
-		$('#images').prepend(
+		var html =
 			'<div id="' + id + '" class="image-set">' +
 				'<div class="container">' +
 					'<div class="google hidden">' +
@@ -59,6 +59,11 @@ function setupImagesContainer(query_en, query_zh) {
 				'</div>' +
 			'</div>'
 		);
+		if (appendHTML) {
+			$('#images').append(html);
+		} else {
+			$('#images').prepend(html);
+		}
 	}
 	return $('#' + id);
 }
