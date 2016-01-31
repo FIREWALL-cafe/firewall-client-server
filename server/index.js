@@ -58,7 +58,7 @@ io.on('connection', function(socket) {
 			};
 			record[images.from] = JSON.stringify(images.urls);
 			console.log(record);
-			var cell = doc[tab].worksheet.addRow(record, function(cell) {
+			var cell = doc.images.worksheet.addRow(record, function(cell) {
 				console.log(Object.keys(cell));
 			});
 		}
