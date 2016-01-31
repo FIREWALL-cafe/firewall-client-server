@@ -175,23 +175,33 @@ function getSearchTab(search) {
 }
 
 function httpRequest(req, res) {
+	var responseHeaders = {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+		"Access-Control-Allow-Headers": "content-type, accept",
+		"Access-Control-Max-Age": 10,
+		"Content-Type": "application/json"
+	};
 	var uri = url.parse(req.url).pathname;
-	if (uri == '/index.json') {
-		outputIndex(req, res);
+	if (req.method == 'OPTIONS') {
+		res.writeHead(200, responseHeaders);
+		res.end();
+	} else if (uri == '/index.json') {
+		outputIndex(req, res, responseHeaders);
 	} else {
 		outputDashboard(req, res);
 	}
 }
 
-function outputIndex(req, res) {
+function outputIndex(req, res, headers) {
 	spreadsheet.getRows(doc.images.id, function(err, rows) {
 		var output = {};
 		if (err) {
-			res.writeHead(500, {"Content-Type": "application/json"});
+			res.writeHead(500, headers);
 			output.ok = 0;
 			output.error = err.getMessage();
 		} else {
-			res.writeHead(200, {"Content-Type": "application/json"});
+			res.writeHead(200, headers);
 			output.ok = 1;
 			var images = [];
 			var queryLookup = {};
