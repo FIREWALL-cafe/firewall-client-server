@@ -128,16 +128,16 @@ function getImages(queryEn, queryZh) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
-		if (i < 11 &&
-		    $(img).attr('data-query') != queryEn) {
-			$(img).attr('data-query', queryEn);
+		if (images.length < 10 &&
+		    typeof $(img).data('query') == 'undefined') {
+			$(img).data('query', queryEn);
 			images.push(img.src);
 		}
 	});
 	$('#rg .rg_l').each(function(i, link) {
-		if (i < 11 &&
-		    $(link).attr('data-query') != queryEn) {
-			$(link).attr('data-query', queryEn);
+		if (images.length < 10 &&
+		    typeof $(link).data('query') == 'undefined') {
+			$(link).data('query', queryEn);
 			var href = $(link).attr('href');
 			var src = href.match(/imgurl=([^&]+)/);
 			if (src) {
@@ -146,7 +146,7 @@ function getImages(queryEn, queryZh) {
 		}
 	});
 	if (images.length == 0) {
-		console.log('No images found, trying again...');
+		console.log('No images found, waiting...');
 		if (getImagesTimeout) {
 			clearTimeout(getImagesTimeout);
 		}
