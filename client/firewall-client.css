@@ -25,23 +25,14 @@
 	line-height: 30px;
 }
 
-#firewall-form label span {
-	display: inline-block;
-	margin-right: 10px;
-	text-align: right;
-	width: 50px;
-}
-
-#firewall-form input[type=text] {
+#firewall-server {
 	font: 14px "helvetica neue", sans-serif;
 	display: inline-block;
-	width: 100px;
-	padding: 5px 10px;
+	width: 185px;
 	border: 1px solid #4F80F0;
 }
 
 #firewall-form input[type=submit] {
-	margin-left: 60px;
 	border: none;
 	border-radius: 5px;
 	padding: 5px 10px;

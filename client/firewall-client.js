@@ -10,10 +10,15 @@ chrome.storage.local.get('firewall', function(storedConfig) {
 		config = storedConfig.firewall;
 	} else {
 		config = {
-			langFrom: 'en',
-			langTo: 'zh-CN',
 			server: 'https://translate.firewallcafe.com/'
 		}
+	}
+	if (location.hostname.indexOf('google.com') != -1) {
+		config.langFrom = 'en';
+		config.langTo = 'zh-CN';
+	} else if (location.hostname.indexOf('baidu.com') != -1) {
+		config.langFrom = 'zh-CN';
+		config.langTo = 'en';
 	}
 	setupUI();
 	setupSocket();
@@ -24,9 +29,7 @@ function setupUI() {
 		'<div id="firewall">' +
 			'<a href="#firewall" id="firewall-show">Firewall</a>' +
 			'<form action="." id="firewall-form">' +
-				'<label><span>From:</span><input name="lang-from" id="firewall-from" value="' + config.langFrom + '"></label>' +
-				'<label><span>To:</span><input name="lang-to" id="firewall-to" value="' + config.langTo + '"></label>' +
-				'<label><span>Server:</span><input name="lang-server" id="firewall-server" value="' + config.server + '"></label>' +
+				'<label><input name="lang-server" id="firewall-server" value="' + config.server + '"></label>' +
 				'<input type="submit" value="Save">' +
 			'</form>' +
 		'</div>'
@@ -54,7 +57,7 @@ function setupSocket() {
 		return;
 	}
 	socket = io(config.server);
-	console.log('Listening for translations to ' + config.langFrom);
+	console.log('Listening for ' + config.langFrom + ' translations');
 	socket.on('translation', function(translation) {
 		if (translation.langTo == config.langFrom) {
 			query = translation.result.toLowerCase().trim();
