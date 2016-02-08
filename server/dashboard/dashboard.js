@@ -9,55 +9,36 @@ $.get('/index.json', function(index) {
 	if (index.ok && index.images) {
 		console.log(index.images);
 		$.each(index.images, function(i, imageSet) {
-			setupImagesContainer(imageSet.query, imageSet.query_zh, true);
-			if (imageSet.google) {
-				addSourceImages(imageSet.query, 'google', imageSet.google);
-			}
-			if (imageSet.baidu) {
-				addSourceImages(imageSet.query, 'baidu', imageSet.baidu);
-			}
+			showImageSet(imageSet);
 		});
-		$("img").unveil(200, function() {
-			$(this).load(function() {
-				this.style.opacity = 1;
-			});
-		});
+		loadImages($('img'));
 	} else if (index.error) {
 		console.log(index.error);
 	}
 });
 
 socket.on('images-received', function(images) {
-	console.log('Image records for query ' + images.query + ' from ' + images.source);
-	if (images.source == 'baidu') {
-		console.log('query_zh = ' + images.query_zh);
-	}
-	var urls = JSON.parse(images.images);
-	var $container = setupImagesContainer(images.query, images.query_zh);
-	addSourceImages(images.query, images.source, urls);
-	$container.find('img').unveil(200, function() {
-		$(this).load(function() {
-			this.style.opacity = 1;
-		});
-	});
+	$images = showImageSet(images);
+	loadImages($images.find('img'));
 });
 
-function setupImagesContainer(query_en, query_zh, appendHTML) {
-	var id = getImageContainerId(query_en);
-	if (!query_zh) {
-		query_zh = query_en;
-	}
+function showImageSet(imageSet, appendHTML) {
+	var id = getImageContainerId(imageSet.google_query);
+	var timestamp = parseInt(imageSet.timestamp);
+	var client = $("<div>").text(imageSet.client).html();
+	var dateTime = new Date(timestamp).toLocaleString();
 	if ($('#' + id).length == 0) {
 		var html =
-			'<div id="' + id + '" class="image-set hidden">' +
+			'<div id="' + id + '" class="image-set">' +
 				'<div class="container">' +
-					'<div class="google hidden">' +
-						'<h2>Google: ' + query_en + '</h2>' +
-						'<div class="images"></div>' +
+					'<h3 class="about">' + client + ', ' + dateTime + '</h3>' +
+					'<div class="google">' +
+						'<h2>Google: <strong>' + imageSet.google_query + '</strong></h2>' +
+						'<div class="images">' + getImageHTML(imageSet.google_images) + '</div>' +
 					'</div>' +
-					'<div class="baidu hidden">' +
-						'<h2>Baidu: ' + query_zh + '</h2>' +
-						'<div class="images"></div>' +
+					'<div class="baidu">' +
+						'<h2>Baidu: <strong>' + imageSet.baidu_query + '</strong></h2>' +
+						'<div class="images">' + getImageHTML(imageSet.baidu_images) + '</div>' +
 					'</div>' +
 				'</div>' +
 			'</div>';
@@ -66,29 +47,32 @@ function setupImagesContainer(query_en, query_zh, appendHTML) {
 		} else {
 			$('#images').prepend(html);
 		}
-	} else if (query_zh) {
-		$('#' + id).find('.baidu h2').html('Baidu: ' + query_zh);
 	}
 	return $('#' + id);
 }
 
 function getImageContainerId(query) {
 	var id = 'images-' + query.replace(/\W+/g, '-');
+	id = $("<div>").text(id).html();
 	return id;
 }
 
-function addSourceImages(query, source, urls) {
-	var imagesHTML = '';
+function getImageHTML(urls) {
+	var imageHTML = '';
 	$.each(urls, function(i, url) {
 		url = decodeURIComponent(url);
 		url = decodeURIComponent(url);
-		imagesHTML += '<img src="/placeholder.png" data-src="' + url + '" alt="">';
+		url = $("<div>").text(url).html();
+		imageHTML += '<img src="/placeholder.png" data-src="' + url + '" alt="" class="pending">';
 	});
-	var containerId = getImageContainerId(query);
-	$('#' + containerId + ' .' + source + ' .images').html(imagesHTML);
-	$('#' + containerId + ' .' + source).removeClass('hidden');
-	if (!$('#' + containerId + ' .google').hasClass('hidden') &&
-	    !$('#' + containerId + ' .baidu').hasClass('hidden')) {
-		$('#' + containerId).removeClass('hidden');
-	}
+	return imageHTML;
+}
+
+function loadImages($query) {
+	$query.unveil(200, function() {
+		$(this).load(function() {
+			this.style.opacity = 1;
+			$(this).removeClass('pending');
+		});
+	});
 }

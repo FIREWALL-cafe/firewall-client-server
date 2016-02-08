@@ -21,6 +21,13 @@ h2 {
 	margin: 0;
 }
 
+h3 {
+	font: 12px/25px helvetica, sans-serif;
+	text-transform: uppercase;
+	color: #808080;
+	margin: 0;
+}
+
 .image-set {
 	position: relative;
 	border-top: 1px solid #808080;

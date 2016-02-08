@@ -7,6 +7,7 @@ var mime = require('mime');
 var url = require('url');
 var path = require('path');
 var https = require('https');
+var qs = require('querystring');
 var GoogleSpreadsheet = require('google-spreadsheet');
 
 var options = {
@@ -42,17 +43,6 @@ io.on('connection', function(socket) {
 			}
 		});
   });
-	socket.on('images', function(images) {
-		console.log('Received images from ' + images.source + ' for ' + images.query);
-		images.images = JSON.stringify(images.images);
-		doc.images.worksheet.addRow(images, function(err) {
-			if (err) {
-				console.log(err);
-			} else {
-				io.emit('images-received', images);
-			}
-		});
-	});
 });
 
 function loadSpreadsheet(err) {
@@ -191,14 +181,66 @@ function httpRequest(req, res) {
 	if (req.method == 'OPTIONS') {
 		res.writeHead(200, responseHeaders);
 		res.end();
+	} else if (uri == '/submit-images') {
+		handleImages(req, res, responseHeaders);
 	} else if (uri == '/index.json') {
-		outputIndex(req, res, responseHeaders);
+		handleIndex(req, res, responseHeaders);
 	} else {
-		outputDashboard(req, res);
+		handleDashboard(req, res);
 	}
 }
 
-function outputIndex(req, res, headers) {
+var getPostData = function(req, callback) {
+	var body = '';
+	req.on('data', function (data) {
+		body += data;
+	});
+	req.on('end', function () {
+		callback(qs.parse(body));
+	});
+}
+
+function handleImages(req, res, headers) {
+	getPostData(req, function(data) {
+		console.log('Received images submission: ' + data.google_query);
+		if (spreadsheetServiceKey.private_key_id != data.secret) {
+			res.writeHead(401, headers);
+			res.end(JSON.stringify({
+				ok: 0,
+				error: 'Shared secret did not match.'
+			}));
+		} else {
+			var images = {
+				timestamp: data.timestamp,
+				client: data.client,
+				google_query: data.google_query,
+				baidu_query: data.baidu_query,
+				google_images: data.google_images,
+				baidu_images: data.baidu_images
+			};
+			doc.images.worksheet.addRow(images, function(err) {
+				if (err) {
+					res.writeHead(500, headers);
+					res.end(JSON.stringify({
+						ok: 0,
+						error: 'Error adding record to spreadsheet.'
+					}));
+				} else {
+					images.timestamp = parseInt(images.timestamp);
+					images.google_images = JSON.parse(images.google_images);
+					images.baidu_images = JSON.parse(images.baidu_images);
+					io.emit('images-received', images);
+					res.writeHead(200, headers);
+					res.end(JSON.stringify({
+						ok: 1
+					}));
+				}
+			});
+		}
+	});
+}
+
+function handleIndex(req, res, headers) {
 	spreadsheet.getRows(doc.images.id, function(err, rows) {
 		var output = {};
 		if (err) {
@@ -208,38 +250,24 @@ function outputIndex(req, res, headers) {
 		} else {
 			res.writeHead(200, headers);
 			output.ok = 1;
-			var images = [];
-			var queryLookup = {};
+			var images = []
 			_.each(rows, function(row) {
-				var query = row.query;
-				var imageSet;
-				if (typeof queryLookup[query] != 'undefined') {
-					var index = queryLookup[query];
-					imageSet = images[index];
-				} else {
-					var index = images.length;
-					imageSet = {
-						query: query
-					};
-					queryLookup[query] = index;
-				}
-				if (!row.images) {
-					return;
-				}
-				imageSet[row.source] = JSON.parse(row.images);
-				if (row.source == 'baidu' &&
-				    row.queryzh) {
-					imageSet.query_zh = row.queryzh;
-				}
-				images[index] = imageSet;
+				images.push({
+					timestamp: parseInt(row.timestamp),
+					client: row.client,
+					google_query: row.googlequery,
+					baidu_query: row.baiduquery,
+					google_images: JSON.parse(row.googleimages),
+					baidu_images: JSON.parse(row.baiduimages)
+				});
 			});
-			output.images = images.reverse();
+			output.images = images;
 		}
 		res.end(JSON.stringify(output));
 	});
 }
 
-function outputDashboard(req, res) {
+function handleDashboard(req, res) {
 	var uri = url.parse(req.url).pathname;
 	var filename = path.join(process.cwd() + '/dashboard', uri);
 	fs.exists(filename, function(exists) {
