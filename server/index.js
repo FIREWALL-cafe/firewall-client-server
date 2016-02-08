@@ -223,6 +223,9 @@ function outputIndex(req, res, headers) {
 					};
 					queryLookup[query] = index;
 				}
+				if (!row.images) {
+					return;
+				}
 				imageSet[row.source] = JSON.parse(row.images);
 				if (row.source == 'baidu' &&
 				    row.queryzh) {
