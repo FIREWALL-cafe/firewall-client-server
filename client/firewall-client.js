@@ -1,27 +1,22 @@
-var query = null;
+var data = null;
+
+var query = '';
 var queryEn = null;
-var socket = null;
-var config = null;
 var ignoreSubmit = false;
 var getImagesTimeout = null;
+var lastImages = [];
 
-chrome.storage.local.get('firewall', function(storedConfig) {
-	if (storedConfig && storedConfig.firewall) {
-		config = storedConfig.firewall;
+chrome.storage.local.get('firewallClient', function(storedData) {
+	if (storedData && storedData.firewallClient) {
+		data = storedData.firewallClient;
 	} else {
-		config = {
-			server: 'https://translate.firewallcafe.com/'
+		data = {
+			query: {},
+			clientId: 'Unknown'
 		}
 	}
-	if (location.hostname.indexOf('google.com') != -1) {
-		config.langFrom = 'en';
-		config.langTo = 'zh-CN';
-	} else if (location.hostname.indexOf('baidu.com') != -1) {
-		config.langFrom = 'zh-CN';
-		config.langTo = 'en';
-	}
+	console.log('Firewall client: ' + data.clientId);
 	setupUI();
-	setupSocket();
 });
 
 function setupUI() {
@@ -29,7 +24,7 @@ function setupUI() {
 		'<div id="firewall">' +
 			'<a href="#firewall" id="firewall-show">Firewall</a>' +
 			'<form action="." id="firewall-form">' +
-				'<label><input name="lang-server" id="firewall-server" value="' + config.server + '"></label>' +
+				'<label>Client ID: <input name="client-id" id="client-id" value="' + data.clientId + '"></label>' +
 				'<input type="submit" value="Save">' +
 			'</form>' +
 		'</div>'
@@ -42,58 +37,18 @@ function setupUI() {
 
 	$('#firewall-form').submit(function(e) {
 		e.preventDefault();
-		config.langFrom = $('#firewall-from').val();
-		config.langTo   = $('#firewall-to').val();
-		config.server   = $('#firewall-server').val();
+		data.clientId = $('#client-id').val();
 		chrome.storage.local.set({
-			firewall: config
+			firewallClient: data
+		}, function() {
+			console.log('Firewall client: ' + data.clientId);
+			$('#firewall-form').removeClass('visible');
 		});
-		$(this).removeClass('visible');
-	});
-}
-
-function setupSocket() {
-	if (!config.server) {
-		return;
-	}
-	socket = io(config.server);
-	console.log('Listening for ' + config.langFrom + ' translations');
-	socket.on('translation', function(translation) {
-		if (translation.langTo == config.langFrom) {
-			query = translation.result.toLowerCase().trim();
-			config.query = query;
-			if (translation.langFrom == 'en') {
-				config.queryEn = translation.query;
-			}
-			chrome.storage.local.set({
-				firewall: config
-			});
-			if (location.hostname == 'www.google.com') {
-				var inputQuery = 'input[name=q]';
-			} else if (location.hostname == 'image.baidu.com') {
-				var inputQuery = 'input[name=word]';
-			}
-			if ($(inputQuery).length == 0 ||
-			    $(inputQuery).first().closest('form').length == 0) {
-				return;
-			}
-			ignoreSubmit = true;
-			$(inputQuery).first().val(query);
-			$(inputQuery).first().closest('form').submit();
-		} else if (config.queryZh) {
-			var queryZh = config.queryZh;
-			var queryEn = translation.result;
-			getImages(queryEn, queryZh);
-			config.queryZh = null;
-			chrome.storage.local.set({
-				firewall: config
-			});
-		}
 	});
 }
 
 setInterval(function() {
-	if (!config || !socket || ignoreSubmit) {
+	if (!data || ignoreSubmit) {
 		return;
 	}
 	var regex = /[^a-zA-Z0-9](q|word)=([^&]+)/;
@@ -102,11 +57,12 @@ setInterval(function() {
 		queryMatch = location.search.match(regex);
 	}
 	if (!queryMatch) {
-		return;
+		queryMatch = ['', '', ''];
 	}
-	queryMatch = decodeURIComponent(queryMatch[2]).replace(/\+/g, ' ');
-	queryMatch = queryMatch.toLowerCase().trim();
-	if (queryMatch != query && queryMatch != config.query) {
+	queryMatch = decodeURIComponent(queryMatch[2]).replace(/\++/g, ' ');
+	queryMatch = normalizeQuery(queryMatch);
+
+	if (queryMatch != query) {
 		query = queryMatch;
 		console.log('Search for ' + query);
 
@@ -114,60 +70,66 @@ setInterval(function() {
 			clearTimeout(getImagesTimeout);
 			getImagesTimeout = null;
 		}
-
-		socket.emit('search', {
-			langFrom: config.langFrom,
-			langTo: config.langTo,
-			query: query
-		});
-		if (config.langFrom == 'en') {
-			getImages(query);
-		} else {
-			config.queryZh = query;
-			chrome.storage.local.set({
-				firewall: config
+		
+		detectLanguage(query, function(langFrom) {
+			if (langFrom == 'en') {
+				var langTo = 'zh-CN';
+			} else {
+				var langTo = 'en';
+			}
+			translateQuery(query, langFrom, langTo, function(translated) {
+				console.log('Translated: ' + translated);
 			});
-		}
-	}
-	if (config.queryEn && config.langFrom != 'en') {
-		var queryEn = config.queryEn;
-		var queryZh = queryMatch;
-		getImages(queryEn, queryZh);
-		config.queryEn = null;
-		chrome.storage.local.set({
-			firewall: config
-		});
-	} else if (config.query && config.langFrom == 'en') {
-		var queryEn = config.query;
-		getImages(queryEn);
-		config.query = null;
-		chrome.storage.local.set({
-			firewall: config
 		});
 	}
 }, 100);
 
+function detectLanguage(query, callback) {
+	$.ajax({
+		url: 'https://www.googleapis.com/language/translate/v2/detect',
+		data: {
+			key: config.apiKey,
+			q: query
+		},
+		dataType: 'json'
+	}).done(function(rsp) {
+		if (rsp && rsp.data && rsp.data.detections) {
+			console.log(rsp.data.detections);
+			callback(rsp.data.detections[0][0].language);
+		} else {
+			console.log('Error detecting language', rsp, this);
+		}
+	});
+}
+
+function translateQuery(query, langFrom, langTo, callback) {
+	
+}
+
 function getImages(queryEn, queryZh) {
 	console.log('Gathering images for ' + queryEn);
 	var images = [];
+	var allImages = [];
 	$('.imglist img').each(function(i, img) {
 		if (images.length < 10 &&
-		    typeof $(img).data('query') != 'string') {
+		    lastImages.indexOf(img.src) == -1) {
 			images.push(img.src);
 		}
-		$(img).data('query', queryEn);
+		allImages.push(img.src);
 	});
 	$('#rg .rg_l').each(function(i, link) {
-		if (images.length < 10 &&
-		    typeof $(link).data('query') != 'string') {
-			var href = $(link).attr('href');
-			var src = href.match(/imgurl=([^&]+)/);
-			if (src) {
+		var href = $(link).attr('href');
+		var src = href.match(/imgurl=([^&]+)/);
+		if (src) {
+			if (images.length < 10 &&
+			    lastImages.indexOf(src[1]) == -1) {
 				images.push(src[1]);
 			}
+			allImages.push(src[1]);
 		}
-		$(link).data('query', queryEn);
 	});
+	console.log('number of allImages: ' + allImages.length);
+	console.log('number of images: ' + images.length);
 	if (images.length == 0) {
 		console.log('No images found, waiting...');
 		if (getImagesTimeout) {
@@ -178,6 +140,7 @@ function getImages(queryEn, queryZh) {
 		}, 1000);
 		return;
 	}
+	lastImages = allImages;
 	var source = location.hostname.replace('www.', '')
 	                              .replace('image.', '')
 	                              .replace('.com', '');
@@ -189,5 +152,12 @@ function getImages(queryEn, queryZh) {
 	if (queryZh) {
 		images.query_zh = queryZh;
 	}
-	socket.emit('images', images);
+	console.log('images!', images);
+	//socket.emit('images', images);
+}
+
+function normalizeQuery(query) {
+	var normalized = query.toLowerCase().trim();
+	normalized = normalized.replace(/\s+/g, ' ');
+	return normalized;
 }
