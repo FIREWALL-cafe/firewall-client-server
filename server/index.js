@@ -6,15 +6,21 @@ var fs = require('fs');
 var mime = require('mime');
 var url = require('url');
 var path = require('path');
+var http = require('http');
 var https = require('https');
 var qs = require('querystring');
 var GoogleSpreadsheet = require('google-spreadsheet');
 
-var options = {
-	key: fs.readFileSync(config.sslKey),
-	cert: fs.readFileSync(config.sslCert)
-};
-var app = https.createServer(options, httpRequest);
+if (config.port == 80 ||
+    !config.sslCert) {
+	var app = http.createServer(httpRequest);
+} else {
+	var options = {
+		key: fs.readFileSync(config.sslKey),
+		cert: fs.readFileSync(config.sslCert)
+	};
+	var app = https.createServer(options, httpRequest);
+}
 var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
 
