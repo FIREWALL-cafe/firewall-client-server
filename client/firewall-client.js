@@ -67,7 +67,7 @@ function setupUI() {
 function setupInterval() {
 	setInterval(function() {
 		checkURLQuery();
-	}, 1000);
+	}, 100);
 }
 
 function setupStorageListener() {
@@ -284,7 +284,7 @@ function getImages(timestamp) {
 function submitImages(pending, callback) {
 	var data = pending;
 	data.client = clientId;
-	data.secret = config.serviceKey.private_key_id;
+	data.secret = config.sharedSecret;
 	data.google_images = JSON.stringify(data.google_images);
 	data.baidu_images = JSON.stringify(data.baidu_images);
 	console.log('Submit images:', pending);

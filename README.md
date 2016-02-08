@@ -31,18 +31,6 @@ git pull
 
 Alternatively, if you'd prefer to avoid using `git`, just download and unzip the [latest archive](https://github.com/dphiffer/firewall-cafe/archive/master.zip).
 
-## Client
-
-The client is implemented as a browser extension for Google Chrome.
-
-1. Go to Chrome's __Settings__ pane (under the hamburger menu, or with `cmd-comma`)
-2. Choose the __Extensions__ tab
-3. Enable the __Developer__ checkbox
-4. Click the __Load unpacked extension__ button
-5. Choose the `firewall-cafe/client` folder
-
-Any time you update the code from GitHub, be sure to click the __Reload__ link to update the extension.
-
 ## Server
 
 The translation service is written in [node.js](http://nodejs.org/) and translates search queries from English to Chinese, and from Chinese to English using the [Google Translate API](https://cloud.google.com/translate/docs). These translations are stored in a Google Spreadsheet where the machine-generated translations can be overridden by human translators, and where resulting images from Google's and Baidu's image search can be stored by the client.
@@ -53,10 +41,23 @@ The translation service is written in [node.js](http://nodejs.org/) and translat
 2. Create a Google spreadsheet based on [this template](https://docs.google.com/spreadsheets/d/1bhoMy4bwZyr58a2pnnxYD4JQogOpAgqqMtSUQIZLz_Q/edit?usp=sharing)  
  	* One tab for each language translation (`en to zh-CN`, `zh-CN to en`, `zh-TW to en`), each with the columns `query`, `google` (machine translation), `override` (human translation)
 	* One tab called `images` with columns: `query`, `query_zh`, `source`, `featured` (for integration with the blog), and `images`
-3. Look inside `service-key.json` to find the `client_email` value, then share the Google Spreadsheet with that email address
-4. Copy `config-example.js` to `config.js`, edit `apiKey`, `spreadsheetId`, and set paths to your `sslKey` and `sslCert`
+3. Look inside `server/service-key.json` to find the `client_email` value, then share the Google Spreadsheet with that email address
+4. Copy `server/config-example.js` to `server/config.js`, edit `apiKey`, `spreadsheetId`, and set paths to your `sslKey` and `sslCert`
 
 If you use a Mac, [this article](http://brianflove.com/2014/12/01/self-signed-ssl-certificate-on-mac-yosemite/) might be helpful for generating a self-signed SSL certificate for testing purposes.
+
+## Client
+
+The client is implemented as a browser extension for Google Chrome.
+
+1. Copy `client/config-example.js` to `client/confnig.js`, edit `serverURL` and `sharedSecret`
+2. Go to Chrome's __Settings__ pane (under the hamburger menu, or with `cmd-comma`)
+3. Choose the __Extensions__ tab
+4. Enable the __Developer__ checkbox
+5. Click the __Load unpacked extension__ button
+6. Choose the `firewall-cafe/client` folder
+
+Any time you update the code from GitHub, be sure to click the __Reload__ link to update the extension.
 
 ## Usage
 
@@ -64,10 +65,12 @@ If you're using a port number below 1024, you will need to use `sudo` on the nod
 
 ```
 cd path/to/somewhere/cool/firewall-cafe/server
-sudo node index.js
+node index.js
 ```
 
-Load up https://localhost/ and you should see a mostly blank page. We're almost done!
+*If you're on Ubuntu, you'll want to run this as `nodejs index.js` (also, you may need `sudo` if your port number is under 1024.)*
+
+Load up https://localhost:4430/ and you should see a mostly blank page. We're almost done!
 
 When you load up [Google Image](https://www.google.com/imghp) or [Baidu Image](http://image.baidu.com/) search pages with your browser extension installed, you should see a discreet __Firewall__ link in the footer of the page. For each browser client, assign your desired server URL and the language translation pairs (e.g., `en` to `zh-CN` and `zh-CN` to `en`).
 
