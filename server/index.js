@@ -158,8 +158,8 @@ function getSearchTab(search) {
 function httpRequest(req, res) {
 	var responseHeaders = {
 		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-		"Access-Control-Allow-Headers": "content-type, accept",
+		"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 		"Access-Control-Max-Age": 10,
 		"Content-Type": "application/json"
 	};
