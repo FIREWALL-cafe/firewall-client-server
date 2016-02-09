@@ -170,7 +170,7 @@ function checkURLQuery() {
 
 function detectLanguage(query, callback) {
 	$.ajax({
-		url: serverURL + 'detect-language',
+		url: config.serverURL + 'detect-language',
 		data: {
 			query: query
 		},
