@@ -170,16 +170,14 @@ function checkURLQuery() {
 
 function detectLanguage(query, callback) {
 	$.ajax({
-		url: 'https://www.googleapis.com/language/translate/v2/detect',
+		url: serverURL + 'detect-language',
 		data: {
-			key: config.apiKey,
-			q: query
+			query: query
 		},
 		dataType: 'json'
 	}).done(function(rsp) {
-		if (rsp && rsp.data && rsp.data.detections) {
-			console.log(rsp.data.detections);
-			callback(rsp.data.detections[0][0].language);
+		if (rsp && rsp.language) {
+			callback(rsp.language);
 		} else {
 			console.log('Error detecting language', rsp, this);
 		}
