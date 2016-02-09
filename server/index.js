@@ -167,6 +167,8 @@ function httpRequest(req, res) {
 	if (req.method == 'OPTIONS') {
 		res.writeHead(200, responseHeaders);
 		res.end();
+	} else if (uri == '/detect-language') {
+		handleDetectLanguage(req, res, responseHeaders);
 	} else if (uri == '/translate') {
 		handleTranslate(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
@@ -185,6 +187,27 @@ var getPostData = function(req, callback) {
 	});
 	req.on('end', function () {
 		callback(qs.parse(body));
+	});
+}
+
+function handleDetectLanguage(req, res, headers) {
+	var query = url.parse(req.url).query;
+	var search = qs.parse(query);
+	console.log('Detect language: ' + search.query);
+	detectLanguage(search, function(err, language) {
+		if (err) {
+			res.writeHead(500, headers);
+			res.end(JSON.stringify({
+				ok: 0,
+				error: 'Error translating query.',
+				details: err
+			}));
+		} else {
+			jsonResponse(res, search, headers, {
+				ok: 1,
+				language: language
+			});
+		}
 	});
 }
 
@@ -308,6 +331,36 @@ function handleDashboard(req, res) {
 			res.write(file, "binary");
 			res.end();
 		});
+	});
+}
+
+function detectLanguage(search, callback) {
+	var query = getNormalizedQuery(search);
+	var url = 'https://www.googleapis.com/language/translate/v2/detect' +
+	          '?key=' + config.apiKey +
+	          '&q=' + encodeURIComponent(query);
+	https.get(url, function(res) {
+		var data = '';
+		res.setEncoding('utf8');
+		res.on('data', function (chunk) {
+			data += chunk;
+		});
+		res.on('end', function() {
+			var response = JSON.parse(data);
+			if (response &&
+			    response.data &&
+			    response.data.detections) {
+				var language = response.data.detections[0][0].language;
+				callback(null, language);
+			} else if (response &&
+			           response.error) {
+				callback(new Error('[' + response.error.code + '] ' + response.error.message));
+			} else {
+				callback(new Error('Something went wrong loading from Google Translate.'));
+			}
+		});
+	}).on('error', function(err) {
+		callback(err);
 	});
 }
 
