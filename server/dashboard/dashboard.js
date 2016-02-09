@@ -5,7 +5,7 @@ socket.on('translation', function(response) {
 	            response.langTo + '): ' + response.result);
 });
 
-$.get('/index.json', function(index) {
+$.get('/images', function(index) {
 	if (index.ok && index.images) {
 		console.log(index.images);
 		$.each(index.images, function(i, imageSet) {

@@ -158,7 +158,7 @@ function getSearchTab(search) {
 function httpRequest(req, res) {
 	var responseHeaders = {
 		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 		"Access-Control-Allow-Headers": "content-type, accept",
 		"Access-Control-Max-Age": 10,
 		"Content-Type": "application/json"
@@ -171,7 +171,7 @@ function httpRequest(req, res) {
 		handleTranslate(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
 		handleImages(req, res, responseHeaders);
-	} else if (uri == '/index.json') {
+	} else if (uri == '/images') {
 		handleIndex(req, res, responseHeaders);
 	} else {
 		handleDashboard(req, res);
@@ -204,14 +204,13 @@ function handleTranslate(req, res, headers) {
 					console.log('Found ' + translation.source + ' translation ' +
 					            '(' + search.langFrom + ' to ' + search.langTo + ') ' +
 					            'for “' + translation.query + '”: ' + translation.value);
-					res.writeHead(200, headers);
-					res.end(JSON.stringify({
+					jsonResponse(res, search, headers, {
 						ok: 1,
 						query: search.query,
 						langFrom: search.langFrom,
 						langTo: search.langTo,
 						translated: translation.value
-					}));
+					});
 				}
 			});
 		}
@@ -260,10 +259,12 @@ function handleIndex(req, res, headers) {
 			res.writeHead(500, headers);
 			output.ok = 0;
 			output.error = err.getMessage();
+			res.end(JSON.stringify(output));
 		} else {
-			res.writeHead(200, headers);
+			var query = url.parse(req.url).query;
+			var data = qs.parse(query);
+			var images = [];
 			output.ok = 1;
-			var images = []
 			_.each(rows, function(row) {
 				images.push({
 					timestamp: parseInt(row.timestamp),
@@ -275,8 +276,9 @@ function handleIndex(req, res, headers) {
 				});
 			});
 			output.images = images;
+			jsonResponse(res, data, headers, output);
 		}
-		res.end(JSON.stringify(output));
+		
 	});
 }
 
@@ -346,6 +348,16 @@ function googleTranslate(search, callback) {
 	}).on('error', function(err) {
 		callback(err);
 	});
+}
+
+function jsonResponse(res, data, headers, json) {
+	var response = JSON.stringify(json);
+	if (data.callback) {
+		headers['Content-Type'] = 'text/javascript';
+		response = data.callback + '(' + response + ');';
+	}
+	res.writeHead(200, headers);
+	res.end(response);
 }
 
 function validateSharedSecret(secret, res, headers) {
