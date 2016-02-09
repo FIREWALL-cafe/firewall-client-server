@@ -31,26 +31,6 @@ console.log('Starting translation server on port ' + config.port);
 app.listen(config.port);
 spreadsheet.useServiceAccountAuth(spreadsheetServiceKey, loadSpreadsheet);
 
-io.on('connection', function(socket) {
-	socket.on('search', function(search) {
-		getTranslation(search, function(err, translation) {
-			if (err) {
-				console.log(err);
-			} else {
-				console.log('Found ' + translation.source + ' translation ' +
-				            '(' + search.langFrom + ' to ' + search.langTo + ') ' +
-				            'for “' + translation.query + '”: ' + translation.value);
-				io.emit('translation', {
-					query: search.query,
-					langFrom: search.langFrom,
-					langTo: search.langTo,
-					result: translation.value
-				});
-			}
-		});
-  });
-});
-
 function loadSpreadsheet(err) {
 	if (err) {
 		console.log(err);
@@ -105,7 +85,7 @@ function getTranslation(search, callback) {
 		} else if (translations.google) {
 			callback(null, {
 				query: search.query,
-				source: 'cached Google',
+				source: 'cached',
 				value: translations.google
 			});
 			return true;
@@ -118,7 +98,7 @@ function getTranslation(search, callback) {
 			setTranslation(search, translation);
 			callback(null, {
 				query: search.query,
-				source: 'Google API',
+				source: 'google',
 				value: translation
 			});
 		}
@@ -187,6 +167,8 @@ function httpRequest(req, res) {
 	if (req.method == 'OPTIONS') {
 		res.writeHead(200, responseHeaders);
 		res.end();
+	} else if (uri == '/translate') {
+		handleTranslate(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
 		handleImages(req, res, responseHeaders);
 	} else if (uri == '/index.json') {
@@ -206,16 +188,40 @@ var getPostData = function(req, callback) {
 	});
 }
 
+function handleTranslate(req, res, headers) {
+	getPostData(req, function(search) {
+		console.log('Translate: ' + search.query + ' from ' + search.langFrom + ' to ' + search.langTo);
+		if (validateSharedSecret(search.secret, res, headers)) {
+			getTranslation(search, function(err, translation) {
+				if (err) {
+					res.writeHead(500, headers);
+					res.end(JSON.stringify({
+						ok: 0,
+						error: 'Error translating query.',
+						details: err
+					}));
+				} else {
+					console.log('Found ' + translation.source + ' translation ' +
+					            '(' + search.langFrom + ' to ' + search.langTo + ') ' +
+					            'for “' + translation.query + '”: ' + translation.value);
+					res.writeHead(200, headers);
+					res.end(JSON.stringify({
+						ok: 1,
+						query: search.query,
+						langFrom: search.langFrom,
+						langTo: search.langTo,
+						translated: translation.value
+					}));
+				}
+			});
+		}
+	});
+}
+
 function handleImages(req, res, headers) {
 	getPostData(req, function(data) {
-		console.log('Received images submission: ' + data.google_query);
-		if (spreadsheetServiceKey.private_key_id != data.secret) {
-			res.writeHead(401, headers);
-			res.end(JSON.stringify({
-				ok: 0,
-				error: 'Shared secret did not match.'
-			}));
-		} else {
+		console.log('Images: ' + data.google_query);
+		if (validateSharedSecret(data.secret, res, headers)) {
 			var images = {
 				timestamp: data.timestamp,
 				client: data.client,
@@ -229,7 +235,8 @@ function handleImages(req, res, headers) {
 					res.writeHead(500, headers);
 					res.end(JSON.stringify({
 						ok: 0,
-						error: 'Error adding record to spreadsheet.'
+						error: 'Error adding record to spreadsheet.',
+						details: err
 					}));
 				} else {
 					images.timestamp = parseInt(images.timestamp);
@@ -340,3 +347,15 @@ function googleTranslate(search, callback) {
 		callback(err);
 	});
 }
+
+function validateSharedSecret(secret, res, headers) {
+	if (secret != spreadsheetServiceKey.private_key_id) {
+		res.writeHead(401, headers);
+		res.end(JSON.stringify({
+			ok: 0,
+			error: 'Shared secret did not match.'
+		}));
+		return false;
+	}
+	return true;
+} 

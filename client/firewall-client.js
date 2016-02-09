@@ -28,6 +28,7 @@ storage.get(['clientId', 'pendingQueries', 'pendingImages'], function(stored) {
 	
 	console.log('Firewall Cafe ' + clientId +
 	            ' (' + pendingQueries.length + ' pending queries)');
+	console.log('Server: ' + config.serverURL);
 	
 	setupUI();
 	setupStorageListener();
@@ -208,19 +209,18 @@ function searchPendingQuery(pending) {
 
 function translatePendingQuery(pending, callback) {
 	$.ajax({
-		url: 'https://www.googleapis.com/language/translate/v2',
+		url: config.serverURL + 'translate',
+		method: 'POST',
 		data: {
-			key: config.apiKey,
-			q: pending.query,
-			source: pending.langFrom,
-			target: pending.langTo
+			secret: config.sharedSecret,
+			query: pending.query,
+			langFrom: pending.langFrom,
+			langTo: pending.langTo
 		},
 		dataType: 'json'
 	}).done(function(rsp) {
-		if (rsp && rsp.data && rsp.data.translations) {
-			console.log(rsp.data.translations);
-			var translated = rsp.data.translations[0].translatedText;
-			callback(translated);
+		if (rsp && rsp.translated) {
+			callback(rsp.translated);
 		} else {
 			console.log('Error translating query', rsp, this);
 		}

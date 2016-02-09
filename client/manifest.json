@@ -11,7 +11,9 @@
 	"permissions": [
 		"activeTab",
 		"storage",
-		"https://www.googleapis.com/*"
+		"https://www.googleapis.com/*",
+		"https://localhost:4430/*",
+		"https://fwc.phiffer.org/*"
 	],
 	"content_scripts": [{
 		"matches": ["https://www.google.com/*", "http://image.baidu.com/*"],
