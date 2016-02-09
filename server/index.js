@@ -289,14 +289,24 @@ function handleIndex(req, res, headers) {
 			var images = [];
 			output.ok = 1;
 			_.each(rows, function(row) {
-				images.push({
-					timestamp: parseInt(row.timestamp),
-					client: row.client,
-					google_query: row.googlequery,
-					baidu_query: row.baiduquery,
-					google_images: JSON.parse(row.googleimages),
-					baidu_images: JSON.parse(row.baiduimages)
-				});
+				try {
+					var google_images = JSON.parse(row.googleimages);
+					var baidu_images = JSON.parse(row.baiduimages);
+				} catch (e) {
+					if (row.googlequery) {
+						console.log('Error parsing row ' + row.googlequery);
+					}
+				}
+				if (google_images && baidu_images) {
+					images.push({
+						timestamp: parseInt(row.timestamp),
+						client: row.client,
+						google_query: row.googlequery,
+						baidu_query: row.baiduquery,
+						google_images: google_images,
+						baidu_images: baidu_images
+					});
+				}
 			});
 			output.images = images;
 			jsonResponse(res, data, headers, output);
