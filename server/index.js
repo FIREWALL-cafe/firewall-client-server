@@ -261,14 +261,23 @@ function handleImages(req, res, headers) {
 						details: err
 					}));
 				} else {
-					images.timestamp = parseInt(images.timestamp);
-					images.google_images = JSON.parse(images.google_images);
-					images.baidu_images = JSON.parse(images.baidu_images);
-					io.emit('images-received', images);
-					res.writeHead(200, headers);
-					res.end(JSON.stringify({
-						ok: 1
-					}));
+					try {
+						images.timestamp = parseInt(images.timestamp);
+						images.google_images = JSON.parse(images.google_images);
+						images.baidu_images = JSON.parse(images.baidu_images);
+						io.emit('images-received', images);
+						res.writeHead(200, headers);
+						res.end(JSON.stringify({
+							ok: 1
+						}));
+					} catch(e) {
+						res.writeHead(500, headers);
+						res.end(JSON.stringify({
+							ok: 0,
+							error: 'Error adding record to spreadsheet.',
+							details: e
+						}));
+					}
 				}
 			});
 		}
@@ -304,7 +313,8 @@ function handleIndex(req, res, headers) {
 						google_query: row.googlequery,
 						baidu_query: row.baiduquery,
 						google_images: google_images,
-						baidu_images: baidu_images
+						baidu_images: baidu_images,
+						remove: row.remove
 					});
 				}
 			});
