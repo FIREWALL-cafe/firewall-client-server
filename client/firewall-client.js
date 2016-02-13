@@ -2,13 +2,13 @@
 var storage = chrome.storage.local;
 var clientId = 'Client ' + (100 + Math.floor(Math.random() * 900));
 var pendingQueries = [];
-var pendingImages = {};
 
 var query = null;
 var ignoreSubmit = false;
+var ignorePending = false;
 var getImagesTimeout = null;
 
-storage.get(['clientId', 'pendingQueries', 'pendingImages'], function(stored) {
+storage.get(['clientId', 'pendingQueries'], function(stored) {
 	
 	if (stored.clientId) {
 		clientId = stored.clientId;
@@ -22,10 +22,6 @@ storage.get(['clientId', 'pendingQueries', 'pendingImages'], function(stored) {
 		pendingQueries = stored.pendingQueries;
 	}
 	
-	if (stored.pendingImages) {
-		pendingImages = stored.pendingImages;
-	}
-	
 	console.log('Firewall Cafe ' + clientId +
 	            ' (' + pendingQueries.length + ' pending queries)');
 	console.log('Server: ' + config.serverURL);
@@ -33,7 +29,6 @@ storage.get(['clientId', 'pendingQueries', 'pendingImages'], function(stored) {
 	setupUI();
 	setupStorageListener();
 	checkPendingQueries();
-	checkPendingTimestamp();
 	setupInterval();
 });
 
@@ -44,6 +39,7 @@ function setupUI() {
 			'<form action="." id="firewall-form">' +
 				'<label>Client ID: <input name="client-id" id="client-id" value="' + clientId + '"></label>' +
 				'<input type="submit" value="Save">' +
+				'<input type="button" id="firewall-reset" value="Reset pending">' +
 			'</form>' +
 		'</div>'
 	);
@@ -52,11 +48,22 @@ function setupUI() {
 		e.preventDefault();
 		$('#firewall-form').toggleClass('visible');
 	});
+	
+	$('#firewall-reset').click(function(e) {
+		e.preventDefault();
+		pendingQueries = [];
+		storage.set({
+			pendingQueries: pendingQueries
+		}, function() {
+			console.log('Pending queries reset');
+		});
+		$('#firewall-form').toggleClass('visible');
+	});
 
 	$('#firewall-form').submit(function(e) {
 		e.preventDefault();
 		clientId = $('#client-id').val();
-		chrome.storage.local.set({
+		storage.set({
 			clientId: clientId
 		}, function() {
 			console.log('Firewall client: ' + clientId);
@@ -80,39 +87,41 @@ function setupStorageListener() {
 			 pendingQueries = changes.pendingQueries.newValue;
 			 checkPendingQueries();
 		 }
-		 if (changes.pendingImages) {
-			 pendingImages = changes.pendingImages.newValue;
-		 }
 	 }); 
 }
 
 function checkPendingQueries() {
-	console.log('Checking for pending queries');
-	if (pendingQueries.length > 0) {
-		if (pendingQueries[0].source != getSource()) {
-			console.log('Found a pending query');
-			var pendingQuery = pendingQueries.shift();
-			chrome.storage.local.set({
-				pendingQueries: pendingQueries
-			}, function() {
-				searchPendingQuery(pendingQuery);
-			});
-		} else {
-			console.log('Found a query for someone else');
+	if (ignorePending) {
+		return;
+	}
+	var pendingQuery;
+	var queryMatch = getQueryMatch();
+	var currTime = (new Date()).getTime();
+	var expired = [];
+	for (var i = 0; i < pendingQueries.length; i++) {
+		pendingQuery = pendingQueries[i];
+		if (pendingQuery.translated == queryMatch) {
+			break;
+		} else if (currTime - pendingQuery.timestamp > 60 * 1000) {
+			// Pending queries expire after 1 min
+			expired.push(i);
+		} else if (pendingQuery.source != getSource()) {
+			console.log('Found a pending query: ' + pendingQuery.query);
+			ignorePending = true;
+			searchPendingQuery(i);
+			break;
 		}
 	}
-}
-
-function checkPendingTimestamp() {
-	var queryMatch = location.search.match(/__ts=(\d+)/);
-	if (queryMatch) {
-		ignoreSubmit = true;
-		var timestamp = parseInt(queryMatch[1]);
-		query = getQueryMatch();
-		if (!query) {
-			console.log('Could not determine query from URL.')
+	if (expired.length > 0) {
+		for (var i = expired.length - 1; i > -1; i--) {
+			console.log('Removing expired query ' + pendingQueries[i].query);
+			var removed = pendingQueries.splice(i, 1);
 		}
-		getImages(timestamp);
+		storage.set({
+			pendingQueries: pendingQueries
+		}, function() {
+			console.log('Done pruning expired queries');
+		});
 	}
 }
 
@@ -129,107 +138,104 @@ function checkURLQuery() {
 	}
 
 	if (queryMatch != query) {
-		var timestamp = (new Date().getTime());
+		
 		query = queryMatch;
-		console.log('Search for ' + query + ' at ' + timestamp);
-
 		if (!query) {
 			return;
 		}
 
-		if (getImagesTimeout) {
-			clearTimeout(getImagesTimeout);
-			getImagesTimeout = null;
+		var timestamp = (new Date().getTime());
+		console.log('Detected a search: ' + query);
+
+		var index = lookupPending(query);
+		if (index == -2) {
+			console.log('Query is already pending');
+			return;
+		} else if (index > -1) {
+			console.log('Pending translation: ' + pendingQueries[index].translated);
+			ignorePending = true;
+			startGettingImages(index);
+		} else {
+			startQuery(query, function(result) {
+				console.log('Translated the query: ' + result.translated);
+				var pending = $.extend(result, {
+					timestamp: timestamp,
+					source: getSource(),
+					googleImages: null,
+					baiduImages: null
+				});
+				pendingQueries.push(pending);
+				var index = pendingQueries.length - 1;
+				storage.set({
+					pendingQueries: pendingQueries
+				}, function() {
+					console.log('Saved pending index: ' + index);
+				});
+				startGettingImages(index);
+			});
 		}
-		setTimeout(function() {
-			getImages(timestamp);
-		}, 1000);
-
-		detectLanguage(query, function(langFrom) {
-			if (langFrom == 'en') {
-				var langTo = 'zh-CN';
-			} else {
-				var langTo = 'en';
-			}
-
-			pendingQueries.push({
-				timestamp: timestamp,
-				source: getSource(),
-				query: query,
-				langFrom: langFrom,
-				langTo: langTo
-			});
-			storage.set({
-				pendingQueries: pendingQueries
-			}, function() {
-				console.log('Saved pending query from ' + getSource());
-			});
-		});
 	}
 }
 
-function detectLanguage(query, callback) {
+function startQuery(query, callback) {
+	console.log('Starting query for ' + query);
+	var data = {
+		query: query,
+		secret: config.sharedSecret
+	};
 	$.ajax({
-		url: config.serverURL + 'detect-language',
-		data: {
-			query: query
-		},
-		dataType: 'json'
-	}).done(function(rsp) {
-		if (rsp && rsp.language) {
-			callback(rsp.language);
-		} else {
-			console.log('Error detecting language', rsp, this);
-		}
-	});
-}
-
-function searchPendingQuery(pending) {
-	console.log('Searching for a pending query ' + pending.query);
-	translatePendingQuery(pending, function(translation) {
-		console.log('Found translation: ' + translation);
-		if (getSource() == 'google') {
-			var inputQuery = 'input[name=q]';
-		} else if (getSource() == 'baidu') {
-			var inputQuery = 'input[name=word]';
-		}
-		if ($(inputQuery).length == 0 ||
-		    $(inputQuery).first().closest('form').length == 0) {
-			return;
-		}
-		ignoreSubmit = true;
-		$(inputQuery).first().val(translation);
-		var $form = $(inputQuery).first().closest('form');
-		$form.append('<input type="hidden" name="__ts" value="' + pending.timestamp + '">');
-		$form.submit();
-	});
-}
-
-function translatePendingQuery(pending, callback) {
-	$.ajax({
-		url: config.serverURL + 'translate',
+		url: config.serverURL + 'query',
 		method: 'POST',
-		data: {
-			secret: config.sharedSecret,
-			query: pending.query,
-			langFrom: pending.langFrom,
-			langTo: pending.langTo
-		},
-		dataType: 'json'
-	}).done(function(rsp) {
-		if (rsp && rsp.translated) {
-			callback(rsp.translated);
-		} else {
-			console.log('Error translating query', rsp, this);
-		}
-	});
+		data: data
+	}).done(function(result) {
+		callback(result);
+	});;
 }
 
-function getImages(timestamp) {
-	console.log('Gathering images for ' + timestamp);
+function startGettingImages(index) {
+	if (getImagesTimeout) {
+		clearTimeout(getImagesTimeout);
+		getImagesTimeout = null;
+	}
+	setTimeout(function() {
+		getImages(index);
+	}, 2000);
+}
+
+function lookupPending(query) {
+	for (var i = 0; i < pendingQueries.length; i++) {
+		if (pendingQueries[i].translated == query) {
+			return i;
+		} else if (pendingQueries[i].query == query) {
+			return -2;
+		}
+	}
+	return -1;
+}
+
+function searchPendingQuery(index) {
+	var pending = pendingQueries[index];
+	console.log('Searching for translated: ' + pending.translated);
+	var inputQuery = 'input[name=q], input[name=word]';
+	if ($(inputQuery).length == 0 ||
+	    $(inputQuery).first().closest('form').length == 0) {
+		console.log('Could not find form input, giving up.');
+		ignorePending = false;
+		return;
+	}
+	$(inputQuery).first().val(pending.translated);
+	var $form = $(inputQuery).first().closest('form');
+	ignoreSubmit = true;
+	$form.submit();
+}
+
+function getImages(index) {
+	var pending = pendingQueries[index];
+	console.log('Gathering images: ' + pending.query);
 	var images = [];
 	$('.imglist img').each(function(i, img) {
-		if (images.length < 10) {
+		if (images.length < 20 &&
+		    images.indexOf(src) == -1) {
 			images.push(img.src);
 		}
 	});
@@ -237,55 +243,60 @@ function getImages(timestamp) {
 		var href = $(link).attr('href');
 		var src = href.match(/imgurl=([^&]+)/);
 		if (src) {
-			if (images.length < 10) {
+			if (images.length < 20 &&
+			    images.indexOf(src[1]) == -1) {
 				images.push(src[1]);
 			}
 		}
 	});
+	
 	if (images.length == 0) {
-		console.log('No images found, waiting...');
-		if (getImagesTimeout) {
-			clearTimeout(getImagesTimeout);
-		}
-		getImagesTimeout = setTimeout(function() {
-			getImages(timestamp);
-		}, 1000);
+		console.log('Waiting for images');
+		startGettingImages();
 		return;
 	}
 	
-	var source = getSource();
-	var imagesKey = source + '_images';
-	var queryKey = source + '_query';
-	if (pendingImages[timestamp]) {
-		var pending = pendingImages[timestamp];
-		pending[imagesKey] = images;
-		pending[queryKey] = query;
+	console.log('Found ' + images.length + ' images');
+	var imagesKey = getSource() + 'Images';
+	pending[imagesKey] = images;
+	
+	if (pending.googleImages &&
+	    pending.baiduImages) {
 		submitImages(pending, function() {
-			pendingImages[timestamp] = null;
+			console.log('Removing pending query');
+			pendingQueries.splice(index, 1);
 			storage.set({
-				pendingimages: pendingImages
+				pendingQueries: pendingQueries
+			}, function() {
+				ignorePending = false;
 			});
 		});
 	} else {
-		var pending = {
-			timestamp: timestamp
-		};
-		pending[imagesKey] = images;
-		pending[queryKey] = query;
-		pendingImages[timestamp] = pending;
+		pendingQueries[index] = pending;
 		storage.set({
-			pendingImages: pendingImages
+			pendingQueries: pendingQueries
+		}, function() {
+			ignorePending = false;
 		});
 	}
 }
 
 function submitImages(pending, callback) {
-	var data = pending;
-	data.client = clientId;
-	data.secret = config.sharedSecret;
-	data.google_images = JSON.stringify(data.google_images);
-	data.baidu_images = JSON.stringify(data.baidu_images);
-	console.log('Submit images:', pending);
+	var data = {
+		timestamp: pending.timestamp,
+		client: clientId,
+		secret: config.sharedSecret,
+		google_images: JSON.stringify(pending.googleImages),
+		baidu_images: JSON.stringify(pending.baiduImages)
+	};
+	if (pending.source == 'google') {
+		data.google_query = pending.query;
+		data.baidu_query = pending.translated;
+	} else {
+		data.google_query = pending.translated;
+		data.baidu_query = pending.query;
+	}
+	console.log('Submitting images', data);
 	$.ajax({
 		url: config.serverURL + 'submit-images',
 		method: 'POST',
@@ -304,14 +315,13 @@ function getQueryMatch() {
 	if (!queryMatch) {
 		return null;
 	}
-	queryMatch = decodeURIComponent(queryMatch[2]).replace(/\++/g, ' ');
+	queryMatch = decodeURIComponent(queryMatch[2]).replace(/\+/g, ' ');
 	queryMatch = normalizeQuery(queryMatch);
 	return queryMatch;
 }
 
 function normalizeQuery(query) {
 	var normalized = query.toLowerCase().trim();
-	normalized = normalized.replace(/\s+/g, ' ');
 	return normalized;
 }
 

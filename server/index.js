@@ -71,7 +71,7 @@ function loadWorksheet(worksheet) {
 function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = getSearchTab(search);
-	console.log('Translate “' + query + '” (' + tab + ')');
+	//console.log('Translate “' + query + '” (' + tab + ')');
 	if (doc[tab] &&
 	    doc[tab].lookup[query]) {
 		var translations = doc[tab].lookup[query];
@@ -171,6 +171,8 @@ function httpRequest(req, res) {
 		handleDetectLanguage(req, res, responseHeaders);
 	} else if (uri == '/translate') {
 		handleTranslate(req, res, responseHeaders);
+	} else if (uri == '/query') {
+		handleQuery(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
 		handleImages(req, res, responseHeaders);
 	} else if (uri == '/images') {
@@ -199,7 +201,7 @@ function handleDetectLanguage(req, res, headers) {
 			res.writeHead(500, headers);
 			res.end(JSON.stringify({
 				ok: 0,
-				error: 'Error translating query.',
+				error: 'Error detecting language.',
 				details: err
 			}));
 		} else {
@@ -240,9 +242,59 @@ function handleTranslate(req, res, headers) {
 	});
 }
 
+function handleQuery(req, res, headers) {
+	getPostData(req, function(data) {
+		console.log('Query: ' + data.query);
+		if (validateSharedSecret(data.secret, res, headers)) {
+			detectLanguage(data, function(err, language) {
+				if (err) {
+					res.writeHead(500, headers);
+					res.end(JSON.stringify({
+						ok: 0,
+						error: 'Error detecting language.',
+						details: err
+					}));
+				} else {
+					var translationSearch = {
+						query: data.query,
+						langFrom: language
+					};
+					if (language == 'en') {
+						translationSearch.langTo = 'zh-CN';
+					} else {
+						translationSearch.langTo = 'en';
+					}
+					
+					getTranslation(translationSearch, function(err, translation) {
+						if (err) {
+							res.writeHead(500, headers);
+							res.end(JSON.stringify({
+								ok: 0,
+								error: 'Error translating query.',
+								details: err
+							}));
+						} else {
+							console.log('Found ' + translation.source + ' translation ' +
+							            '(' + translationSearch.langFrom + ' to ' + translationSearch.langTo + ') ' +
+							            'for “' + translation.query + '”: ' + translation.value);
+							jsonResponse(res, data, headers, {
+								ok: 1,
+								query: translationSearch.query,
+								langFrom: translationSearch.langFrom,
+								langTo: translationSearch.langTo,
+								translated: translation.value
+							});
+						}
+					});
+				}
+			});
+		}
+	});
+}
+
 function handleImages(req, res, headers) {
 	getPostData(req, function(data) {
-		console.log('Images: ' + data.google_query);
+		console.log('Images: ' + data.query);
 		if (validateSharedSecret(data.secret, res, headers)) {
 			var images = {
 				timestamp: data.timestamp,
