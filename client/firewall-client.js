@@ -235,7 +235,7 @@ function getImages(index) {
 	var images = [];
 	$('.imglist img').each(function(i, img) {
 		if (images.length < 20 &&
-		    images.indexOf(src) == -1) {
+		    images.indexOf(img.src) == -1) {
 			images.push(img.src);
 		}
 	});
@@ -252,7 +252,7 @@ function getImages(index) {
 	
 	if (images.length == 0) {
 		console.log('Waiting for images');
-		startGettingImages();
+		startGettingImages(index);
 		return;
 	}
 	
