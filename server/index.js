@@ -60,7 +60,7 @@ function loadWorksheet(worksheet) {
 			console.log(err);
 		} else {
 			_.each(rows, function(row) {
-				var query = rows.query;
+				var query = getNormalizedQuery(row);
 				tabLookup[query] = row;
 			});
 			console.log('Loaded ' + rows.length + ' records from ' + tab);
@@ -71,9 +71,18 @@ function loadWorksheet(worksheet) {
 function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = getSearchTab(search);
-	//console.log('Translate “' + query + '” (' + tab + ')');
-	if (doc[tab] &&
-	    doc[tab].lookup[query]) {
+	console.log('Translate “' + query + '” (' + tab + ')');
+	
+	if (doc.sensitive.lookup[query]) {
+		var sensitive = doc.sensitive.lookup[query];
+		callback(null, {
+			query: search.query,
+			source: 'sensitive',
+			value: sensitive.translated
+		});
+		return true;
+	} else if (doc[tab] &&
+	           doc[tab].lookup[query]) {
 		var translations = doc[tab].lookup[query];
 		if (translations.override) {
 			callback(null, {
@@ -144,9 +153,13 @@ function saveTranslation(search, translation) {
 }
 
 function getNormalizedQuery(search) {
-	var normalized = search.query.toLowerCase().trim();
-	normalized = normalized.replace(/\s+/g, ' ');
-	return normalized;
+	if (search && search.query) {
+		var normalized = search.query.toLowerCase().trim();
+		normalized = normalized.replace(/\s+/g, ' ');
+		return normalized;
+	} else {
+		return '';
+	}
 }
 
 function getSearchTab(search) {
@@ -205,6 +218,11 @@ function handleDetectLanguage(req, res, headers) {
 				details: err
 			}));
 		} else {
+			if (language != 'zh-CN' &&
+			    language != 'zh-TW' &&
+			    language != 'en') {
+				language = 'en';
+			}
 			jsonResponse(res, search, headers, {
 				ok: 1,
 				language: language
@@ -294,7 +312,7 @@ function handleQuery(req, res, headers) {
 
 function handleImages(req, res, headers) {
 	getPostData(req, function(data) {
-		console.log('Images: ' + data.query);
+		console.log('Images: ' + data.google_query);
 		if (validateSharedSecret(data.secret, res, headers)) {
 			var images = {
 				timestamp: data.timestamp,

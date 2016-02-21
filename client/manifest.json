@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Firewall Cafe",
 	"description": "Client software that synchronizes and translates search queries between Google/Baidu",
-	"version": "0.8",
+	"version": "0.9",
 	"icons": {
 		"16": "icons/firewall-16.png",
 		"48": "icons/firewall-48.png",
@@ -16,8 +16,20 @@
 		"https://fwc.phiffer.org/*"
 	],
 	"content_scripts": [{
-		"matches": ["https://www.google.com/*", "http://image.baidu.com/*"],
-		"css": ["firewall-client.css"],
-		"js": ["jquery-2.2.0.min.js", "config.js", "firewall-client.js"]
+		"matches": [
+			"https://www.google.com/*",
+			"http://image.baidu.com/*"
+		],
+		"css": [
+			"jquery-ui/jquery-ui.css",
+			"firewall-client.css"
+		],
+		"js": [
+			"jquery-2.2.0.min.js",
+			"jquery-ui/jquery-ui.js",
+			"config.js",
+			"sensitive.js",
+			"firewall-client.js"
+		]
 	}]
 }
