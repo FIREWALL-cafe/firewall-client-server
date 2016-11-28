@@ -212,7 +212,9 @@ function startQuery(query, callback) {
 		data: data
 	}).done(function(result) {
 		callback(result);
-	});;
+	}).fail(function(xhr, textStatus) {
+		console.log('Failed query: ' + textStatus + ' / ' + xhr.responseText);
+	});
 }
 
 function startGettingImages() {
@@ -266,6 +268,9 @@ function getImages() {
 	});
 	$('#rg .rg_l').each(function(i, link) {
 		var href = $(link).attr('href');
+		if (!href) {
+			return;
+		}
 		var src = href.match(/imgurl=([^&]+)/);
 		if (src) {
 			if (images.length < 20 &&
@@ -296,9 +301,11 @@ function getImages() {
 }
 
 function checkPendingImages() {
+	console.log('Checking pending images...');
 	if (pendingQuery &&
 	    pendingQuery.googleImages &&
 	    pendingQuery.baiduImages) {
+		console.log('Looks like we have everything');
 		// If we have both sets of images, submit them ... annnd we're done
 		submitImages(function() {
 			console.log('Removing pending query');
@@ -311,6 +318,8 @@ function checkPendingImages() {
 		});
 		return true;
 	}
+	console.log('Still waiting');
+	console.log(pendingQuery);
 	return false;
 }
 
@@ -329,13 +338,28 @@ function submitImages(callback) {
 		data.google_query = pendingQuery.translated;
 		data.baidu_query = pendingQuery.query;
 	}
-	console.log('Submitting images');
+	console.log('Submitting images to translation server');
 	$.ajax({
 		url: config.serverURL + 'submit-images',
 		method: 'POST',
 		data: data
 	}).done(function() {
+		console.log('Done submitting images to translation server');
 		callback();
+	}).fail(function(xhr, textStatus) {
+		console.log('Failed submitting images to translation server: ' + textStatus + ' / ' + xhr.responseText);
+	});
+
+	console.log('Submitting images to library');
+	$.ajax({
+		url: config.libraryURL,
+		method: 'POST',
+		data: data
+	}).done(function() {
+		console.log('Done submitting images to library');
+		callback();
+	}).fail(function(xhr, textStatus) {
+		console.log('Failed submitting images to library: ' + textStatus + ' / ' + xhr.responseText);
 	});
 }
 

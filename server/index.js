@@ -217,6 +217,7 @@ function handleDetectLanguage(req, res, headers) {
 				error: 'Error detecting language.',
 				details: err
 			}));
+			console.log(err);
 		} else {
 			if (language != 'zh-CN' &&
 			    language != 'zh-TW' &&
@@ -360,7 +361,7 @@ function handleIndex(req, res, headers) {
 		if (err) {
 			res.writeHead(500, headers);
 			output.ok = 0;
-			output.error = err.getMessage();
+			output.error = 'Error getting rows: ' + err;
 			res.end(JSON.stringify(output));
 		} else {
 			var query = url.parse(req.url).query;
@@ -450,6 +451,8 @@ function detectLanguage(search, callback) {
 			}
 		});
 	}).on('error', function(err) {
+		console.log('Error detecting language.');
+		console.log(err);
 		callback(err);
 	});
 }
