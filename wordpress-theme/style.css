@@ -1,0 +1,358 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+	font: 16px/24px "Source Sans Pro", sans-serif;
+}
+
+a {
+	color: #E60011;
+	text-decoration: none;
+	transition: all 0.25s ease-out;
+	border-bottom: 1px solid transparent;
+}
+
+a:hover {
+	border-color: #E60011;
+}
+
+b, strong {
+	font-weight: bold;
+}
+
+i, em {
+	font-style: italic;
+}
+
+.container {
+	position: relative;
+	padding: 15px;
+}
+
+header::after {
+	clear: both;
+	content: "";
+	display: table;
+}
+
+header h1 {
+	float: left;
+}
+
+header h1 img {
+	width: 150px;
+	height: auto;
+}
+
+header h1 a:hover {
+	border-color: transparent;
+}
+
+header .menu-header-menu-container {
+	float: left;
+	padding-left: 30px;
+	padding-top: 15px;
+}
+
+header .menu-header-menu-container li {
+	margin-bottom: 7px;
+}
+
+header .menu a {
+	text-transform: uppercase;
+}
+
+header .menu .current-menu-item a {
+	border-color: #E60011;
+}
+
+header .details {
+	clear: both;
+	padding: 15px 0;
+}
+
+img {
+	vertical-align: top;
+}
+
+h2 {
+	font-size: 36px;
+	font-weight: lighter;
+	margin-bottom: 24px;
+}
+
+h3 {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 7px;
+}
+
+section {
+	padding: 15px 0;
+	border-top: 1px solid #dedede;
+}
+
+p {
+	margin-bottom: 15px;
+}
+
+.artist img {
+	border: 1px solid #000;
+	transition: all 0.25s ease-out;
+	margin-bottom: 5px;
+}
+
+.artist a:hover img {
+	border-color: #E60011;
+}
+
+.item {
+	margin-top: 30px;
+}
+
+.item:first-child {
+	margin-top: 0;
+}
+
+img.logo {
+	width: 180px;
+	vertical-align: middle;
+	margin: 15px;
+}
+
+label {
+	color: #E60011;
+}
+
+input, textarea {
+	display: block;
+	font: 14px "Source Sans Pro", sans-serif;
+	margin: 5px 0 15px 0;
+	padding: 5px;
+	background: #f2f2f2;
+	border: 1px solid #ccc;
+	width: 100%;
+	transition: all 0.25s ease-out;
+}
+
+input:focus, textarea:focus {
+	border-color: #E60011;
+	background: #fff;
+}
+
+button {
+	font: bold 14px "Source Sans Pro", sans-serif;
+	color: #E60011;
+	background: #ccc;
+	border: none;
+	padding: 7px;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: all 0.25s ease-out;
+	background: #E60011;
+	color: #fff;
+}
+
+.feedback {
+	background: #e6b9bc;
+	padding: 10px;
+	border: 1px solid #bf000d;
+	margin-bottom: 15px;
+}
+
+.feedback--ok {
+	border-color: #00bf39;
+	background: #b8e5c5;
+}
+
+.right-sidebar {
+	float: right;
+	width: 225px;
+}
+
+.right-sidebar img {
+	width: 100%;
+	height: auto;
+	margin-bottom: 15px;
+}
+
+.columns::after {
+	content: "";
+	clear: both;
+	display: table;
+}
+
+.post-content {
+	width: 100%;
+	overflow: auto;
+}
+
+.post-content h3 {
+	font-weight: normal;
+	position: absolute;
+	left: 15px;
+}
+
+.post-content h3 strong {
+	color: #E60011;
+}
+
+.gallery {
+	height: 220px;
+	overflow: hidden;
+	margin-bottom: 30px;
+	padding-top: 31px;
+}
+
+.gallery:after {
+	content: "";
+	clear: both;
+	display: table;
+}
+
+.gallery-item {
+	float: left;
+	margin-right: 1px;
+}
+
+footer {
+	background: #f2f2f2;
+	padding-top: 15px;
+}
+
+.post-meta {
+	color: #808080;
+}
+
+.post-meta a {
+	color: #666;
+}
+
+.post-meta a:hover {
+	color: #E60011;
+}
+
+#pagination .container:after {
+	content: "";
+	clear: both;
+	display: table;
+}
+
+.nav-next,
+.nav-previous {
+	float: left;
+	margin-right: 30px;
+}
+
+#home .content img {
+	width: 100%;
+	height: auto;
+	margin-bottom: 1px;
+}
+
+.post-content ul li {
+	list-style: disc;
+	margin-left: 1em;
+}
+
+@media (min-width: 540px) {
+	
+	header .details {
+		clear: none;
+		float: right;
+		width: 225px;
+	}
+	
+}
+
+@media (min-width: 665px) {
+	.artist img {
+		float: left;
+		margin-right: 25px;
+		max-width: 215px;
+		margin-bottom: 0;
+	}
+
+	.artist .text {
+		float: left;
+		width: 425px;
+	}
+
+	.artist::after {
+		content: "";
+		clear: both;
+		display: table;
+	}
+}
+
+@media (min-width: 980px) {
+	
+	header {
+		position: relative;
+		height: 180px;
+	}
+	
+	header h1 {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+	}
+	
+	header .menu-header-menu-container {
+		float: none;
+		padding: 0;
+	}
+	
+	header .menu {
+		position: absolute;
+		left: 250px;
+		bottom: 0;
+	}
+	
+	header .menu li {
+		display: inline;
+		margin-right: 20px;
+	}
+	
+	header .details {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		width: 225px;
+		padding: 0;
+	}
+	
+	section {
+		padding: 30px 0;
+	}
+	
+	.container {
+		width: 980px;
+		margin: 0 auto;
+	}
+	
+	.main {
+		padding-top: 30px;
+	}
+	
+	.sidebar {
+		float: left;
+		width: 225px;
+	}
+	
+	.content {
+		float: left;
+		padding-left: 25px;
+		width: calc(100% - 225px);
+		max-width: 480px;
+	}
+	
+	.content--wide {
+		max-width: none;
+	}
+	
+}
