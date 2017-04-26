@@ -187,7 +187,8 @@ function httpRequest(req, res) {
 	} else if (uri == '/translate') {
 		handleTranslate(req, res, responseHeaders);
 	} else if (uri == '/query') {
-		handleQuery(req, res, responseHeaders);
+		// handleQuery(req, res, responseHeaders);
+		simulateHandleQuery(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
 		handleImages(req, res, responseHeaders);
 	} else if (uri == '/images') {
@@ -202,6 +203,7 @@ var getPostData = function(req, callback) {
 	req.on('data', function (data) {
 		body += data;
 	});
+
 	req.on('end', function () {
 		callback(qs.parse(body));
 	});
@@ -263,6 +265,47 @@ function handleTranslate(req, res, headers) {
 	});
 }
 
+// Added as a temporary workaround for IP blocking issue. - RN
+function simulateHandleQuery(req, res, headers) {
+	getPostData(req, function(data) {
+		console.log('Simulating query: ' + data.query);
+		if (validateSharedSecret(data.secret, res, headers)) {
+			console.log('Shared secret is valid.');
+
+			var translation = {
+				source: 'google',
+				query: data.query,
+				value: '吐司'
+			};
+
+			var translationSearch = {
+				query: data.query,
+				langFrom: 'en',
+				langTo: 'zh-CN'
+			};
+
+			var query = getNormalizedQuery(data.query);
+			var tab = getSearchTab(data.query);
+
+			console.log('Translate “' + query + '” (' + tab + ')');
+
+			setTranslation(translationSearch, translation.value);
+
+			console.log('Found ' + translation.source + ' translation ' +
+			            '(' + translationSearch.langFrom + ' to ' + translationSearch.langTo + ') ' +
+			            'for “' + translation.query + '”: ' + translation.value);
+
+			jsonResponse(res, data, headers, {
+				ok: 1,
+				query: translationSearch.query,
+				langFrom: translationSearch.langFrom,
+				langTo: translationSearch.langTo,
+				translated: translation.value
+			});
+		}
+	})
+}
+
 function handleQuery(req, res, headers) {
 	getPostData(req, function(data) {
 		console.log('Query: ' + data.query);
@@ -300,9 +343,12 @@ function handleQuery(req, res, headers) {
 								details: err
 							}));
 						} else {
+
 							console.log('Found ' + translation.source + ' translation ' +
 							            '(' + translationSearch.langFrom + ' to ' + translationSearch.langTo + ') ' +
 							            'for “' + translation.query + '”: ' + translation.value);
+
+
 							jsonResponse(res, data, headers, {
 								ok: 1,
 								query: translationSearch.query,

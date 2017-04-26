@@ -16,7 +16,7 @@ storage.get([
 	'pendingQuery',
 	'autocompleteEnabled'
 ], function(stored) {
-	
+
 	if (stored.clientId) {
 		clientId = stored.clientId;
 	} else {
@@ -24,15 +24,15 @@ storage.get([
 			clientId: clientId
 		});
 	}
-	
+
 	if (stored.pendingQuery) {
 		pendingQuery = stored.pendingQuery;
 	}
-	
+
 	if (stored.autocompleteEnabled) {
 		autocompleteEnabled = (stored.autocompleteEnabled == 'on');
 	}
-	
+
 	console.log('Firewall Cafe ' + clientId);
 	console.log('Server: ' + config.serverURL);
 	if (pendingQuery && pendingQuery.query) {
@@ -41,7 +41,7 @@ storage.get([
 	if (autocompleteEnabled) {
 		console.log('Autocomplete enabled');
 	}
-	
+
 	setupUI();
 	setupStorageListener();
 	checkPendingQuery();
@@ -49,9 +49,9 @@ storage.get([
 });
 
 function setupUI() {
-	
+
 	var suggestChecked = autocompleteEnabled ? ' checked="checked"' : '';
-	
+
 	$('#fsr, #lh, #ft').append(
 		'<div id="firewall">' +
 			'<a href="#firewall" id="firewall-show">Firewall</a>' +
@@ -92,7 +92,7 @@ function setupUI() {
 			$(document.body).removeClass('firewall-autocomplete');
 		}
 	});
-	
+
 	if (autocompleteEnabled) {
 		$(googleInput).autocomplete({
 			source: sensitiveQueries
@@ -117,7 +117,7 @@ function setupStorageListener() {
 			 checkPendingQuery();
 			 checkPendingImages();
 		 }
-	 }); 
+	 });
 }
 
 function checkPendingQuery() {
@@ -126,7 +126,7 @@ function checkPendingQuery() {
 	}
 	var queryMatch = getQueryMatch();
 	var currTime = (new Date()).getTime();
-	
+
 	if (pendingQuery &&
 	    pendingQuery.translated &&
 	    pendingQuery.translated == queryMatch) {
@@ -163,7 +163,7 @@ function checkURLQuery() {
 	}
 
 	if (queryMatch != query) {
-		
+
 		query = queryMatch;
 		if (!query) {
 			return;
@@ -279,17 +279,17 @@ function getImages() {
 			}
 		}
 	});
-	
+
 	if (images.length == 0) {
 		console.log('Waiting for images');
 		startGettingImages();
 		return;
 	}
-	
+
 	console.log('Found ' + images.length + ' images');
 	var imagesKey = getSource() + 'Images';
 	pendingQuery[imagesKey] = images;
-	
+
 	if (!checkPendingImages()) {
 		// If we don't have all the images yet, save the first crop of them to storage
 		storage.set({
@@ -302,11 +302,15 @@ function getImages() {
 
 function checkPendingImages() {
 	console.log('Checking pending images...');
-	if (pendingQuery &&
-	    pendingQuery.googleImages &&
-	    pendingQuery.baiduImages) {
-		console.log('Looks like we have everything');
-		// If we have both sets of images, submit them ... annnd we're done
+	if (pendingQuery && pendingQuery.googleImages) {
+		console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google...');
+
+	   if (pendingQuery.baiduImages) {
+			console.log('and', pendingQuery.baiduImages.length, 'images from Baidu!');
+		} else {
+			console.log('but no images from Baidu. :(');
+		}
+		// If we have one or both sets of images, submit them ... annnd we're done
 		submitImages(function() {
 			console.log('Removing pending query');
 			pendingQuery = {};
