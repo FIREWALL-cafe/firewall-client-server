@@ -61,7 +61,6 @@ function getImageHTML(urls) {
 	var imageHTML = '';
 	$.each(urls, function(i, url) {
 		url = decodeURIComponent(url);
-		url = decodeURIComponent(url);
 		url = $("<div>").text(url).html();
 		imageHTML += '<img src="/placeholder.png" data-src="' + url + '" alt="" class="pending">';
 	});
