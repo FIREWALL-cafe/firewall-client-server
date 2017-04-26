@@ -35,9 +35,16 @@ Alternatively, if you'd prefer to avoid using `git`, just download and unzip the
 
 The translation service is written in [node.js](http://nodejs.org/) and translates search queries from English to Chinese, and from Chinese to English using the [Google Translate API](https://cloud.google.com/translate/docs). These translations are stored in a Google Spreadsheet where the machine-generated translations can be overridden by human translators, and where resulting images from Google's and Baidu's image search can be stored by the client.
 
+If you're working on the existing dev spreadsheet:
+1. Ask Dan for access to the secret gist file containing four files.
+2. Place `service-key.json` and `config.js` in the `server` directory.
+3. Create a subdirectory `server/ssl` and place `localhost.key` and `localhost.crt` within.
+
+If you're starting a new spreadsheet from scratch:
+
 1. Go to the [Google Cloud credentials](https://console.cloud.google.com/apis/credentials) page  
 	* Download a service account key JSON file for the Google Spreadsheet API and save it as `translation/service-key.json`
-	* Register an Translation API key, with your server's IP address
+	* Register a Translation API key, with your server's IP address
 2. Create a Google spreadsheet based on [this template](https://docs.google.com/spreadsheets/d/1bhoMy4bwZyr58a2pnnxYD4JQogOpAgqqMtSUQIZLz_Q/edit?usp=sharing)  
  	* One tab for each language translation (`en to zh-CN`, `zh-CN to en`, `zh-TW to en`), each with the columns `query`, `google` (machine translation), `override` (human translation)
 	* One tab called `images` with columns: `query`, `query_zh`, `source`, `featured` (for integration with the blog), and `images`
@@ -50,7 +57,7 @@ If you use a Mac, [this article](http://brianflove.com/2014/12/01/self-signed-ss
 
 The client is implemented as a browser extension for Google Chrome.
 
-1. Copy `client/config-example.js` to `client/confnig.js`, edit `serverURL` and `sharedSecret`
+1. Copy `client/config-example.js` to `client/config.js`. Edit `serverURL` and `sharedSecret`.
 2. Go to Chrome's __Settings__ pane (under the hamburger menu, or with `cmd-comma`)
 3. Choose the __Extensions__ tab
 4. Enable the __Developer__ checkbox
