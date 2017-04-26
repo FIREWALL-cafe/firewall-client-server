@@ -72,9 +72,11 @@ function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = getSearchTab(search);
 	console.log('Translate “' + query + '” (' + tab + ')');
-	
+
 	if (doc.sensitive.lookup[query]) {
 		var sensitive = doc.sensitive.lookup[query];
+		console.log('This is a sensitive term. Its translation is', sensitive.translated);
+
 		callback(null, {
 			query: search.query,
 			source: 'sensitive',
@@ -265,6 +267,7 @@ function handleQuery(req, res, headers) {
 	getPostData(req, function(data) {
 		console.log('Query: ' + data.query);
 		if (validateSharedSecret(data.secret, res, headers)) {
+			console.log('Shared secret is valid.');
 			detectLanguage(data, function(err, language) {
 				if (err) {
 					res.writeHead(500, headers);
@@ -279,11 +282,15 @@ function handleQuery(req, res, headers) {
 						langFrom: language
 					};
 					if (language == 'en') {
+						console.log('Language detected: English');
+						console.log('Translating to simplified Chinese...');
 						translationSearch.langTo = 'zh-CN';
 					} else {
+						console.log('Language detected:', language);
+						console.log('Translating to English...');
 						translationSearch.langTo = 'en';
 					}
-					
+
 					getTranslation(translationSearch, function(err, translation) {
 						if (err) {
 							res.writeHead(500, headers);
@@ -307,6 +314,8 @@ function handleQuery(req, res, headers) {
 					});
 				}
 			});
+		} else {
+			console.log('Shared secret is not valid.');
 		}
 	});
 }
@@ -392,7 +401,7 @@ function handleIndex(req, res, headers) {
 			output.images = images;
 			jsonResponse(res, data, headers, output);
 		}
-		
+
 	});
 }
 
@@ -427,6 +436,8 @@ function handleDashboard(req, res) {
 
 function detectLanguage(search, callback) {
 	var query = getNormalizedQuery(search);
+	console.log('Detecting language for normalized query:', query);
+
 	var url = 'https://www.googleapis.com/language/translate/v2/detect' +
 	          '?key=' + config.apiKey +
 	          '&q=' + encodeURIComponent(query);
@@ -516,4 +527,4 @@ function validateSharedSecret(secret, res, headers) {
 		return false;
 	}
 	return true;
-} 
+}
