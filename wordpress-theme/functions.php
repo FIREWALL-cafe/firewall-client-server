@@ -158,7 +158,7 @@ function fwc_update_post_content($post_id, $row) {
 			'post_date' => $post_date,
 			'post_date_gmt' => $post_date_gmt,
 			'edit_date' => true,
-			'post_status' => 'publish'
+			//'post_status' => 'publish'
 		));
 	}
 }
@@ -234,6 +234,8 @@ function fwc_attach_image($parent_id, $path) {
 }
 
 function fwc_submit_images() {
+	fwc_enable_cors();
+	
 	if (!defined('FWC_SHARED_SECRET')) {
 		die('No FWC_SHARED_SECRET defined');
 	}
@@ -266,9 +268,10 @@ function fwc_intermediate_image_sizes($sizes) {
 add_filter('intermediate_image_sizes', 'fwc_intermediate_image_sizes');
 
 function fwc_enable_cors() {
-	header("Access-Control-Allow-Origin: *"); 
+	header('x-test: 1');
+	header("Access-Control-Allow-Origin: *");
 }
-add_action('send_headers', 'fwc_enable_cors');
+add_action('wp_headers', 'fwc_enable_cors');
 
 class CSV_File {
 	

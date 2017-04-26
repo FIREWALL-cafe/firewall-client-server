@@ -338,7 +338,7 @@ function submitImages(callback) {
 		data.google_query = pendingQuery.translated;
 		data.baidu_query = pendingQuery.query;
 	}
-	console.log('Submitting images to translation server');
+	/*console.log('Submitting images to translation server');
 	$.ajax({
 		url: config.serverURL + 'submit-images',
 		method: 'POST',
@@ -348,7 +348,7 @@ function submitImages(callback) {
 		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed submitting images to translation server: ' + textStatus + ' / ' + xhr.responseText);
-	});
+	});*/
 
 	console.log('Submitting images to library');
 	$.ajax({
