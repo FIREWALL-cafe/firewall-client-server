@@ -141,12 +141,13 @@ function setTranslation(search, translation) {
 
 function saveTranslation(search, translation) {
 	var query = getNormalizedQuery(search);
-	var tab = getSearchTab(search);
-	if (!doc[tab] ||
-	    !doc[tab].worksheet) {
-		console.log('Warning: no worksheet for ' + tab);
-		return;
-	}
+	var tab = 'images';
+	// var tab = getSearchTab(search);
+	// if (!doc[tab] ||
+	//     !doc[tab].worksheet) {
+	// 	console.log('Warning: no worksheet for ' + tab);
+	// 	return;
+	// }
 	doc[tab].worksheet.addRow({
 		query: query,
 		google: translation,
@@ -212,8 +213,8 @@ var getPostData = function(req, callback) {
 function handleDetectLanguage(req, res, headers) {
 	var query = url.parse(req.url).query;
 	var search = qs.parse(query);
-	console.log('Detect language: ' + search.query);
-	detectLanguage(search, function(err, language) {
+
+	detectLanguage(search, function(err, detections) {
 		if (err) {
 			res.writeHead(500, headers);
 			res.end(JSON.stringify({
@@ -223,18 +224,16 @@ function handleDetectLanguage(req, res, headers) {
 			}));
 			console.log(err);
 		} else {
-			if (language != 'zh-CN' &&
-			    language != 'zh-TW' &&
-			    language != 'en') {
-				language = 'en';
-			}
 			jsonResponse(res, search, headers, {
 				ok: 1,
-				language: language
+				language: detections.language,
+				confidence: detections.confidence,
+				alternate: detections.alternate
 			});
 		}
 	});
 }
+
 
 function handleTranslate(req, res, headers) {
 	getPostData(req, function(search) {
@@ -311,7 +310,8 @@ function handleQuery(req, res, headers) {
 		console.log('Query: ' + data.query);
 		if (validateSharedSecret(data.secret, res, headers)) {
 			console.log('Shared secret is valid.');
-			detectLanguage(data, function(err, language) {
+
+			detectLanguage(data, function(err, detections) {
 				if (err) {
 					res.writeHead(500, headers);
 					res.end(JSON.stringify({
@@ -322,16 +322,25 @@ function handleQuery(req, res, headers) {
 				} else {
 					var translationSearch = {
 						query: data.query,
-						langFrom: language
+						langFrom: detections.language,
+						langConfidence: detections.confidence,
+						langAlternate: detections.alternate,
 					};
-					if (language == 'en') {
-						console.log('Language detected: English');
-						console.log('Translating to simplified Chinese...');
-						translationSearch.langTo = 'zh-CN';
-					} else {
-						console.log('Language detected:', language);
-						console.log('Translating to English...');
+
+					// Simplified or traditional Chinese queries are translated to English.
+					// Queries in all other languages are translated to simplified Chinese.
+					if (language == 'zh-CN' || language == 'zh-TW') {
+						var dialect = language == 'zh-CN' ? 'simplified' : 'traditional';
+						console.log('Language detected:', dialect, 'Chinese');
+
+						console.log('Translating to English');
 						translationSearch.langTo = 'en';
+					} else {
+						var lang = language == 'en' ? 'English' : language;
+						console.log('Language detected:', lang);
+
+						console.log('Translating to simplified Chinese');
+						translationSearch.langTo = 'zh-CN';
 					}
 
 					getTranslation(translationSearch, function(err, translation) {
@@ -440,6 +449,8 @@ function handleIndex(req, res, headers) {
 						baidu_query: row.baiduquery,
 						google_images: google_images,
 						baidu_images: baidu_images,
+						lang_from: row.lang_from,
+						lang_to: row.lang_to,
 						remove: row.remove
 					});
 				}
@@ -487,6 +498,7 @@ function detectLanguage(search, callback) {
 	var url = 'https://www.googleapis.com/language/translate/v2/detect' +
 	          '?key=' + config.apiKey +
 	          '&q=' + encodeURIComponent(query);
+
 	https.get(url, function(res) {
 		var data = '';
 		res.setEncoding('utf8');
@@ -495,11 +507,29 @@ function detectLanguage(search, callback) {
 		});
 		res.on('end', function() {
 			var response = JSON.parse(data);
+			console.log(response);
 			if (response &&
 			    response.data &&
 			    response.data.detections) {
-				var language = response.data.detections[0][0].language;
-				callback(null, language);
+
+				var detections = {
+					language: detections[0][0].language,
+					confidence: detections[0][0].confidence,
+					alternate: null
+				};
+
+				// If there's another language possibility, note it for user review.
+				if (detections.confidence < 1 && response.data.detections.length > 1) {
+					detections.alternate = detections[1][0].language;
+				}
+
+				callback(null, detections); // Send more data about language detection.
+
+				// var language = response.data.detections[0][0].language;
+				// var isReliable = response.data.detections[0][0].isReliable;
+				// var confidence = response.data.detections[0][0].confidence;
+				// callback(null, language);
+
 			} else if (response &&
 			           response.error) {
 				callback(new Error('[' + response.error.code + '] ' + response.error.message));
