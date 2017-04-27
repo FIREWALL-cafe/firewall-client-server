@@ -187,7 +187,11 @@ function checkURLQuery() {
 					timestamp: timestamp,
 					source: getSource(),
 					googleImages: null,
-					baiduImages: null
+					baiduImages: null,
+					// langFrom: '',
+					// langTo: '',
+					// langConfidence: '',
+					// langAlternate: '',
 				});
 				storage.set({
 					pendingQuery: pendingQuery
@@ -304,7 +308,6 @@ function checkPendingImages() {
 	console.log('Checking pending images...');
 	if (pendingQuery && pendingQuery.googleImages) {
 		console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google...');
-
 	   if (pendingQuery.baiduImages) {
 			console.log('and', pendingQuery.baiduImages.length, 'images from Baidu!');
 		} else {
@@ -333,7 +336,11 @@ function submitImages(callback) {
 		client: clientId,
 		secret: config.sharedSecret,
 		google_images: JSON.stringify(pendingQuery.googleImages),
-		baidu_images: JSON.stringify(pendingQuery.baiduImages)
+		baidu_images: JSON.stringify(pendingQuery.baiduImages),
+		// lang_from: pendingQuery.langFrom,
+		// lang_to: pendingQuery.langTo,
+		// lang_confidence: pendingQuery.langConfidence,
+		// lang_alternate_from: pendingQuery.langAlternate,
 	};
 	if (pendingQuery.source == 'google') {
 		data.google_query = pendingQuery.query;

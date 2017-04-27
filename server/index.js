@@ -36,10 +36,54 @@ var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
 var doc = {};
 
 console.log('Starting translation server on port ' + config.port);
+consoleLogDivider();
+
 app.listen(config.port);
 spreadsheet.useServiceAccountAuth(spreadsheetServiceKey, loadSpreadsheet);
 
+/////// ROUTING ///////
+
+function httpRequest(req, res) {
+	var responseHeaders = {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+		"Access-Control-Max-Age": 10,
+		"Content-Type": "application/json"
+	};
+
+	if (req.method == 'OPTIONS') {
+		res.writeHead(200, responseHeaders);
+		res.end();
+	} else {
+		var uri = url.parse(req.url).pathname;
+
+		switch (uri) {
+			case '/detect-language':
+				handleDetectLanguage(req, res, responseHeaders);
+				break;
+			case '/translate':
+				handleTranslate(req, res, responseHeaders);
+				break;
+			case '/query':
+				handleQuery(req, res, responseHeaders);
+				break;
+			case '/submit-images':
+				handleImages(req, res, responseHeaders);
+				break;
+			case '/images':
+				handleIndex(req, res, responseHeaders);
+				break;
+			default:
+				handleDashboard(req, res);
+		}
+	}
+}
+
+/////// SPREADSHEET ///////
+
 function loadSpreadsheet(err) {
+	console.log('Loading the spreadsheet...');
 	if (err) {
 		console.log(err);
 	} else {
@@ -55,6 +99,7 @@ function loadSpreadsheet(err) {
 
 function loadWorksheet(worksheet) {
 	var tab = worksheet.title.trim();
+
 	if (!doc[tab]) {
 		doc[tab] = {
 			id: worksheet.id,
@@ -62,7 +107,9 @@ function loadWorksheet(worksheet) {
 			worksheet: worksheet
 		};
 	}
+
 	var tabLookup = doc[tab].lookup;
+
 	worksheet.getRows(function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -71,190 +118,72 @@ function loadWorksheet(worksheet) {
 				var query = getNormalizedQuery(row);
 				tabLookup[query] = row;
 			});
-			console.log('Loaded ' + rows.length + ' records from ' + tab);
+			console.log('Loaded ' + rows.length + ' records from ' + tab + '.');
 		}
 	});
 }
 
-function getTranslation(search, callback) {
-	var query = getNormalizedQuery(search);
-	var tab = getSearchTab(search);
-	console.log('Translate “' + query + '” (' + tab + ')');
+/////// SEARCH ////////
 
-	if (doc.sensitive.lookup[query]) {
-		var sensitive = doc.sensitive.lookup[query];
-		console.log('This is a sensitive term. Its translation is', sensitive.translated);
+function handleQuery(req, res, headers) {
+	getPostData(req, function(data) {
+		var query = data.query;
 
-		callback(null, {
-			query: search.query,
-			source: 'sensitive',
-			value: sensitive.translated
-		});
-		return true;
-	} else if (doc[tab] &&
-	           doc[tab].lookup[query]) {
-		var translations = doc[tab].lookup[query];
-		if (translations.override) {
-			callback(null, {
-				query: search.query,
-				source: 'override',
-				value: translations.override
+		consoleLogDivider();
+		consoleLogDivider();
+		consoleLogDivider();
+		console.log(query.toUpperCase());
+
+		if (validateSharedSecret(data.secret, res, headers)) {
+			detectLanguage(data, function(err, detections) {
+				if (err) {
+					res.writeHead(500, headers);
+					res.end(JSON.stringify({
+						ok: 0,
+						error: 'Error detecting language.',
+						details: err.toString()
+					}));
+				} else {
+
+					var translationSearch = setupTranslation(query, detections);
+					consoleLogDivider();
+
+					getTranslation(translationSearch, function(err, translation) {
+						if (err) {
+
+							res.writeHead(500, headers);
+							res.end(JSON.stringify({
+								ok: 0,
+								error: 'Error translating query.',
+								details: err.toString()
+							}));
+
+						} else {
+							jsonResponse(res, data, headers, {
+								ok: 1,
+								query: translationSearch.query,
+								langFrom: translationSearch.langFrom,
+								langTo: translationSearch.langTo,
+								langConfidence: translationSearch.langConfidence,
+								langAlternate: translationSearch.langAlternate,
+								translated: translation.value
+							});
+						}
+					});
+				}
 			});
-			return true;
-		} else if (translations.google) {
-			callback(null, {
-				query: search.query,
-				source: 'cached',
-				value: translations.google
-			});
-			return true;
-		}
-	}
-	googleTranslate(search, function(err, translation) {
-		if (err) {
-			console.log(err);
 		} else {
-			setTranslation(search, translation);
-			callback(null, {
-				query: search.query,
-				source: 'google',
-				value: translation
-			});
-		}
-	});
-	return false;
-}
-
-function setTranslation(search, translation) {
-	var query = getNormalizedQuery(search);
-	var tab = getSearchTab(search);
-	if (!doc[tab]) {
-		console.log('Warning: no worksheet for ' + tab + '.');
-		doc[tab] = {
-			lookup: {}
-		};
-	}
-	if (!doc[tab].lookup[query]) {
-		doc[tab].lookup[query] = {
-			query: query,
-			google: translation,
-			override: null
-		};
-	} else {
-		console.log('Warning: updating Google Translation for “' + query + '”');
-		doc[tab].lookup[query].google = translation;
-	}
-	saveTranslation(search, translation);
-}
-
-function saveTranslation(search, translation) {
-	var query = getNormalizedQuery(search);
-	var tab = getSearchTab(search);
-	if (!doc[tab] ||
-	    !doc[tab].worksheet) {
-		console.log('Warning: no worksheet for ' + tab);
-		return;
-	}
-	doc[tab].worksheet.addRow({
-		query: query,
-		google: translation,
-		override: ''
-	});
-}
-
-function getNormalizedQuery(search) {
-	if (search && search.query) {
-		var normalized = search.query.toLowerCase().trim();
-		normalized = normalized.replace(/\s+/g, ' ');
-		return normalized;
-	} else {
-		return '';
-	}
-}
-
-function getSearchTab(search) {
-	var langFrom = search.langFrom;
-	var langTo   = search.langTo;
-	return langFrom + ' to ' + langTo;
-}
-
-function httpRequest(req, res) {
-	var responseHeaders = {
-		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-		"Access-Control-Max-Age": 10,
-		"Content-Type": "application/json"
-	};
-	var uri = url.parse(req.url).pathname;
-	if (req.method == 'OPTIONS') {
-		res.writeHead(200, responseHeaders);
-		res.end();
-	} else if (uri == '/detect-language') {
-		handleDetectLanguage(req, res, responseHeaders);
-	} else if (uri == '/translate') {
-		handleTranslate(req, res, responseHeaders);
-	} else if (uri == '/query') {
-		handleQuery(req, res, responseHeaders);
-		// simulateHandleQuery(req, res, responseHeaders);
-	} else if (uri == '/submit-images') {
-		handleImages(req, res, responseHeaders);
-	} else if (uri == '/images') {
-		handleIndex(req, res, responseHeaders);
-	} else {
-		handleDashboard(req, res);
-	}
-}
-
-var getPostData = function(req, callback) {
-	var body = '';
-	req.on('data', function (data) {
-		body += data;
-	});
-
-	req.on('end', function () {
-		callback(qs.parse(body));
-	});
-}
-
-function handleDetectLanguage(req, res, headers) {
-	var query = url.parse(req.url).query;
-	var search = qs.parse(query);
-	detectLanguage(search, function(err, language) {
-		if (err) {
-			res.writeHead(500, headers);
-			res.end(JSON.stringify({
-				ok: 0,
-				error: 'Error detecting language.',
-				details: err.toString()
-			}));
-			console.log(err);
-		} else {
-			/*
-
-			This logic seems less useful now. Just return the language
-			as-is. Before we were using it to choose between 3 different
-			spreadsheet tabs, but now we should probably leave open
-			the possibility that ~any language~ could come down the pipe.
-			(20170427/dphiffer)
-
-			if (language != 'zh-CN' &&
-			    language != 'zh-TW' &&
-			    language != 'en') {
-				language = 'en';
-			}*/
-			console.log('Detected language for: ' + search.query + ' (' + language + ')');
-			jsonResponse(res, search, headers, {
-				ok: 1,
-				language: language
-			});
+			console.log('Shared secret is not valid.');
 		}
 	});
 }
+
+/////// TRANSLATION ////////
 
 function handleTranslate(req, res, headers) {
 	getPostData(req, function(search) {
 		console.log('Translate: ' + search.query + ' from ' + search.langFrom + ' to ' + search.langTo);
+
 		if (validateSharedSecret(search.secret, res, headers)) {
 			getTranslation(search, function(err, translation) {
 				if (err) {
@@ -281,106 +210,283 @@ function handleTranslate(req, res, headers) {
 	});
 }
 
-// Added as a temporary workaround for IP blocking issue. - RN
-function simulateHandleQuery(req, res, headers) {
-	getPostData(req, function(data) {
-		console.log('Simulating query: ' + data.query);
-		if (validateSharedSecret(data.secret, res, headers)) {
-			console.log('Shared secret is valid.');
+function setupTranslation(query, detections) {
+	var language = detections.language;
+	var translationSearch = {
+		query: query,
+		langFrom: language,
+		langConfidence: detections.confidence,
+		langAlternate: detections.alternate,
+	};
 
-			var translation = {
-				source: 'google',
-				query: data.query,
-				value: '烟雾在广州'
-			};
+	// Simplified or traditional Chinese queries are translated to English.
+	// Queries in all other languages are translated to simplified Chinese.
+	if (isChinese( language)) {
+		console.log('Language detected:', getDialect(language), 'Chinese');
 
-			var translationSearch = {
-				query: data.query,
-				langFrom: 'en',
-				langTo: 'zh-CN'
-			};
+		console.log('Will translate to English!');
+		translationSearch.langTo = 'en';
 
-			var query = getNormalizedQuery(data.query);
-			var tab = getSearchTab(data.query);
+	} else {
+		var lang = isEnglish(language) ? 'English' : language;
+		console.log('Language detected:', lang);
 
-			console.log('Translate “' + query + '” (' + tab + ')');
-
-			setTranslation(translationSearch, translation.value);
-
-			console.log('Found ' + translation.source + ' translation ' +
-			            '(' + translationSearch.langFrom + ' to ' + translationSearch.langTo + ') ' +
-			            'for “' + translation.query + '”: ' + translation.value);
-
-			jsonResponse(res, data, headers, {
-				ok: 1,
-				query: translationSearch.query,
-				langFrom: translationSearch.langFrom,
-				langTo: translationSearch.langTo,
-				translated: translation.value
-			});
+		if (translationSearch.langAlternate) {
+			console.log('Alternatively, Google says the language might be:', translationSearch.langAlternate);
+		} else {
+			console.log('Google is reasonably confident about this.');
 		}
-	})
+
+		console.log('Will translate to simplified Chinese!');
+		translationSearch.langTo = 'zh-CN';
+	}
+
+	return translationSearch;
 }
 
-function handleQuery(req, res, headers) {
-	getPostData(req, function(data) {
-		console.log('Query: ' + data.query);
-		if (validateSharedSecret(data.secret, res, headers)) {
-			console.log('Shared secret is valid.');
-			detectLanguage(data, function(err, language) {
-				if (err) {
-					res.writeHead(500, headers);
-					res.end(JSON.stringify({
-						ok: 0,
-						error: 'Error detecting language.',
-						details: err.toString()
-					}));
-				} else {
-					var translationSearch = {
-						query: data.query,
-						langFrom: language
-					};
-					if (language == 'en') {
-						console.log('Language detected: English');
-						console.log('Translating to simplified Chinese...');
-						translationSearch.langTo = 'zh-CN';
-					} else {
-						console.log('Language detected:', language);
-						console.log('Translating to English...');
-						translationSearch.langTo = 'en';
-					}
+function getTranslation(search, callback) {
+	var query = getNormalizedQuery(search);
+	var tab = doc['translations'],
+		sensitive = doc.sensitive.lookup[query],
+		// tab = getSearchTab(search),
+		inSheet = false,
+		source,
+		value;
 
-					getTranslation(translationSearch, function(err, translation) {
-						if (err) {
-							res.writeHead(500, headers);
-							res.end(JSON.stringify({
-								ok: 0,
-								error: 'Error translating query.',
-								details: err.toString()
-							}));
-						} else {
+	console.log('Translating “' + query + '"...');
 
-							console.log('Found ' + translation.source + ' translation ' +
-							            '(' + translationSearch.langFrom + ' to ' + translationSearch.langTo + ') ' +
-							            'for “' + translation.query + '”: ' + translation.value);
+	if (sensitive) {
 
+		value = sensitive.translated;
+		source = 'sensitive';
+		inSheet = true;
 
-							jsonResponse(res, data, headers, {
-								ok: 1,
-								query: translationSearch.query,
-								langFrom: translationSearch.langFrom,
-								langTo: translationSearch.langTo,
-								translated: translation.value
-							});
-						}
-					});
-				}
-			});
+		console.log('This is a sensitive term. Its translation is', value);
+
+	} else if (tab && tab.lookup[query]) {
+
+		var translations = tab.lookup[query];
+		inSheet = true;
+		console.log('We already have this term in our translations spreadsheet.');
+
+		if (translations.override) {
+
+			value = translations.override;
+			source = 'override';
+
+			console.log('It\'s been manually overridden with the following translation:', value);
+
+		} else if (translations.google) {
+
+			value = translations.google;
+			source = 'cached';
+
+			console.log('The cached translation is:', translations.google);
+		}
+	}
+
+	if (inSheet) {
+		consoleLogDivider();
+
+		callback(null, {
+			query: search.query,
+			source: source,
+			value: value
+		});
+
+		return inSheet;
+	}
+
+	googleTranslate(search, function(err, translation) {
+		if (err) {
+			console.log(err);
 		} else {
-			console.log('Shared secret is not valid.');
+
+			inSheet = false;
+			setTranslation(search, translation);
+
+			callback(null, {
+				query: search.query,
+				source: 'google',
+				value: translation,
+				langFrom: search.langFrom,
+				langTo: search.langTo,
+				langConfidence: search.langConfidence,
+				langAlternate: search.langAlternate
+			});
+		}
+	});
+
+	return inSheet;
+}
+
+function googleTranslate(search, callback) {
+	console.log('This is a new query! Consulting Google...');
+
+	var query = getNormalizedQuery(search),
+		langFrom = search.langFrom,
+		langTo = search.langTo;
+
+	var url = 'https://www.googleapis.com/language/translate/v2' +
+	          '?key=' + config.apiKey +
+	          '&q=' + encodeURIComponent(query) +
+	          '&source=' + langFrom +
+	          '&target=' + langTo;
+
+	https.get(url, function(res) {
+		var data = '';
+		res.setEncoding('utf8');
+		res.on('data', function (chunk) {
+			data += chunk;
+		});
+		res.on('end', function() {
+			var response = JSON.parse(data);
+			if (response && response.data && response.data.translations) {
+
+				var translation = response.data.translations[0].translatedText;
+
+				if (!isChinese(langTo)) {
+					translation = translation.toLowerCase();
+				} // Will this work for all other languages? Guessing no. - RN
+
+				translation.trim();
+				translation.replace(/\s+/g, ' ');
+
+				callback(null, translation);
+
+			} else if (response && response.error) {
+
+				callback(new Error('[' + response.error.code + '] ' + response.error.message));
+
+			} else {
+
+				callback(new Error('Something went wrong loading from Google Translate.'));
+
+			}
+		});
+	}).on('error', function(err) {
+		callback(err);
+	});
+}
+
+function setTranslation(search, translation) {
+	console.log('Google says:', translation);
+
+	var query = getNormalizedQuery(search),
+		tab = doc['translations'];
+
+	if (!tab.lookup[query]) {
+		tab.lookup[query] = {
+			query: query,
+			google: translation,
+			langFrom: search.langFrom,
+			langTo: search.langTo,
+			langConfidence: search.langConfidence,
+			langAlternate: search.langAlternate,
+			override: null,
+		};
+	} else {
+		console.log('')
+	}
+
+	saveTranslation(search, translation);
+}
+
+function saveTranslation(search, translation) {
+	console.log('Saving this translation...');
+	consoleLogDivider();
+
+	var query = getNormalizedQuery(search),
+		tab = doc['translations'];
+
+	tab.worksheet.addRow({
+		query: query,
+		google: translation,
+		override: '',
+		langFrom: search.langFrom,
+		langTo: search.langTo,
+		langConfidence: search.langConfidence,
+		langAlternate: search.langAlternate,
+	});
+}
+
+//////// LANGUAGE DETECTION ////////
+
+function handleDetectLanguage(req, res, headers) {
+	var query = url.parse(req.url).query;
+	var search = qs.parse(query);
+
+	detectLanguage(search, function(err, detections) {
+		if (err) {
+			res.writeHead(500, headers);
+			res.end(JSON.stringify({
+				ok: 0,
+				error: 'Error detecting language.',
+				details: err.toString()
+			}));
+			console.log(err);
+		} else {
+			jsonResponse(res, search, headers, {
+				ok: 1,
+				language: detections.language,
+				confidence: detections.confidence,
+				alternate: detections.alternate
+			});
 		}
 	});
 }
+
+function detectLanguage(search, callback) {
+
+	var query = getNormalizedQuery(search);
+	console.log('Normalized query:', query);
+	consoleLogDivider();
+
+	console.log('Detecting language...');
+
+	var url = 'https://www.googleapis.com/language/translate/v2/detect' +
+	          '?key=' + config.apiKey +
+	          '&q=' + encodeURIComponent(query);
+
+	https.get(url, function(res) {
+		var data = '';
+		res.setEncoding('utf8');
+		res.on('data', function (chunk) {
+			data += chunk;
+		});
+		res.on('end', function() {
+			var response = JSON.parse(data);
+			if (response &&
+			    response.data &&
+			    response.data.detections) {
+
+				var detections = {
+					language: response.data.detections[0][0].language,
+					confidence: response.data.detections[0][0].confidence,
+					alternate: null
+				};
+
+				// If there's another language possibility, note it for user review.
+				if (detections.confidence < 1 && response.data.detections.length > 1) {
+					detections.alternate = response.data.detections[1][0].language;
+				}
+
+				callback(null, detections); // Send more data about language detection.
+			} else if (response &&
+			           response.error) {
+				callback(new Error('[' + response.error.code + '] ' + response.error.message));
+			} else {
+				callback(new Error('Something went wrong loading from Google Translate.'));
+			}
+		});
+	}).on('error', function(err) {
+		console.log('Error detecting language.');
+		console.log(err);
+		callback(err);
+	});
+}
+
+//////// IMAGES /////////
 
 function handleImages(req, res, headers) {
 	getPostData(req, function(data) {
@@ -456,6 +562,8 @@ function handleIndex(req, res, headers) {
 						baidu_query: row.baiduquery,
 						google_images: google_images,
 						baidu_images: baidu_images,
+						lang_from: row.lang_from,
+						lang_to: row.lang_to,
 						remove: row.remove
 					});
 				}
@@ -466,6 +574,8 @@ function handleIndex(req, res, headers) {
 
 	});
 }
+
+//////// DASHBOARD ////////
 
 function handleDashboard(req, res) {
 	var uri = url.parse(req.url).pathname;
@@ -496,76 +606,28 @@ function handleDashboard(req, res) {
 	});
 }
 
-function detectLanguage(search, callback) {
-	var query = getNormalizedQuery(search);
-	console.log('Detecting language for normalized query:', query);
+//////// UTILITIES /////////
 
-	var url = 'https://www.googleapis.com/language/translate/v2/detect' +
-	          '?key=' + config.apiKey +
-	          '&q=' + encodeURIComponent(query);
-	https.get(url, function(res) {
-		var data = '';
-		res.setEncoding('utf8');
-		res.on('data', function (chunk) {
-			data += chunk;
-		});
-		res.on('end', function() {
-			var response = JSON.parse(data);
-			if (response &&
-			    response.data &&
-			    response.data.detections) {
-				var language = response.data.detections[0][0].language;
-				callback(null, language);
-			} else if (response &&
-			           response.error) {
-				callback(new Error('[' + response.error.code + '] ' + response.error.message));
-			} else {
-				callback(new Error('Something went wrong loading from Google Translate.'));
-			}
-		});
-	}).on('error', function(err) {
-		console.log('Error detecting language.');
-		console.log(err);
-		callback(err);
-	});
+function validateSharedSecret(secret, res, headers) {
+	if (secret != spreadsheetServiceKey.private_key_id) {
+		res.writeHead(401, headers);
+		res.end(JSON.stringify({
+			ok: 0,
+			error: 'Shared secret did not match.'
+		}));
+		return false;
+	}
+	return true;
 }
 
-function googleTranslate(search, callback) {
-	var query = getNormalizedQuery(search);
-	var langFrom = search.langFrom;
-	var langTo = search.langTo;
-	var url = 'https://www.googleapis.com/language/translate/v2' +
-	          '?key=' + config.apiKey +
-	          '&q=' + encodeURIComponent(query) +
-	          '&source=' + langFrom +
-	          '&target=' + langTo;
-	https.get(url, function(res) {
-		var data = '';
-		res.setEncoding('utf8');
-		res.on('data', function (chunk) {
-			data += chunk;
-		});
-		res.on('end', function() {
-			var response = JSON.parse(data);
-			if (response &&
-			    response.data &&
-			    response.data.translations) {
-				var translation = response.data.translations[0].translatedText;
-				if (langTo == 'en') {
-					translation = translation.toLowerCase();
-				}
-				translation.trim();
-				translation.replace(/\s+/g, ' ');
-				callback(null, translation);
-			} else if (response &&
-			           response.error) {
-				callback(new Error('[' + response.error.code + '] ' + response.error.message));
-			} else {
-				callback(new Error('Something went wrong loading from Google Translate.'));
-			}
-		});
-	}).on('error', function(err) {
-		callback(err);
+var getPostData = function(req, callback) {
+	var body = '';
+	req.on('data', function (data) {
+		body += data;
+	});
+
+	req.on('end', function () {
+		callback(qs.parse(body));
 	});
 }
 
@@ -579,14 +641,33 @@ function jsonResponse(res, data, headers, json) {
 	res.end(response);
 }
 
-function validateSharedSecret(secret, res, headers) {
-	if (secret != spreadsheetServiceKey.private_key_id) {
-		res.writeHead(401, headers);
-		res.end(JSON.stringify({
-			ok: 0,
-			error: 'Shared secret did not match.'
-		}));
-		return false;
-	}
-	return true;
+function consoleLogDivider() {
+	console.log('=======================================');
 }
+
+function getNormalizedQuery(search) {
+	if (search && search.query) {
+		var normalized = search.query.toLowerCase().trim();
+		normalized = normalized.replace(/\s+/g, ' ');
+		return normalized;
+	} else {
+		return '';
+	}
+}
+
+function isChinese(language) {
+	return (language == 'zh-CN' || language == 'zh-TW');
+}
+
+function isEnglish(language) {
+	return (language == 'en');
+}
+
+function getDialect(language) {
+	return language == 'zh-CN' ? 'simplified' : 'traditional';
+}
+
+function getSearchTab(search) {
+	return search.langFrom + ' to ' + search.langTo;
+}
+
