@@ -1,6 +1,14 @@
 var config = require('./config');
 var spreadsheetServiceKey = require('./service-key.json');
 
+/*
+
+Testing one-liners:
+https://localhost:4430/detect-language?query=toast
+https://localhost:4430/detect-language?query=%E5%90%90%E5%8F%B8 (zh-TW "toast")
+
+*/
+
 var _ = require('lodash');
 var fs = require('fs');
 var mime = require('mime');
@@ -220,7 +228,7 @@ function handleDetectLanguage(req, res, headers) {
 			res.end(JSON.stringify({
 				ok: 0,
 				error: 'Error detecting language.',
-				details: err
+				details: err.toString()
 			}));
 			console.log(err);
 		} else {
@@ -245,7 +253,7 @@ function handleTranslate(req, res, headers) {
 					res.end(JSON.stringify({
 						ok: 0,
 						error: 'Error translating query.',
-						details: err
+						details: err.toString()
 					}));
 				} else {
 					console.log('Found ' + translation.source + ' translation ' +
@@ -317,7 +325,7 @@ function handleQuery(req, res, headers) {
 					res.end(JSON.stringify({
 						ok: 0,
 						error: 'Error detecting language.',
-						details: err
+						details: err.toString()
 					}));
 				} else {
 					var translationSearch = {
@@ -349,7 +357,7 @@ function handleQuery(req, res, headers) {
 							res.end(JSON.stringify({
 								ok: 0,
 								error: 'Error translating query.',
-								details: err
+								details: err.toString()
 							}));
 						} else {
 
@@ -393,7 +401,7 @@ function handleImages(req, res, headers) {
 					res.end(JSON.stringify({
 						ok: 0,
 						error: 'Error adding record to spreadsheet.',
-						details: err
+						details: err.toString()
 					}));
 				} else {
 					try {
@@ -410,7 +418,7 @@ function handleImages(req, res, headers) {
 						res.end(JSON.stringify({
 							ok: 0,
 							error: 'Error adding record to spreadsheet.',
-							details: e
+							details: e.toString()
 						}));
 					}
 				}
