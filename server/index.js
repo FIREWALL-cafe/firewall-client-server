@@ -187,8 +187,8 @@ function httpRequest(req, res) {
 	} else if (uri == '/translate') {
 		handleTranslate(req, res, responseHeaders);
 	} else if (uri == '/query') {
-		// handleQuery(req, res, responseHeaders);
-		simulateHandleQuery(req, res, responseHeaders);
+		handleQuery(req, res, responseHeaders);
+		// simulateHandleQuery(req, res, responseHeaders);
 	} else if (uri == '/submit-images') {
 		handleImages(req, res, responseHeaders);
 	} else if (uri == '/images') {
@@ -275,7 +275,7 @@ function simulateHandleQuery(req, res, headers) {
 			var translation = {
 				source: 'google',
 				query: data.query,
-				value: '吐司'
+				value: '烟雾在广州'
 			};
 
 			var translationSearch = {
@@ -432,7 +432,7 @@ function handleIndex(req, res, headers) {
 						console.log('Error parsing row ' + row.googlequery);
 					}
 				}
-				if (google_images && baidu_images) {
+				if (google_images || baidu_images) {
 					images.push({
 						timestamp: parseInt(row.timestamp),
 						client: row.client,
