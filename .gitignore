@@ -1,4 +1,5 @@
 .DS_Store
+/vpn
 /client/config.js
 /server/config.js
 /server/service-key.json
