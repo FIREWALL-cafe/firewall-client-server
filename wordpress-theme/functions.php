@@ -18,31 +18,38 @@ function fwc_register_menu() {
 }
 add_action( 'init', 'fwc_register_menu' );
 
+/////////////////////////////////////////////////
+//// Sets up metadata for individual search display. ////
+/////////////////////////////////////////////////
 function fwc_post_meta() {
-	$popularity = get_post_meta(get_the_ID(), 'popularity', true);
-	$client = get_post_meta(get_the_ID(), 'client', true);
-	$popularity_html = '';
-	if ($popularity > 1) {
-		$popularity_html = "($popularity overall searches)";
-	}
-	?>
+	$client = get_post_meta(get_the_ID(), 'client', true); ?>
 	Search by <?php echo esc_html($client); ?>
-	on <a href="<?php the_permalink(); ?>" class="permalink"><?php
-	
+	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_get_search_timestamp(); ?></a>
+	<?php echo fwc_get_search_popularity();
+	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
+}
+
+function fwc_get_search_popularity() {
+	$popularity = get_post_meta(get_the_ID(), 'popularity', true);
+	if ($popularity > 1) {
+		return "($popularity overall searches)";
+	} else {
+		return '';
+	}
+}
+
+function fwc_get_search_timestamp() {
 	$timestamp = get_post_meta(get_the_ID(), 'timestamp', true);
 	if ($timestamp) {
 		echo date('M, j Y, g:ia', round($timestamp / 1000));
 	} else {
 		the_time('M, j Y, g:ia');
 	}
-	
-	?></a>
-	<?php
-	
-	echo $popularity_html;
-	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
 }
 
+/////////////////////////////////////////////////
+//// Imports images from CSV file. ////
+/////////////////////////////////////////////////
 function fwc_import_images() {
 	echo '<pre>';
 	set_time_limit(0);
@@ -56,6 +63,8 @@ function fwc_import_images() {
 	$curr = 0;
 	while ($row = $csv->next_row($verbose)) {
 		echo "$curr\n";
+
+		// TODO: Edit below to allow empty image sets.
 		if (empty($row) ||
 		    empty($row->timestamp) ||
 		    empty($row->google_query) ||
@@ -65,6 +74,7 @@ function fwc_import_images() {
 			echo "Skipping $curr\n";
 			continue;
 		}
+
 		$verbose = false; //($curr == 3095);
 		if ($curr == $index) {
 			if (!empty($_GET['import'])) {
@@ -78,6 +88,8 @@ function fwc_import_images() {
 					echo "<script>window.location = '$next_url';</script>";
 				}
 			} else {
+				// TODO: Handle missing image sets & placeholders here.
+
 				echo "Google: $row->google_query<br><br>";
 				$gi = json_decode($row->google_images);
 				foreach ($gi as $src) {
@@ -107,7 +119,10 @@ function fwc_import_images() {
 add_action('wp_ajax_import_images', 'fwc_import_images');
 
 function fwc_import_post($row) {
+
+	// TODO: Reconsider how we assign slugs. Adjust logic here.
 	$slug = sanitize_title("$row->google_query-$row->baidu_query");
+
 	$post = get_page_by_path($slug, OBJECT, 'post');
 	if ($post) {
 		fwc_update_post_content($post->ID, $row);
@@ -125,6 +140,8 @@ function fwc_import_post($row) {
 }
 
 function fwc_update_post_content($post_id, $row) {
+	// TODO: This overwrites existing searches with new content every time a search is repeated.
+	// Consider modifying so that this begins appending new content instead.
 	$timestamp = round($row->timestamp / 1000);
 	$post_date = date('Y-m-d H:i:s', $timestamp  - (5 * 60 * 60)); // EST
 	$post_date_gmt = date('Y-m-d H:i:s', $timestamp);
@@ -141,8 +158,15 @@ function fwc_update_post_content($post_id, $row) {
 		update_post_meta($post_id, 'client', $row->client);
 		update_post_meta($post_id, 'google_query', $row->google_query);
 		update_post_meta($post_id, 'baidu_query', $row->baidu_query);
-		update_post_meta($post_id, 'google_images', $row->google_images);
-		update_post_meta($post_id, 'baidu_images', $row->baidu_images);
+
+		// Prevent overwriting image sets with blank image sets if subsequent searches yield no results.
+		if (!empty($row->google_images)) {
+			update_post_meta($post_id, 'google_images', $row->google_images);
+		}
+		if (!empty($row->baidu_images)) {
+			update_post_meta($post_id, 'baidu_images', $row->baidu_images);
+		}
+
 		$google_urls = json_decode($row->google_images);
 		$google_attachments = fwc_download_images($post_id, $google_urls, "google-$row->timestamp");
 		$baidu_urls = json_decode($row->baidu_images);
@@ -173,6 +197,7 @@ function fwc_update_popularity($post_id) {
 	}
 }
 
+// TODO: Handle URL-encoded images here
 function fwc_download_images($parent_id, $urls, $prefix) {
 	$image_ids = array();
 	$upload_dir = wp_upload_dir();
@@ -215,12 +240,12 @@ function fwc_download_images($parent_id, $urls, $prefix) {
 	}
 	return $image_ids;
 }
-	
+
 function fwc_attach_image($parent_id, $path) {
 	$filetype = wp_check_filetype(basename( $path ), null);
 	$wp_upload_dir = wp_upload_dir();
 	$attachment = array(
-		'guid'           => $wp_upload_dir['url'] . '/' . basename( $path ), 
+		'guid'           => $wp_upload_dir['url'] . '/' . basename( $path ),
 		'post_mime_type' => $filetype['type'],
 		'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $path ) ),
 		'post_content'   => '',
@@ -235,7 +260,7 @@ function fwc_attach_image($parent_id, $path) {
 
 function fwc_submit_images() {
 	fwc_enable_cors();
-	
+
 	if (!defined('FWC_SHARED_SECRET')) {
 		die('No FWC_SHARED_SECRET defined');
 	}
@@ -274,13 +299,13 @@ function fwc_enable_cors() {
 add_action('wp_headers', 'fwc_enable_cors');
 
 class CSV_File {
-	
+
 	function __construct($path) {
 		$this->path = $path;
 		$this->fh = fopen($path, 'r');
 		$this->headings = fgetcsv($this->fh);
 	}
-	
+
 	function next_row($verbose = false) {
 		if ($verbose)
 			echo "before get\n";
@@ -301,5 +326,5 @@ class CSV_File {
 			echo "returning labeled\n";
 		return (object) $labeled;
 	}
-	
+
 }

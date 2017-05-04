@@ -1,4 +1,3 @@
-
 var storage = chrome.storage.local;
 var clientId = randomClientId();
 var pendingQuery = {};
@@ -306,13 +305,14 @@ function getImages() {
 
 function checkPendingImages() {
 	console.log('Checking pending images...');
-	if (pendingQuery && pendingQuery.googleImages) {
-		console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google...');
-	   if (pendingQuery.baiduImages) {
-			console.log('and', pendingQuery.baiduImages.length, 'images from Baidu!');
-		} else {
-			console.log('but no images from Baidu. :(');
+	if (pendingQuery) {
+		if (pendingQuery.googleImages) {
+			console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google!');
 		}
+	   if (pendingQuery.baiduImages) {
+			console.log('Looks like we have', pendingQuery.baiduImages.length, 'images from Baidu!');
+		}
+
 		// If we have one or both sets of images, submit them ... annnd we're done
 		submitImages(function() {
 			console.log('Removing pending query');
