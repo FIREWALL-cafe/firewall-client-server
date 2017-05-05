@@ -74,6 +74,9 @@ function httpRequest(req, res) {
 			case '/images':
 				handleIndex(req, res, responseHeaders);
 				break;
+			case '/test-wp-api':
+				console.log(WPAPI);
+				break;
 			default:
 				handleDashboard(req, res);
 		}
@@ -541,9 +544,6 @@ function handleImages(req, res, headers) {
 }
 
 function handleIndex(req, res, headers) {
-
-	console.log(WPAPI);
-
 	spreadsheet.getRows(doc.images.id, function(err, rows) {
 		var output = {};
 		if (err) {
