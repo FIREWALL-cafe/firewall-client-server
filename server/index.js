@@ -18,6 +18,7 @@ var http = require('http');
 var https = require('https');
 var qs = require('querystring');
 var GoogleSpreadsheet = require('google-spreadsheet');
+var WPAPI = require('wpapi');
 
 if (config.port == 80 ||
     !config.sslCert) {
@@ -505,6 +506,8 @@ function handleImages(req, res, headers) {
 				lang_confidence: data.lang_confidence,
 				lang_alternate: data.lang_alternate,
 			};
+
+			// Add row to Google spreadsheet.
 			doc.images.worksheet.addRow(images, function(err) {
 				if (err) {
 					res.writeHead(500, headers);
@@ -538,6 +541,9 @@ function handleImages(req, res, headers) {
 }
 
 function handleIndex(req, res, headers) {
+
+	console.log(WPAPI);
+
 	spreadsheet.getRows(doc.images.id, function(err, rows) {
 		var output = {};
 		if (err) {
@@ -552,8 +558,8 @@ function handleIndex(req, res, headers) {
 			output.ok = 1;
 			_.each(rows, function(row) {
 				try {
-					var google_images = JSON.parse(row.google_images);
-					var baidu_images = JSON.parse(row.baidu_images);
+					var google_images = JSON.parse(row.googleimages);
+					var baidu_images = JSON.parse(row.baiduimages);
 				} catch (e) {
 					if (row.query) {
 						console.log('Error parsing row ' + row.query);
@@ -563,15 +569,15 @@ function handleIndex(req, res, headers) {
 					images.push({
 						timestamp: parseInt(row.timestamp),
 						client: row.client,
-						search_engine: row.search_engine,
+						search_engine: row.searchengine,
 						query: row.query,
 						translated: row.translated,
 						google_images: google_images,
 						baidu_images: baidu_images,
-						lang_from: row.lang_from,
-						lang_to: row.lang_to,
-						lang_confidence: row.lang_confidence,
-						lang_alternate: row.lang_alternate,
+						lang_from: row.langfrom,
+						lang_to: row.langto,
+						lang_confidence: row.langconfidence,
+						lang_alternate: row.langalternate,
 						remove: row.remove
 					});
 				}
