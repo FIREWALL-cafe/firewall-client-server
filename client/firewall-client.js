@@ -1,14 +1,15 @@
 var storage = chrome.storage.local;
+
 var clientId = randomClientId();
 var pendingQuery = {};
-
 var query = null;
+
 var ignoreSubmit = false;
 var ignorePending = false;
 var getImagesTimeout = null;
 var autocompleteEnabled = true;
 
-var googleInput = '#lst-ib';
+var $googleInput = $('#lst-ib');
 
 storage.get([
 	'clientId',
@@ -16,6 +17,7 @@ storage.get([
 	'autocompleteEnabled'
 ], function(stored) {
 
+	// Get or set the client ID.
 	if (stored.clientId) {
 		clientId = stored.clientId;
 	} else {
@@ -24,21 +26,30 @@ storage.get([
 		});
 	}
 
-	if (stored.pendingQuery) {
-		pendingQuery = stored.pendingQuery;
-	}
+	console.log('Firewall Cafe | ' + clientId);
+	console.log('Server: ' + config.serverURL);
 
+	// Get user autocomplete preference.
 	if (stored.autocompleteEnabled) {
 		autocompleteEnabled = (stored.autocompleteEnabled == 'on');
 	}
 
-	console.log('Firewall Cafe ' + clientId);
-	console.log('Server: ' + config.serverURL);
-	if (pendingQuery && pendingQuery.query) {
-		console.log('Pending query: ' + pendingQuery.query);
-	}
 	if (autocompleteEnabled) {
-		console.log('Autocomplete enabled');
+		console.log('Autocomplete enabled.');
+	} else {
+		console.log('Autocomplete disabled.');
+	}
+
+	// Check for a pending query in storage and set it.
+	if (stored.pendingQuery) {
+		pendingQuery = stored.pendingQuery;
+		if (pendingQuery.query) {
+			console.log('Stored pending query: ' + pendingQuery.query);
+		} else {
+			console.log('No stored pending query. Starting fresh.');
+		}
+	} else {
+		console.log('No stored pending query. Starting fresh.');
 	}
 
 	setupUI();
@@ -48,6 +59,13 @@ storage.get([
 });
 
 function setupUI() {
+	console.log('Setting up UI...');
+
+	var $firewallShow = $('#firewall-show'),
+		 $firewallForm = $('#firewall-form'),
+		 $firewallClientId = $('#firewall-client-id'),
+		 $firewallSuggest = $('#firewall-suggest')[0],
+		 $body = $(document.body);
 
 	var suggestChecked = autocompleteEnabled ? ' checked="checked"' : '';
 
@@ -62,95 +80,132 @@ function setupUI() {
 		'</div>'
 	);
 
-	$('#firewall-show').click(function(e) {
+	$firewallShow.click(function(e) {
 		e.preventDefault();
-		$('#firewall-form').toggleClass('visible');
+		$firewallForm.toggleClass('visible');
 	});
 
-	$('#firewall-form').submit(function(e) {
+	// On Firewall form submit, update user preferences.
+	$firewallForm.submit(function(e) {
 		e.preventDefault();
-		clientId = $('#firewall-client-id').val();
-		autocompleteEnabled = $('#firewall-suggest')[0].checked;
+		clientId = $firewallClientId.val();
+		autocompleteEnabled = $firewallSuggest.checked;
 		var autocompleteStatus = (autocompleteEnabled ? 'on' : 'off');
+
 		storage.set({
 			clientId: clientId,
 			autocompleteEnabled: autocompleteStatus
 		}, function() {
+			console.log('Changing settings...');
 			console.log('Firewall client: ' + clientId);
 			console.log('Autocomplete: ' + autocompleteStatus);
-			$('#firewall-form').removeClass('visible');
+			$firewallForm.removeClass('visible');
 		});
+
 		if (autocompleteEnabled) {
-			$(googleInput).autocomplete({
+			$googleInput.autocomplete({
 				source: sensitiveQueries
 			});
-			$(googleInput).autocomplete('enable');
-			$(document.body).addClass('firewall-autocomplete');
+			$googleInput.autocomplete('enable');
+			$body.addClass('firewall-autocomplete');
 		} else {
-			$(googleInput).autocomplete('disable');
-			$(document.body).removeClass('firewall-autocomplete');
+			$googleInput.autocomplete('disable');
+			$body.removeClass('firewall-autocomplete');
 		}
 	});
 
+	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
-		$(googleInput).autocomplete({
+		$googleInput.autocomplete({
 			source: sensitiveQueries
 		});
-		$(document.body).addClass('firewall-autocomplete');
+		$body.addClass('firewall-autocomplete');
 	}
 }
 
 function setupInterval() {
+	console.log('Setting up URL checking interval...');
 	setInterval(function() {
 		checkURLQuery();
 	}, 100);
 }
 
 function setupStorageListener() {
-	 chrome.storage.onChanged.addListener(function(changes, area) {
-		 if (area != 'local') {
-			 return;
-		 }
-		 if (changes.pendingQuery) {
-			 pendingQuery = $.extend(pendingQuery, changes.pendingQuery.newValue);
-			 checkPendingQuery();
-			 checkPendingImages();
-		 }
-	 });
+	console.log('Setting up storage listener...');
+
+	// Listen to chrome storage for changes.
+	chrome.storage.onChanged.addListener(function(changes, area) {
+
+		// Ignore changes that aren't happening in local storage.
+		if (area != 'local') {
+			return;
+		}
+
+		// If the client performs a search and saves results to storage,
+		// update the pending query with the incoming data.
+		if (changes.pendingQuery) {
+			pendingQuery = $.extend(pendingQuery, changes.pendingQuery.newValue);
+			checkPendingQuery();
+			checkPendingImages();
+		}
+	});
 }
 
 function checkPendingQuery() {
+	if (pendingQuery.query) {
+		console.log("Pending query: ");
+		console.log(pendingQuery);
+	}
+
+	// If we're ignoring incoming query data because we're in the middle of handling a query, move on.
 	if (ignorePending) {
+		console.log('Ignoring pending queries.');
 		return;
 	}
+
+	// Look at the URL query string to get the search term.
 	var queryMatch = getQueryMatch();
+	if (queryMatch) {
+		console.log('URL search term is:', queryMatch);
+	}
+
+	// Timestamp this query.
 	var currTime = (new Date()).getTime();
 
+	// If the search term is the translation of an original search term, move on.
 	if (pendingQuery &&
 	    pendingQuery.translated &&
 	    pendingQuery.translated == queryMatch) {
 		// We've just searched for this one, let getImages take it from here
+		console.log('Already getting these images.');
 		return;
 	} else if (pendingQuery &&
 	           pendingQuery.timestamp &&
 	           currTime - pendingQuery.timestamp > 60 * 1000) {
-		// Pending queries expire after 1 min
+		// Pending queries expire after 1 min.
+		// If the query has expired, reset everything.
+		console.log('Query has expired.');
 		pendingQuery = {};
 		storage.set({
 			pendingQuery: {}
 		}, function() {
-			console.log('Removed expired pending query');
+			console.log('Reset query.');
 		});
 	} else if (pendingQuery.query &&
-	           pendingQuery.source != getSource()) {
-		console.log('Found a pending query: ' + pendingQuery.query);
+	           pendingQuery.searchEngine != getSource()) {
+		// If the origin of the search was in the other search engine,
+		// start a search for the term in the current search engine.
+		console.log('Found a pending query from', pendingQuery.source, ':', pendingQuery.query);
 		ignorePending = true;
 		searchPendingQuery();
 	}
 }
 
 function checkURLQuery() {
+	// Look at the URL query string to find the search term.
 	var queryMatch = getQueryMatch();
+
+	// If there's nothing that looks like a search term in the URL, keep polling.
 	if (!queryMatch) {
 		return;
 	}
@@ -161,41 +216,48 @@ function checkURLQuery() {
 		return;
 	}
 
+	// If the URL search term is not the query, that means we're about to start handling
+	// a new search.
 	if (queryMatch != query) {
 
+		// Update the query.
 		query = queryMatch;
 		if (!query) {
 			return;
 		}
 
+		console.log('Detected a', getSource(),'search: ' + query);
 		var timestamp = (new Date().getTime());
-		console.log('Detected a search: ' + query);
 
+		// Check to see if the ongoing query has any history.
 		var isPending = checkPending(query);
+
+		// If the primary search term is pending and is the original "source" search term,
+		// just continue along.
 		if (isPending == 'source') {
 			console.log('Query is already pending');
 			return;
 		} else if (isPending == 'translated') {
-			console.log('Pending translation: ' + pendingQuery.translated);
+			// If the primary search term is pending and is the translation of an original search,
+			// start ignoring subsequent pending queries and begin getting images.
+			console.log('Translation: ' + pendingQuery.translated);
 			ignorePending = true;
 			startGettingImages();
 		} else {
+			// If neither search is in progress,
+			// start the first query for images.
 			startQuery(query, function(result) {
-				console.log('Translated the query: ' + result.translated);
+				console.log('Translated query: ' + result.translated);
 				pendingQuery = $.extend(result, {
 					timestamp: timestamp,
-					source: getSource(),
 					googleImages: null,
-					baiduImages: null,
-					// langFrom: '',
-					// langTo: '',
-					// langConfidence: '',
-					// langAlternate: '',
+					baiduImages: null
 				});
+
 				storage.set({
 					pendingQuery: pendingQuery
 				}, function() {
-					console.log('Saved pending: ' + result.query);
+					console.log('Saved query to pending: ' + result.query);
 				});
 				startGettingImages();
 			});
@@ -207,6 +269,7 @@ function startQuery(query, callback) {
 	console.log('Starting query for ' + query);
 	var data = {
 		query: query,
+		searchEngine: getSource(),
 		secret: config.sharedSecret
 	};
 	$.ajax({
@@ -242,32 +305,58 @@ function checkPending(query) {
 }
 
 function searchPendingQuery() {
-	console.log('Searching for translated: ' + pendingQuery.translated);
-	var inputQuery = 'input[name=q], input[name=word]';
-	if ($(inputQuery).length == 0 ||
-	    $(inputQuery).first().closest('form').length == 0) {
-		console.log('Could not find form input, giving up.');
+	console.log('Searching for', pendingQuery.translated, '(translation of', pendingQuery.query, ') in', getSource());
+	// var inputQuery = 'input[name=q], input[name=word]';
+	// if ($(inputQuery).length == 0 ||
+	//     $(inputQuery).first().closest('form').length == 0) {
+	// 	console.log('Could not find form input, giving up.');
+	// 	ignorePending = false;
+	// 	return;
+	// }
+	var $inputField = findInputField();
+
+	$inputField.val(pendingQuery.translated);
+	// $(inputQuery).first().val(pendingQuery.translated);
+
+	// var $form = $inputField.first().closest('form');
+	// var $form = $(inputQuery).first().closest('form');
+	ignoreSubmit = true;
+	$inputField.first().closest('form').submit();
+}
+
+function findInputField() {
+	var inputField = 'input[name=q], input[name=word]',
+		$inputField = $(inputField);
+	if ($inputField.length == 0 || $inputField.first().closest('form').length == 0) {
+		console.log('Could not find form input. Giving up.');
 		ignorePending = false;
 		return;
 	}
-	$(inputQuery).first().val(pendingQuery.translated);
-	var $form = $(inputQuery).first().closest('form');
-	ignoreSubmit = true;
-	$form.submit();
+	return $inputField.first();
 }
 
 function getImages() {
-	if (!pendingQuery ||
-	    !pendingQuery.query) {
+	if (!pendingQuery || !pendingQuery.query) {
 		return;
 	}
-	console.log('Gathering images: ' + pendingQuery.query);
+
+	var imagesKey = getSource() + 'Images';
+	var numImages = 5;
+	var charLimit = 50000;
+
+	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
+
+	function _dedupeLimitedSet(imageSet, image) {
+		if (imageSet.length < numImages &&
+			image.length < charLimit/numImages &&
+			imageSet.indexOf(image) == -1) {
+			imageSet.push(image);
+		}
+	}
+
 	var images = [];
 	$('.imglist img').each(function(i, img) {
-		if (images.length < 20 &&
-		    images.indexOf(img.src) == -1) {
-			images.push(img.src);
-		}
+		_dedupeLimitedSet(images, img.src);
 	});
 	$('#rg .rg_l').each(function(i, link) {
 		var href = $(link).attr('href');
@@ -275,22 +364,23 @@ function getImages() {
 			return;
 		}
 		var src = href.match(/imgurl=([^&]+)/);
+
 		if (src) {
-			if (images.length < 20 &&
-			    images.indexOf(src[1]) == -1) {
-				images.push(src[1]);
-			}
+			_dedupeLimitedSet(images, src[1]);
 		}
 	});
 
 	if (images.length == 0) {
-		console.log('Waiting for images');
+		// Set images key to show that we looked for images but came up empty.
+		// Then let this run its course.
+		pendingQuery[imagesKey] = 'empty';
+
+		console.log('Still no images. Waiting 2 seconds and trying again.');
 		startGettingImages();
 		return;
 	}
 
-	console.log('Found ' + images.length + ' images');
-	var imagesKey = getSource() + 'Images';
+	console.log('Found ' + images.length + ' images from', getSource());
 	pendingQuery[imagesKey] = images;
 
 	if (!checkPendingImages()) {
@@ -304,16 +394,22 @@ function getImages() {
 }
 
 function checkPendingImages() {
-	console.log('Checking pending images...');
-	if (pendingQuery) {
-		if (pendingQuery.googleImages) {
+	if (pendingQuery && pendingQuery.googleImages && pendingQuery.baiduImages) {
+		console.log('Image gathering complete.');
+
+		if (pendingQuery.googleImages.length) {
 			console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google!');
-		}
-	   if (pendingQuery.baiduImages) {
-			console.log('Looks like we have', pendingQuery.baiduImages.length, 'images from Baidu!');
+		} else {
+			console.log('No image results from Google. :(');
 		}
 
-		// If we have one or both sets of images, submit them ... annnd we're done
+		if (pendingQuery.baiduImages.length) {
+			console.log('Looks like we have', pendingQuery.baiduImages.length, 'images from Baidu!');
+		} else {
+			console.log('No image results from Baidu. :(');
+		}
+
+		// If we have results from both search engines, submit them ... annnd we're done
 		submitImages(function() {
 			console.log('Removing pending query');
 			pendingQuery = {};
@@ -325,8 +421,7 @@ function checkPendingImages() {
 		});
 		return true;
 	}
-	console.log('Still waiting');
-	console.log(pendingQuery);
+
 	return false;
 }
 
@@ -335,31 +430,26 @@ function submitImages(callback) {
 		timestamp: pendingQuery.timestamp,
 		client: clientId,
 		secret: config.sharedSecret,
-		google_images: JSON.stringify(pendingQuery.googleImages),
-		baidu_images: JSON.stringify(pendingQuery.baiduImages),
-		// lang_from: pendingQuery.langFrom,
-		// lang_to: pendingQuery.langTo,
-		// lang_confidence: pendingQuery.langConfidence,
-		// lang_alternate_from: pendingQuery.langAlternate,
+		search_engine: pendingQuery.searchEngine,
+		query: pendingQuery.query,
+		translated: pendingQuery.translated,
+		lang_from: pendingQuery.langFrom,
+		lang_to: pendingQuery.langTo,
+		lang_confidence: pendingQuery.langConfidence,
+		lang_alternate: pendingQuery.langAlternate,
 	};
-	if (pendingQuery.source == 'google') {
-		data.google_query = pendingQuery.query;
-		data.baidu_query = pendingQuery.translated;
+
+	if (pendingQuery.googleImages == 'empty') {
+		data.google_images = null;
 	} else {
-		data.google_query = pendingQuery.translated;
-		data.baidu_query = pendingQuery.query;
+		data.google_images = JSON.stringify(pendingQuery.googleImages);
 	}
-	/*console.log('Submitting images to translation server');
-	$.ajax({
-		url: config.serverURL + 'submit-images',
-		method: 'POST',
-		data: data
-	}).done(function() {
-		console.log('Done submitting images to translation server');
-		callback();
-	}).fail(function(xhr, textStatus) {
-		console.log('Failed submitting images to translation server: ' + textStatus + ' / ' + xhr.responseText);
-	});*/
+
+	if (pendingQuery.baiduImages == 'empty') {
+		data.baidu_images = null;
+	} else {
+		data.baidu_images = JSON.stringify(pendingQuery.baiduImages);
+	}
 
 	console.log('Submitting images to library');
 	$.ajax({
@@ -374,6 +464,7 @@ function submitImages(callback) {
 	});
 }
 
+// Looks at URL query string and extracts search term.
 function getQueryMatch() {
 	var regex = /[^a-zA-Z0-9](q|word)=([^&]+)/;
 	var queryMatch = location.hash.match(regex);

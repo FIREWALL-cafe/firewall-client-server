@@ -23,21 +23,24 @@ socket.on('images-received', function(images) {
 });
 
 function showImageSet(imageSet, appendHTML) {
-	var id = getImageContainerId(imageSet.google_query);
+	var id = getImageContainerId(imageSet.query);
 	var timestamp = parseInt(imageSet.timestamp);
 	var client = $("<div>").text(imageSet.client).html();
 	var dateTime = new Date(timestamp).toLocaleString();
+	var googleQuery = imageSet.search_engine == 'google' ? imageSet.query : imageSet.translated;
+	var baiduQuery = imageSet.search_engine == 'baidu' ? imageSet.query : imageSet.translated;
+
 	if ($('#' + id).length == 0) {
 		var html =
 			'<div id="' + id + '" class="image-set">' +
 				'<div class="container">' +
 					'<h3 class="about">' + client + ', ' + dateTime + '</h3>' +
 					'<div class="google">' +
-						'<h2>Google: <strong>' + imageSet.google_query + '</strong></h2>' +
+						'<h2>Google: <strong>' + googleQuery + '</strong></h2>' +
 						'<div class="images">' + getImageHTML(imageSet.google_images) + '</div>' +
 					'</div>' +
 					'<div class="baidu">' +
-						'<h2>Baidu: <strong>' + imageSet.baidu_query + '</strong></h2>' +
+						'<h2>Baidu: <strong>' + baiduQuery + '</strong></h2>' +
 						'<div class="images">' + getImageHTML(imageSet.baidu_images) + '</div>' +
 					'</div>' +
 				'</div>' +

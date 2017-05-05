@@ -57,7 +57,6 @@ function httpRequest(req, res) {
 		res.end();
 	} else {
 		var uri = url.parse(req.url).pathname;
-
 		switch (uri) {
 			case '/detect-language':
 				handleDetectLanguage(req, res, responseHeaders);
@@ -133,6 +132,7 @@ function handleQuery(req, res, headers) {
 		consoleLogDivider();
 		consoleLogDivider();
 		console.log(query.toUpperCase());
+		console.log('Searched using', data.searchEngine);
 
 		if (validateSharedSecret(data.secret, res, headers)) {
 			detectLanguage(data, function(err, detections) {
@@ -162,6 +162,7 @@ function handleQuery(req, res, headers) {
 							jsonResponse(res, data, headers, {
 								ok: 1,
 								query: translationSearch.query,
+								searchEngine: data.searchEngine,
 								langFrom: translationSearch.langFrom,
 								langTo: translationSearch.langTo,
 								langConfidence: translationSearch.langConfidence,
@@ -248,7 +249,6 @@ function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = doc['translations'],
 		sensitive = doc.sensitive.lookup[query],
-		// tab = getSearchTab(search),
 		inSheet = false,
 		source,
 		value;
@@ -495,10 +495,15 @@ function handleImages(req, res, headers) {
 			var images = {
 				timestamp: data.timestamp,
 				client: data.client,
-				google_query: data.google_query,
-				baidu_query: data.baidu_query,
+				search_engine: data.search_engine,
+				query: data.query,
+				translated: data.translated,
 				google_images: data.google_images,
-				baidu_images: data.baidu_images
+				baidu_images: data.baidu_images,
+				lang_to: data.lang_to,
+				lang_from: data.lang_from,
+				lang_confidence: data.lang_confidence,
+				lang_alternate: data.lang_alternate,
 			};
 			doc.images.worksheet.addRow(images, function(err) {
 				if (err) {
@@ -547,23 +552,26 @@ function handleIndex(req, res, headers) {
 			output.ok = 1;
 			_.each(rows, function(row) {
 				try {
-					var google_images = JSON.parse(row.googleimages);
-					var baidu_images = JSON.parse(row.baiduimages);
+					var google_images = JSON.parse(row.google_images);
+					var baidu_images = JSON.parse(row.baidu_images);
 				} catch (e) {
-					if (row.googlequery) {
-						console.log('Error parsing row ' + row.googlequery);
+					if (row.query) {
+						console.log('Error parsing row ' + row.query);
 					}
 				}
 				if (google_images || baidu_images) {
 					images.push({
 						timestamp: parseInt(row.timestamp),
 						client: row.client,
-						google_query: row.googlequery,
-						baidu_query: row.baiduquery,
+						search_engine: row.search_engine,
+						query: row.query,
+						translated: row.translated,
 						google_images: google_images,
 						baidu_images: baidu_images,
 						lang_from: row.lang_from,
 						lang_to: row.lang_to,
+						lang_confidence: row.lang_confidence,
+						lang_alternate: row.lang_alternate,
 						remove: row.remove
 					});
 				}

@@ -18,7 +18,8 @@
     "content_scripts": [{
         "matches": [
             "https://www.google.com/*",
-            "http://image.baidu.com/*"
+            "http://image.baidu.com/*",
+            "https://image.baidu.com/*"
         ],
         "css": [
             "jquery-ui/jquery-ui.css",
