@@ -32,6 +32,7 @@ if (config.port == 80 ||
 }
 var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
+var wp = new WPAPI({ endpoint: config.wp_api_endpoint });
 
 // Store a locally cached copy of the Google Spreadsheet
 var doc = {};
@@ -75,7 +76,7 @@ function httpRequest(req, res) {
 				handleIndex(req, res, responseHeaders);
 				break;
 			case '/test-wp-api':
-				console.log(WPAPI);
+				console.log(wp);
 				break;
 			default:
 				handleDashboard(req, res);
