@@ -6,8 +6,7 @@ the_post();
 ?>
 <section id="library" class="search">
 	<div class="container">
-      // TODO: Consider editing this to reflect individual info about search.
-		<h2>Search Library</h2>
+		<?php the_title( '<h2>', '</h2>' ); ?>
 		<div class="post-content">
 			<?php the_content(); ?>
 		</div>

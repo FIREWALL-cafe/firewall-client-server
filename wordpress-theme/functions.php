@@ -29,6 +29,59 @@ function fwc_post_meta() {
 	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
 }
 
+function fwc_post_language_meta() {
+
+}
+
+function fwc_post_popularity_meta() {
+	$total_count = esc_html(fwc_get_search_count());
+	$google_count = esc_html(fwc_get_search_count_google());
+	$baidu_count = esc_html(fwc_get_search_count_baidu());
+	$ranking = esc_html(fwc_get_search_ranking());
+	$initial_search_date = esc_html(fwc_get_initial_search_date());
+	?>
+	This term has been searched <?php echo $total_count; ?> times since <?php echo $initial_search_date; ?>.
+	<?php if ($google_count > 0 && $baidu_count > 0) ?>
+		It's been searched <?php echo $google_count; ?> times using Google and <?php echo $baidu_count; ?> times using Baidu.
+	<?php else if ($google_count > 0) ?>
+		It's only been searched using Google.
+	<?php else ?>
+		It's only been searched using Baidu.
+	<?php end ?>
+
+
+	<?php fwc_build_search_chart(); ?>
+
+	That means it's the <?php
+}
+
+function fwc_get_search_ranking() {
+	// Get the search ranking among all searches in terms of popularity.
+}
+
+// Total times the term has been searched.
+function fwc_get_search_count() {
+	$count = get_post_meta(get_the_ID(), 'count', true);
+	return $count;
+}
+
+function fwc_get_initial_search_date() {
+	$initial_search_date = get_post_meta(get_the_ID(), 'initial_search_date', true);
+	retun $initial_search_date;
+}
+
+// Total times the term has been searched through Google.
+function fwc_get_search_count_google() {
+	$count_google = get_post_meta(get_the_ID(), 'count_google', true);
+	return $count_google;
+}
+
+// Total times the term has been searched through Baidu.
+function fwc_get_search_count_baidu() {
+	$count_baidu = get_post_meta(get_the_ID(), 'count_baidu', true);
+	return $count_baidu;
+}
+
 function fwc_get_search_popularity() {
 	$popularity = get_post_meta(get_the_ID(), 'popularity', true);
 	if ($popularity > 1) {
@@ -38,6 +91,7 @@ function fwc_get_search_popularity() {
 	}
 }
 
+// Most recent search datetime.
 function fwc_get_search_timestamp() {
 	$timestamp = get_post_meta(get_the_ID(), 'timestamp', true);
 	if ($timestamp) {
@@ -119,29 +173,65 @@ function fwc_import_images() {
 add_action('wp_ajax_import_images', 'fwc_import_images');
 
 function fwc_import_post($row) {
-
-	// TODO: Reconsider how we assign slugs. Adjust logic here.
-	$slug = sanitize_title("$row->google_query-$row->baidu_query");
-
+	$slug = sanitize_title("$row->query");
 	$post = get_page_by_path($slug, OBJECT, 'post');
+
 	if ($post) {
 		fwc_update_post_content($post->ID, $row);
 	} else {
-		$title = "$row->google_query / $row->baidu_query";
+		$title = "$row->query";
 		$post_id = wp_insert_post(array(
 			'post_title' => $title,
 			'post_name' => $slug,
 			'post_status' => 'draft'
 		));
 		if (!empty($post_id)) {
-			fwc_update_post_content($post_id, $row);
+			// fwc_update_post_content($post_id, $row);
+			fwc_add_initial_post_content($post_id, $row);
 		}
 	}
 }
 
+function fwc_add_initial_post_content($post_id, $row) {
+	$timestamp = round($row->timestamp / 1000);
+	$initial_search_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
+	$initial_search_date_gmt = date('Y-m-d H:i:s', $timestamp);
+
+	$search_language = $row->lang_from;
+	$search_language_confidence = $row->lang_confidence;
+	$search_language_alternate = $row->lang_alternate;
+
+	$search_engine = $row->$search_engine;
+	$search_count = 1;
+	$search_count_google = $search_engine == 'google' ? 1 : 0;
+	$search_count_baidu = $search_engine == 'baidu' ? 1 : 0;
+
+	$post_data = array(
+		'client' => $row->client,
+		'translated' => $row->translated,
+		'initial_search_date' => $initial_search_date,
+		'post_date' => $initial_search_date,
+		'initial_search_date_gmt' => $initial_search_date_gmt,
+		'post_date_gmt' => $initial_search_date_gmt,
+		'search_language' => $search_language,
+		'search_language_confidence' => $search_language_confidence,
+		'search_language_alternate' => $search_language_alternate,
+		'search_engine' => $search_engine,
+		'search_count' => $search_count,
+		'search_count_google' => $search_count_google,
+		'search_count_baidu' => $search_count_baidu,
+		'nsfw' => false,
+		'censorship_status' => 'not_censored',
+		'censored_count' => 0,
+		'uncensored_count' => 0,
+		'maybe_censored_count' => 0,
+		'search_dates' => array($initial_search_date),
+	);
+
+	wp_update_post($post_data);
+}
+
 function fwc_update_post_content($post_id, $row) {
-	// TODO: This overwrites existing searches with new content every time a search is repeated.
-	// Consider modifying so that this begins appending new content instead.
 	$timestamp = round($row->timestamp / 1000);
 	$post_date = date('Y-m-d H:i:s', $timestamp  - (5 * 60 * 60)); // EST
 	$post_date_gmt = date('Y-m-d H:i:s', $timestamp);
@@ -268,13 +358,25 @@ function fwc_submit_images() {
 	    $_POST['secret'] != FWC_SHARED_SECRET) {
 		return false;
 	}
+	// $row = (object) array(
+	// 	'timestamp' =>     $_POST['timestamp'],
+	// 	'client' =>        $_POST['client'],
+	// 	'google_query' =>  $_POST['google_query'],
+	// 	'baidu_query' =>   $_POST['baidu_query'],
+	// 	'google_images' => $_POST['google_images'],
+	// 	'baidu_images' =>  $_POST['baidu_images']
+	// );
 	$row = (object) array(
-		'timestamp' =>     $_POST['timestamp'],
-		'client' =>        $_POST['client'],
-		'google_query' =>  $_POST['google_query'],
-		'baidu_query' =>   $_POST['baidu_query'],
+		'timestamp' => $_POST['timestamp'],
+		'search_engine' => $_POST['search_engine'],
+		'client' => $_POST['client'],
+		'query' => $_POST['query'],
+		'translated' => $_POST['translated'],
 		'google_images' => $_POST['google_images'],
-		'baidu_images' =>  $_POST['baidu_images']
+		'baidu_images' => $_POST['baidu_images'],
+		'lang_from' => $_POST['lang_from'],
+		'lang_confidence' => $_POST['lang_confidence'],
+		'lang_alternate' => $_POST['lang_alternate'],
 	);
 	fwc_import_post($row);
 	die(1);
