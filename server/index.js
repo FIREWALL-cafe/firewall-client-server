@@ -32,7 +32,13 @@ if (config.port == 80 ||
 }
 var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
-var wp = new WPAPI({ endpoint: config.wp_api_endpoint });
+
+var wp = new WPAPI({
+	endpoint: config.wp_api_endpoint,
+	username: config.wp_username,
+	password: config.wp_password,
+	auth: true
+});
 
 // Store a locally cached copy of the Google Spreadsheet
 var doc = {};
@@ -76,7 +82,15 @@ function httpRequest(req, res) {
 				handleIndex(req, res, responseHeaders);
 				break;
 			case '/test-wp-api':
-				console.log(wp);
+				wp.posts().create({
+					title: 'Test from Node',
+					content: 'Test content from Node',
+				})
+				.then(function(response) {
+					console.log(response);
+				}).catch(function(error) {
+					console.log(error);
+				});
 				break;
 			default:
 				handleDashboard(req, res);
