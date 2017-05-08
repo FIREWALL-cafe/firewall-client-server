@@ -18,11 +18,88 @@ function fwc_register_menu() {
 }
 add_action( 'init', 'fwc_register_menu' );
 
+
+/////////////////////////////////////////////////
+//// Adds FWC custom taxonomies.
+/////////////////////////////////////////////////
+function fwc_add_custom_taxonomies() {
+  register_taxonomy('censorship_status', 'post', array(
+    'hierarchical' => false,
+    'labels' => array(
+      'name' => _x( 'Censorship Statuses', 'taxonomy general name' ),
+      'singular_name' => _x( 'Censorship Status', 'taxonomy singular name' ),
+      'search_items' =>  __( 'Search By Censorship Status' ),
+      'all_items' => __( 'All Censorship Statuses' ),
+      'edit_item' => __( 'Edit Censorship Status' ),
+      'update_item' => __( 'Update Censorship Status' ),
+      'add_new_item' => __( 'Add New Censorship Status' ),
+      'new_item_name' => __( 'New Censorship Status' ),
+      'menu_name' => __( 'Censorship Statuses' ),
+    ),
+    'rewrite' => array(
+      'slug' => 'censorship',
+      'with_front' => false,
+      'hierarchical' => false
+    ),
+  ));
+
+  // Add Search Language taxonomy to searches.
+  register_taxonomy('search_language', 'post', array(
+    // Hierarchical taxonomy (like categories)
+    'hierarchical' => false,
+    // This array of options controls the labels displayed in the WordPress Admin UI
+    'labels' => array(
+      'name' => _x( 'Search Languages', 'taxonomy general name' ),
+      'singular_name' => _x( 'Search Language', 'taxonomy singular name' ),
+      'search_items' =>  __( 'Search By Search Language' ),
+      'all_items' => __( 'All Search Languages' ),
+      'edit_item' => __( 'Edit Search Language' ),
+      'update_item' => __( 'Update Search Language' ),
+      'add_new_item' => __( 'Add New Search Language' ),
+      'new_item_name' => __( 'New Search Language' ),
+      'menu_name' => __( 'Search Languages' ),
+    ),
+    // Control the slugs used for this taxonomy
+    'rewrite' => array(
+      'slug' => 'search-language',
+      'with_front' => false,
+      'hierarchical' => false
+    ),
+  ));
+
+  register_taxonomy('search_engine', 'post', array(
+    // Hierarchical taxonomy (like categories)
+    'hierarchical' => false,
+    // This array of options controls the labels displayed in the WordPress Admin UI
+    'labels' => array(
+      'name' => _x( 'Search Engines', 'taxonomy general name' ),
+      'singular_name' => _x( 'Search Engine', 'taxonomy singular name' ),
+      'search_items' =>  __( 'Search By Search Engine' ),
+      'all_items' => __( 'All Search Engines' ),
+      'edit_item' => __( 'Edit Search Engine' ),
+      'update_item' => __( 'Update Search Engine' ),
+      'add_new_item' => __( 'Add New Search Engine' ),
+      'new_item_name' => __( 'New Search Engine' ),
+      'menu_name' => __( 'Search Engines' ),
+    ),
+    // Control the slugs used for this taxonomy
+    'rewrite' => array(
+      'slug' => 'search-engine',
+      'with_front' => false,
+      'hierarchical' => false
+    ),
+  ));
+}
+
+add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
+
+
 /////////////////////////////////////////////////
 //// Sets up metadata for individual search display. ////
 /////////////////////////////////////////////////
 function fwc_post_meta() {
-	$client = get_post_meta(get_the_ID(), 'client', true); ?>
+	$client = get_post_meta(get_the_ID(), 'client', true);
+	?>
 	Search by <?php echo esc_html($client); ?>
 	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_get_search_timestamp(); ?></a>
 	<?php echo fwc_get_search_popularity();
@@ -38,16 +115,14 @@ function fwc_post_popularity_meta() {
 	$google_count = esc_html(fwc_get_search_count_google());
 	$baidu_count = esc_html(fwc_get_search_count_baidu());
 	$ranking = esc_html(fwc_get_search_ranking());
-	$initial_search_date = esc_html(fwc_get_initial_search_date());
+	// $initial_search_date = esc_html(fwc_get_initial_search_date());
 	?>
-	This term has been searched <?php echo $total_count; ?> times since <?php echo $initial_search_date; ?>.
-	<?php if ($google_count > 0 && $baidu_count > 0) ?>
-		It's been searched <?php echo $google_count; ?> times using Google and <?php echo $baidu_count; ?> times using Baidu.
-	<?php else if ($google_count > 0) ?>
-		It's only been searched using Google.
-	<?php else ?>
-		It's only been searched using Baidu.
-	<?php end ?>
+	This term has been searched <?php echo $total_count; ?> times since <?php echo "initial_search_date"; ?>.
+	<?php
+	if ($google_count > 0 && $baidu_count > 0) {
+		echo "It's been searched ".$google_count."times using Google and".$baidu_count."times using Baidu.";
+	}
+	?>
 
 
 	<?php fwc_build_search_chart(); ?>
@@ -67,7 +142,7 @@ function fwc_get_search_count() {
 
 function fwc_get_initial_search_date() {
 	$initial_search_date = get_post_meta(get_the_ID(), 'initial_search_date', true);
-	retun $initial_search_date;
+	return $initial_search_date;
 }
 
 // Total times the term has been searched through Google.
@@ -95,9 +170,9 @@ function fwc_get_search_popularity() {
 function fwc_get_search_timestamp() {
 	$timestamp = get_post_meta(get_the_ID(), 'timestamp', true);
 	if ($timestamp) {
-		echo date('M, j Y, g:ia', round($timestamp / 1000));
+		echo date('M j, Y, g:ia', round($timestamp / 1000));
 	} else {
-		the_time('M, j Y, g:ia');
+		the_time('M j, Y, g:ia');
 	}
 }
 
@@ -172,11 +247,20 @@ function fwc_import_images() {
 }
 add_action('wp_ajax_import_images', 'fwc_import_images');
 
+
+/////////////////////////////////////////////////
+//// Import spreadsheet row and build or update post. ////
+/////////////////////////////////////////////////
 function fwc_import_post($row) {
 	$slug = sanitize_title("$row->query");
+	echo "Query: ".$slug."</br>";
+
 	$post = get_page_by_path($slug, OBJECT, 'post');
+	$post_id = $post->ID;
+	echo "Post ID: ".$post_id."</br>";
 
 	if ($post) {
+		echo "Post already exists. Updating post with new data.</br>";
 		fwc_update_post_content($post->ID, $row);
 	} else {
 		$title = "$row->query";
@@ -185,96 +269,115 @@ function fwc_import_post($row) {
 			'post_name' => $slug,
 			'post_status' => 'draft'
 		));
+
 		if (!empty($post_id)) {
-			// fwc_update_post_content($post_id, $row);
-			fwc_add_initial_post_content($post_id, $row);
+			fwc_initialize_post_content($post_id, $row);
 		}
 	}
 }
 
-function fwc_add_initial_post_content($post_id, $row) {
-	$timestamp = round($row->timestamp / 1000);
+function fwc_initialize_post_content($post_id, $row) {
+	fwc_initialize_post_metadata($post_id, $row);
+	fwc_build_post_content($post_id, $row);
+}
+
+function fwc_initialize_post_metadata($post_id, $row) {
+	fwc_update_post_metadata($post_id, $row);
+
+	add_post_meta( $post_id, 'censored_votes', 0, true);
+	add_post_meta( $post_id, 'uncensored_votes', 0, true);
+	add_post_meta( $post_id, 'maybe_censored_votes', 0, true);
+
 	$initial_search_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
 	$initial_search_date_gmt = date('Y-m-d H:i:s', $timestamp);
+	echo "Initial search date: ".$initial_search_date."</br>";
+	add_post_meta( $post_id, 'initial_search_date', $initial_search_date, true);
+	add_post_meta( $post_id, 'initial_search_date_gmt', $initial_search_date_gmt, true);
+}
+
+function fwc_update_post_metadata($post_id, $row) {
+	$timestamp = round($row->timestamp / 1000);
+	echo "Timestamp: ".$timestamp."</br>";
+	add_post_meta( $post_id, 'timestamp', $timestamp, false );
+
+	$client = array( $timestamp => $row->client );
+	echo "Client: ".$client."</br>";
+	add_post_meta( $post_id, 'client', $client, false );
+
+	$translation = array( $timestamp => $row->translation );
+	echo "Translation: ".$translation."</br>";
+	add_post_meta( $post_id, 'translation', $translation, false );
 
 	$search_language = $row->lang_from;
 	$search_language_confidence = $row->lang_confidence;
 	$search_language_alternate = $row->lang_alternate;
+	echo "Search language: ".$search_language."</br>";
+	if ($search_language == 'en') {
+		// Add to English
+	}
 
-	$search_engine = $row->$search_engine;
-	$search_count = 1;
-	$search_count_google = $search_engine == 'google' ? 1 : 0;
-	$search_count_baidu = $search_engine == 'baidu' ? 1 : 0;
+	$search_language = array( $timestamp => $search_language );
+	$search_language_confidence = array( $timestamp => $search_language_confidence );
+	$search_language_alternate = array( $timestamp => $search_language_alternate );
+
+	add_post_meta( $post_id, 'search_language', $search_language, false);
+	add_post_meta( $post_id, 'search_language_confidence', $search_language_confidence, false);
+	add_post_meta( $post_id, 'search_language_alternate', $search_language_alternate, false);
+
+	echo "Search engine: ".$row->search_engine;
+	$search_engine = array( $timestamp => $row->search_engine );
+	add_post_meta( $post_id, 'search_engine', $search_engine, false );
+
+	$google_images = array( $timestamp => $row->google_images );
+	add_post_meta( $post_id, 'google_images', $google_images, false);
+
+	$baidu_images = array( $timestamp => $row->baidu_images );
+	add_post_meta( $post_id, 'baidu_images', $baidu_images, false);
+}
+
+function fwc_update_post_content($post_id, $row) {
+	fwc_update_post_metadata($post_id, $row);
+	fwc_build_post_content($post_id, $row);
+}
+
+function fwc_build_post_content($post_id, $row) {
+
+	$google_images_html = fwc_build_image_set($post_id, $row, $row->google_images, 'google');
+	$baidu_images_html = fwc_build_image_set($post_id, $row, $row->baidu_images, 'baidu');
+
+	$post_content = $google_images_html . $baidu_images_html;
+
+	$timestamp = round($row->timestamp / 1000);
+	$post_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
+	$post_date_gmt = date('Y-m-d H:i:s', $timestamp);
 
 	$post_data = array(
-		'client' => $row->client,
-		'translated' => $row->translated,
-		'initial_search_date' => $initial_search_date,
-		'post_date' => $initial_search_date,
-		'initial_search_date_gmt' => $initial_search_date_gmt,
-		'post_date_gmt' => $initial_search_date_gmt,
-		'search_language' => $search_language,
-		'search_language_confidence' => $search_language_confidence,
-		'search_language_alternate' => $search_language_alternate,
-		'search_engine' => $search_engine,
-		'search_count' => $search_count,
-		'search_count_google' => $search_count_google,
-		'search_count_baidu' => $search_count_baidu,
-		'nsfw' => false,
-		'censorship_status' => 'not_censored',
-		'censored_count' => 0,
-		'uncensored_count' => 0,
-		'maybe_censored_count' => 0,
-		'search_dates' => array($initial_search_date),
+		'ID' => $post_id,
+		'post_content' => $post_content,
+		'post_date' => $post_date,
+		'post_date_gmt' => $post_date_gmt,
+		'edit_date' => true,
+		'post_status' => 'draft'
 	);
 
 	wp_update_post($post_data);
 }
 
-function fwc_update_post_content($post_id, $row) {
-	$timestamp = round($row->timestamp / 1000);
-	$post_date = date('Y-m-d H:i:s', $timestamp  - (5 * 60 * 60)); // EST
-	$post_date_gmt = date('Y-m-d H:i:s', $timestamp);
-	if (!empty($_GET['date_only'])) {
-		wp_update_post(array(
-			'ID' => $post_id,
-			'post_date' => $post_date,
-			'post_date_gmt' => $post_date_gmt,
-			'edit_date' => true
-		));
+function fwc_build_image_set($post_id, $row, $images, $label) {
+	if ($label == $row->search_engine) {
+		$term = $row->query;
 	} else {
-		fwc_update_popularity($post_id);
-		update_post_meta($post_id, 'timestamp', $row->timestamp);
-		update_post_meta($post_id, 'client', $row->client);
-		update_post_meta($post_id, 'google_query', $row->google_query);
-		update_post_meta($post_id, 'baidu_query', $row->baidu_query);
-
-		// Prevent overwriting image sets with blank image sets if subsequent searches yield no results.
-		if (!empty($row->google_images)) {
-			update_post_meta($post_id, 'google_images', $row->google_images);
-		}
-		if (!empty($row->baidu_images)) {
-			update_post_meta($post_id, 'baidu_images', $row->baidu_images);
-		}
-
-		$google_urls = json_decode($row->google_images);
-		$google_attachments = fwc_download_images($post_id, $google_urls, "google-$row->timestamp");
-		$baidu_urls = json_decode($row->baidu_images);
-		$baidu_attachments = fwc_download_images($post_id, $baidu_urls, "baidu-$row->timestamp");
-		$google_heading = "<h3 class=\"query-label\">Google: <strong>" . esc_html($row->google_query) . "</strong></h3>";
-		$google_ids = implode(',', $google_attachments);
-		$baidu_heading = "<h3 class=\"query-label\">Baidu: <strong>" . esc_html($row->baidu_query) . "</strong></h3>";
-		$baidu_ids = implode(',', $baidu_attachments);
-		wp_update_post(array(
-			'ID' => $post_id,
-			'post_content' => "$google_heading\n[gallery ids=\"$google_ids\" link=\"none\"]\n\n" .
-			                  "$baidu_heading\n[gallery ids=\"$baidu_ids\" link=\"none\"]",
-			'post_date' => $post_date,
-			'post_date_gmt' => $post_date_gmt,
-			'edit_date' => true,
-			//'post_status' => 'publish'
-		));
+		$term = $row->translation;
 	}
+	$urls = json_decode($images);
+	$attachments = fwc_download_images($post_id, $urls, "$label-$row->timestamp");
+
+	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong>" .
+		esc_html($term) . "</strong></h3>";
+	$ids = implode(',', $attachments);
+
+	$image_set = "$heading\n[gallery ids=\"$ids\" link=\"none\"]\n\n";
+	return $image_set;
 }
 
 function fwc_update_popularity($post_id) {
@@ -287,7 +390,6 @@ function fwc_update_popularity($post_id) {
 	}
 }
 
-// TODO: Handle URL-encoded images here
 function fwc_download_images($parent_id, $urls, $prefix) {
 	$image_ids = array();
 	$upload_dir = wp_upload_dir();
@@ -351,33 +453,42 @@ function fwc_attach_image($parent_id, $path) {
 function fwc_submit_images() {
 	fwc_enable_cors();
 
-	if (!defined('FWC_SHARED_SECRET')) {
-		die('No FWC_SHARED_SECRET defined');
-	}
-	if (empty($_POST['secret']) ||
-	    $_POST['secret'] != FWC_SHARED_SECRET) {
-		return false;
-	}
-	// $row = (object) array(
-	// 	'timestamp' =>     $_POST['timestamp'],
-	// 	'client' =>        $_POST['client'],
-	// 	'google_query' =>  $_POST['google_query'],
-	// 	'baidu_query' =>   $_POST['baidu_query'],
-	// 	'google_images' => $_POST['google_images'],
-	// 	'baidu_images' =>  $_POST['baidu_images']
-	// );
+	// if (!defined('FWC_SHARED_SECRET')) {
+	// 	die('No FWC_SHARED_SECRET defined');
+	// }
+
+	// if (empty($_POST['secret']) ||
+	//     $_POST['secret'] != FWC_SHARED_SECRET) {
+	// 	return false;
+	// }
+
 	$row = (object) array(
 		'timestamp' => $_POST['timestamp'],
 		'search_engine' => $_POST['search_engine'],
 		'client' => $_POST['client'],
 		'query' => $_POST['query'],
-		'translated' => $_POST['translated'],
+		'translation' => $_POST['translated'],
 		'google_images' => $_POST['google_images'],
 		'baidu_images' => $_POST['baidu_images'],
 		'lang_from' => $_POST['lang_from'],
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
 	);
+
+	// $row = (object) array(
+	// 	'timestamp' => 1494002936099,
+	// 	'search_engine' => 'google',
+	// 	'client' => 'Rachel',
+	// 	'query' => 'smog',
+	// 	'translation' => '烟雾',
+	// 	'testing' => 'test',
+	// 	'google_images' => '["https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fen%2F0%2F0d%2FEnemy_poster.jpg","https%3A%2F%2Fimages-na.ssl-images-amazon.com%2Fimages%2FM%2FMV5BMTQ2NzA5NjE4N15BMl5BanBnXkFtZTgwMjQ4NzMxMTE%40._V1_UY1200_CR92%2C0%2C630%2C1200_AL_.jpg","https%3A%2F%2Fimg.clipartfest.com%2F0c170ac7dd190527f5170a84b1b16506_chess-two-rows-of-pawns-with-enemy_2716-1810.jpeg","http%3A%2F%2Fwiki.teamliquid.net%2Fcommons%2Fimages%2Fthumb%2Fa%2Fa6%2FEnemyGG.png%2F600px-EnemyGG.png","https%3A%2F%2Ffateclick.com%2Fimages%2Farticle%2F20160629173902286.jpg"]',
+	// 	'baidu_images' => '["https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3001856329,28893401&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=399869671,3588326122&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=4059498633,2217812550&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3044178884,1121413162&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=1038633627,702716351&fm=23&gp=0.jpg"]',
+	// 	'lang_from' => 'en',
+	// 	'lang_confidence' => '0.98828125',
+	// 	'lang_alternate' => '',
+	// );
+
 	fwc_import_post($row);
 	die(1);
 }

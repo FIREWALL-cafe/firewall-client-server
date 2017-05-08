@@ -486,8 +486,19 @@ function submitImages(callback) {
 	// Grab information about the images uploaded, including new URLs.
 	// Replace the URL data for images with WP media URLs in the spreadsheet.
 
+	console.log('Sending draft post to WP.');
+	var url = config.libraryURL;
+	$.ajax({
+		url: url,
+		method: 'POST',
+		data: data,
+	}).done(function(){
+		console.log('Done sending draft post to WP.');
+	}).fail(function(xhr, textStatus)) {
+		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
+	});
 
-	// Sends data back to server for entry into the Google spreadsheet.
+	// Send data back to server for entry into the Google spreadsheet.
 	console.log('Saving images to spreadsheet');
 	var url = config.serverURL + 'submit-images';
 	$.ajax({
