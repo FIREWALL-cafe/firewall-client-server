@@ -274,6 +274,9 @@ function fwc_import_post($row) {
 			fwc_initialize_post_content($post_id, $row);
 		}
 	}
+
+	$post = get_page_by_path($slug, OBJECT, 'post');
+	return $post;
 }
 
 function fwc_initialize_post_content($post_id, $row) {
@@ -453,14 +456,14 @@ function fwc_attach_image($parent_id, $path) {
 function fwc_submit_images() {
 	fwc_enable_cors();
 
-	// if (!defined('FWC_SHARED_SECRET')) {
-	// 	die('No FWC_SHARED_SECRET defined');
-	// }
+	if (!defined('FWC_SHARED_SECRET')) {
+		die('No FWC_SHARED_SECRET defined');
+	}
 
-	// if (empty($_POST['secret']) ||
-	//     $_POST['secret'] != FWC_SHARED_SECRET) {
-	// 	return false;
-	// }
+	if (empty($_POST['secret']) ||
+	    $_POST['secret'] != FWC_SHARED_SECRET) {
+		return false;
+	}
 
 	$row = (object) array(
 		'timestamp' => $_POST['timestamp'],
@@ -489,8 +492,8 @@ function fwc_submit_images() {
 	// 	'lang_alternate' => '',
 	// );
 
-	fwc_import_post($row);
-	die(1);
+	$post = fwc_import_post($row);
+	die($post);
 }
 add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');

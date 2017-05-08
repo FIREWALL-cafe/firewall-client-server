@@ -277,6 +277,7 @@ function startQuery(query, callback) {
 		method: 'POST',
 		data: data
 	}).done(function(result) {
+		console.log(result);
 		callback(result);
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed query: ' + textStatus + ' / ' + xhr.responseText);
@@ -494,7 +495,7 @@ function submitImages(callback) {
 		data: data,
 	}).done(function(){
 		console.log('Done sending draft post to WP.');
-	}).fail(function(xhr, textStatus)) {
+	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
 	});
 
