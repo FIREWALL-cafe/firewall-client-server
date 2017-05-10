@@ -261,7 +261,7 @@ function fwc_import_post($row) {
 
 	if ($post) {
 		echo "Post already exists. Updating post with new data.</br>";
-		fwc_update_post_content($post->ID, $row);
+		fwc_update_post_content($post_id, $row);
 	} else {
 		$title = "$row->query";
 		$post_id = wp_insert_post(array(
@@ -275,8 +275,7 @@ function fwc_import_post($row) {
 		}
 	}
 
-	$post = get_page_by_path($slug, OBJECT, 'post');
-	return $post;
+	// $post = get_page_by_path($slug, OBJECT, 'post');
 }
 
 function fwc_initialize_post_content($post_id, $row) {
@@ -360,7 +359,7 @@ function fwc_build_post_content($post_id, $row) {
 		'post_date' => $post_date,
 		'post_date_gmt' => $post_date_gmt,
 		'edit_date' => true,
-		'post_status' => 'draft'
+		'post_status' => 'publish'
 	);
 
 	wp_update_post($post_data);
@@ -492,8 +491,8 @@ function fwc_submit_images() {
 	// 	'lang_alternate' => '',
 	// );
 
-	$post = fwc_import_post($row);
-	die($post);
+	fwc_import_post($row);
+	die(1);
 }
 add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');

@@ -5,13 +5,19 @@ the_post();
 $post_id = get_the_ID();
 
 $translation_data = get_post_meta($post_id, 'translation');
-$translation = array_values($translation_data[0])[0];
+if ($translation_data) {
+  $translation = array_values($translation_data[0])[0];
+}
 
 ?>
 <section id="library" class="search">
 	<div class="container">
-		<?php the_title( '<h2>', '</h2>' ); ?>
-      <h2><?php echo $translation; ?></h2>
+		<?php
+        the_title( '<h2>', '</h2>' );
+        if ($translation_data) {
+          echo "<h2>".$translation."</h2>";
+        }
+       ?>
 		<div class="post-content">
 			<?php the_content(); ?>
 		</div>
