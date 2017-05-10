@@ -1,10 +1,12 @@
 			<footer>
 				<div class="container">
-					<p><strong>FIREWALL</strong><br>
-						Pop-up internet cafe<br>
-						16B Orchard Street, NYC 10002</p>
+					<p><strong>FIREWALL Internet Cafe</strong><br>
+				
+						NYC pop-up: Feb 9 – Mar 6, 2016  |  St. Pölten, Austria pop-up: Dec 3 - 31, 2016<br>
+					
+						</p>
 					<p><a href="http://instagram.com/firewallcafe" target="_blank">Instagram</a><br>
-						<a href="https://www.facebook.com/events/964309336996524/" target="_blank">Facebook Event</a></p>
+						<a href="https://www.facebook.com/firewallcafepopup" target="_blank">Facebook </a></p>
 					<p><a href="http://www.joyceyujeanlee.com/" target="_blank">Joyce Yu-Jean Lee</a><br>
 						<a href="https://phiffer.org/" target="_blank">Dan Phiffer</a></p>
 				</div>

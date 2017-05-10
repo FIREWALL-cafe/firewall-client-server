@@ -11,9 +11,10 @@ the_post();
 	<div class="container">
 		<div class="columns">
 			<div class="sidebar">
-				<?php the_content(); ?>
+				<?php the_field( 'sidebar_content' ); ?>
 			</div>
 			<div class="content content--wide">
+				<?php the_content(); ?>
 				<?php
 				
 				while (have_rows( 'images' )) {

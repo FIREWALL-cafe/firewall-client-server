@@ -9,9 +9,10 @@ the_post();
 ?>
 <section id="home">
 	<div class="container">
-		<div class="columns">
-			<div class="sidebar">
-				<?php the_content(); ?>
+		<h2><?php the_title(); ?></h2>
+			<div class="columns">
+				<div class="sidebar">
+					<?php the_content(); ?>
 			</div>
 			<div class="content content--wide">
 				<?php
@@ -20,6 +21,8 @@ the_post();
 					the_row();
 					$img = get_sub_field( 'image' );
 					echo "<img src=\"{$img['sizes']['large']}\" alt=\"\">";
+					$caption = get_sub_field( 'caption' );
+					echo "hello $caption";
 				}
 				
 				?>

@@ -18,6 +18,15 @@ a {
 
 a:hover {
 	border-color: #E60011;
+	text-decoration: none;
+}
+
+a.publicationName {
+	color: #000;
+}
+
+a.publicationName:hover {
+	color: #e60011;
 }
 
 b, strong {
@@ -260,13 +269,13 @@ footer {
 }
 
 @media (min-width: 540px) {
-
+	
 	header .details {
 		clear: none;
 		float: right;
 		width: 225px;
 	}
-
+	
 }
 
 @media (min-width: 665px) {
@@ -290,34 +299,34 @@ footer {
 }
 
 @media (min-width: 980px) {
-
+	
 	header {
 		position: relative;
 		height: 180px;
 	}
-
+	
 	header h1 {
 		position: absolute;
 		left: 0;
 		bottom: 0;
 	}
-
+	
 	header .menu-header-menu-container {
 		float: none;
 		padding: 0;
 	}
-
+	
 	header .menu {
 		position: absolute;
 		left: 250px;
 		bottom: 0;
 	}
-
+	
 	header .menu li {
 		display: inline;
 		margin-right: 20px;
 	}
-
+	
 	header .details {
 		position: absolute;
 		right: 0;
@@ -325,34 +334,34 @@ footer {
 		width: 225px;
 		padding: 0;
 	}
-
+	
 	section {
 		padding: 30px 0;
 	}
-
+	
 	.container {
 		width: 980px;
 		margin: 0 auto;
 	}
-
+	
 	.main {
 		padding-top: 30px;
 	}
-
+	
 	.sidebar {
 		float: left;
 		width: 225px;
 	}
-
+	
 	.content {
 		float: left;
 		padding-left: 25px;
 		width: calc(100% - 225px);
 		max-width: 480px;
 	}
-
+	
 	.content--wide {
 		max-width: none;
 	}
-
+	
 }

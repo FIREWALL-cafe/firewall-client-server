@@ -86,7 +86,7 @@ the_post();
 				<h2>Support</h2>
 			</div>
 			<div class="content content--wide">
-				<p>This work was made possible by the Asian Women Giving Circle; and by the Franklin Furnace Fund supported by Jerome Foundation; the Lambent Foundation, The SHS Foundation, and by public funds from the New York City Department of Cultural Affairs in partnership with the City Council.</p>
+				<p>FIREWALL was made possible by the Asian Women Giving Circle; by the Franklin Furnace Fund supported by Jerome Foundation, the Lambent Foundation, The SHS Foundation; and in part with public funds from Creative Engagement, supported by the New York City Department of Cultural Affairs in partnership with the City Council and administered by Lower Manhattan Cultural Council.</p>
 				<?php 
 				
 				while ( have_rows( 'logos' ) ) {
