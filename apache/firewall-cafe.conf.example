@@ -1,20 +1,18 @@
+ServerName dev.firewallcafe.com
+
 <VirtualHost *:80>
 
-	DocumentRoot __PROJECT_ROOT__/www
+	DocumentRoot __PROJECT_ROOT__/wordpress
 
 	<Directory />
 		Options FollowSymLinks
 		AllowOverride None
 	</Directory>
 
-	<Directory __PROJECT_ROOT__/www>
+	<Directory __PROJECT_ROOT__/wordpress>
 		Options FollowSymLinks Indexes
 		AllowOverride All
 		Require all granted
-	</Directory>
-
-	<Directory __PROJECT_ROOT__/www/templates_c>
-		Require all denied
 	</Directory>
 
 	ErrorLog ${APACHE_LOG_DIR}/error.log

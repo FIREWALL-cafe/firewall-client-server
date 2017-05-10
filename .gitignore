@@ -1,8 +1,10 @@
 .DS_Store
 /.vagrant
-/vpn
+/apache/firewall-cafe.conf
 /client/config.js
 /server/config.js
 /server/service-key.json
 /server/node_modules/
 /server/ssl/
+/wordpress
+/vpn
