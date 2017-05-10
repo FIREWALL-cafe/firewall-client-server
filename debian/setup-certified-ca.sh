@@ -5,6 +5,15 @@ if [ $(id -u) != 0 ]; then
 	exit 1
 fi
 
+if [ ! -f /home/vagrant/.gitconfig ]; then
+	# Putting this at the top so we don't fail midway through setup
+	echo "This setup script uses your .gitconfig to autodetect your email address."
+	echo "Please run:"
+	echo "git config --global user.email \"you@example.com\""
+	echo "git config --global user.name \"Your Name\""
+	exit 1
+fi
+
 WHOAMI=`python -c 'import os, sys; print os.path.realpath(sys.argv[1])' $0`
 
 DEBIAN=`dirname $WHOAMI`
