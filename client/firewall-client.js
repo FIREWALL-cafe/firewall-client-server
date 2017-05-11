@@ -342,7 +342,7 @@ function getImages() {
 	}
 
 	var imagesKey = getSource() + 'Images';
-	var numImages = 5;
+	var numImages = 20;
 	var charLimit = 50000;
 
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
@@ -451,41 +451,6 @@ function submitImages(callback) {
 	} else {
 		data.baidu_images = JSON.stringify(pendingQuery.baiduImages);
 	}
-
-	// Post data to WordPress.
-	// Look for an existing post with the slug data.query.
-	// If there's no existing post, we create a new post:
-		// POST /wp/v2/posts
-			// date: data.timestamp (?)
-			// slug: data.query
-			// status: draft
-			// title: data.query
-			// content: [build content]
-			// comment_status: closed
-			// ping_status: open
-			// meta: (?)
-			// template: (?)
-			// categories:
-			// tags:
-	// If there's an existing post, get it and update:
-		// POST /wp/v2/posts/<id>
-			// date: data.timestamp
-			// [add previous date/time to query history] -- could use post-revisions endpoint for this?
-			// content: [rebuild content]
-			// meta: (?)
-			// categories: (?)
-			// tags: (?)
-	// For each image in each image set:
-		// Create a media object:
-			// POST wp/v2/media
-				// date: data.timestamp
-				// status: publish
-				// alt_text, caption, description: data.query
-				// post: <post ID>
-
-	// Get response data.
-	// Grab information about the images uploaded, including new URLs.
-	// Replace the URL data for images with WP media URLs in the spreadsheet.
 
 	console.log('Sending draft post to WP.');
 	var url = config.libraryURL;

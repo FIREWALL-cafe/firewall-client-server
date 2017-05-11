@@ -42,13 +42,7 @@
 		<div class="container">
 			<header>
 				<h1><a href="/"><img src="<?php echo get_stylesheet_directory_uri(); ?>/img/firewall.jpg" alt="FIREWALL Internet Cafe NYC"></a></h1><?php wp_nav_menu( array( 'theme_location' => 'header-menu' ) ); ?>
-				<div class="details">
-					<b>FIREWALL</b><br>
-					Pop-up Internet Cafe<br>
-					February 9–March 6, 2016<br>
-					Hours: Tues–Sun, 12–7pm<br>
-					16B Orchard Street, NYC 10002
-				</div>
+			
 			</header>
 		</div>
 		<div class="main">

@@ -1,19 +1,15 @@
 <?php
 /*
-Template Name: Press
+Template Name: Library
 */
 
 get_header();
 the_post();
 
 ?>
-<section id="home">
+<section id="library">
 	<div class="container">
 		<h2><?php the_title(); ?></h2>
-				
-				<?php the_content(); ?>
-				
-		<?php edit_post_link('Edit'); ?>
 	</div>
 </section>
 <?php

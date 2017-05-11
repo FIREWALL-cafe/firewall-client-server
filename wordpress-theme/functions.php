@@ -1,5 +1,7 @@
 <?php
 
+// Make sure FWC_SHARED_SECRET is defined in wp-config.
+
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
 	add_filter('wp_get_attachment_image_attributes', function($attr) {
@@ -90,7 +92,6 @@ function fwc_add_custom_taxonomies() {
     ),
   ));
 }
-
 add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
 
 
@@ -196,8 +197,8 @@ function fwc_import_images() {
 		// TODO: Edit below to allow empty image sets.
 		if (empty($row) ||
 		    empty($row->timestamp) ||
-		    empty($row->google_query) ||
-		    empty($row->baidu_query) ||
+		    empty($row->query) ||
+		    empty($row->translated) ||
 		    empty($row->google_images) ||
 		    empty($row->baidu_images)) {
 			echo "Skipping $curr\n";
@@ -207,7 +208,7 @@ function fwc_import_images() {
 		$verbose = false; //($curr == 3095);
 		if ($curr == $index) {
 			if (!empty($_GET['import'])) {
-				echo "Importing $row->google_query / $row->baidu_query<br><br>";
+				echo "Importing $row->query / $row->translated<br><br>";
 				fwc_import_post($row);
 				echo "Done.<br><br>";
 				if (!empty($_GET['continue'])) {
@@ -217,9 +218,8 @@ function fwc_import_images() {
 					echo "<script>window.location = '$next_url';</script>";
 				}
 			} else {
-				// TODO: Handle missing image sets & placeholders here.
-
-				echo "Google: $row->google_query<br><br>";
+				// TODO: Revise to manage new post data structure.
+				echo "Google: $row->query<br><br>";
 				$gi = json_decode($row->google_images);
 				foreach ($gi as $src) {
 					echo "<img src=\"$src\" style=\"height: 100px; width: auto;\">";
@@ -274,8 +274,6 @@ function fwc_import_post($row) {
 			fwc_initialize_post_content($post_id, $row);
 		}
 	}
-
-	// $post = get_page_by_path($slug, OBJECT, 'post');
 }
 
 function fwc_initialize_post_content($post_id, $row) {
@@ -286,55 +284,69 @@ function fwc_initialize_post_content($post_id, $row) {
 function fwc_initialize_post_metadata($post_id, $row) {
 	fwc_update_post_metadata($post_id, $row);
 
+	$timestamp = round($row->timestamp / 1000);
+	$initial_search_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
+	$initial_search_date_gmt = date('Y-m-d H:i:s', $timestamp);
+
+	add_post_meta( $post_id, 'initial_search_date', $initial_search_date, true);
+	add_post_meta( $post_id, 'initial_search_date_gmt', $initial_search_date_gmt, true);
+
 	add_post_meta( $post_id, 'censored_votes', 0, true);
 	add_post_meta( $post_id, 'uncensored_votes', 0, true);
 	add_post_meta( $post_id, 'maybe_censored_votes', 0, true);
-
-	$initial_search_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
-	$initial_search_date_gmt = date('Y-m-d H:i:s', $timestamp);
-	echo "Initial search date: ".$initial_search_date."</br>";
-	add_post_meta( $post_id, 'initial_search_date', $initial_search_date, true);
-	add_post_meta( $post_id, 'initial_search_date_gmt', $initial_search_date_gmt, true);
 }
 
 function fwc_update_post_metadata($post_id, $row) {
+
 	$timestamp = round($row->timestamp / 1000);
-	echo "Timestamp: ".$timestamp."</br>";
-	add_post_meta( $post_id, 'timestamp', $timestamp, false );
-
-	$client = array( $timestamp => $row->client );
-	echo "Client: ".$client."</br>";
-	add_post_meta( $post_id, 'client', $client, false );
-
-	$translation = array( $timestamp => $row->translation );
-	echo "Translation: ".$translation."</br>";
-	add_post_meta( $post_id, 'translation', $translation, false );
-
+	// $client = array( $timestamp => $row->client );
+	// $translation = array( $timestamp => $row->translation );
+	// $search_engine = array( $timestamp => $row->search_engine );
+	// $google_images = array( $timestamp => $row->google_images );
+	// $baidu_images = array( $timestamp => $row->baidu_images );
 	$search_language = $row->lang_from;
-	$search_language_confidence = $row->lang_confidence;
-	$search_language_alternate = $row->lang_alternate;
-	echo "Search language: ".$search_language."</br>";
+
+	$metadata = array(
+		'timestamp' => $timestamp,
+		'client' => $row->client,
+		'translation' => $row->translation,
+		'search_engine' => $row->search_engine,
+		'google_images' => $row->google_images,
+		'baidu_images' => $row->baidu_images,
+		'search_language' => $search_language,
+		'search_language_confidence' => $row->lang_confidence,
+		'search_language_alternate' => $row->lang_alternate,
+	);
+
+	// add_post_meta( $post_id, 'timestamp', $timestamp, false );
+	// add_post_meta( $post_id, 'client', $client, false );
+	// add_post_meta( $post_id, 'translation', $translation, false );
+	// add_post_meta( $post_id, 'search_engine', $search_engine, false );
+	// add_post_meta( $post_id, 'google_images', $google_images, false);
+	// add_post_meta( $post_id, 'baidu_images', $baidu_images, false);
+
+	fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
+	fwc_update_post_search_language($post_id, $search_language);
+}
+
+function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {
+	foreach ($metadata as $meta_key => $data) {
+		add_post_meta( $post_id, $meta_key, array( $timestamp => $data ), false );
+	}
+}
+
+function fwc_update_post_search_language($post_id, $search_language) {
 	if ($search_language == 'en') {
-		// Add to English
+		// Attach to appropriate Search Language taxonomy.
 	}
 
-	$search_language = array( $timestamp => $search_language );
-	$search_language_confidence = array( $timestamp => $search_language_confidence );
-	$search_language_alternate = array( $timestamp => $search_language_alternate );
+	// $search_language = array( $timestamp => $search_language );
+	// $search_language_confidence = array( $timestamp => $row->lang_confidence );
+	// $search_language_alternate = array( $timestamp => $row->lang_alternate );
 
-	add_post_meta( $post_id, 'search_language', $search_language, false);
-	add_post_meta( $post_id, 'search_language_confidence', $search_language_confidence, false);
-	add_post_meta( $post_id, 'search_language_alternate', $search_language_alternate, false);
-
-	echo "Search engine: ".$row->search_engine;
-	$search_engine = array( $timestamp => $row->search_engine );
-	add_post_meta( $post_id, 'search_engine', $search_engine, false );
-
-	$google_images = array( $timestamp => $row->google_images );
-	add_post_meta( $post_id, 'google_images', $google_images, false);
-
-	$baidu_images = array( $timestamp => $row->baidu_images );
-	add_post_meta( $post_id, 'baidu_images', $baidu_images, false);
+	// add_post_meta( $post_id, 'search_language', $search_language, false);
+	// add_post_meta( $post_id, 'search_language_confidence', $search_language_confidence, false);
+	// add_post_meta( $post_id, 'search_language_alternate', $search_language_alternate, false);
 }
 
 function fwc_update_post_content($post_id, $row) {
@@ -476,26 +488,31 @@ function fwc_submit_images() {
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
 	);
-
-	// $row = (object) array(
-	// 	'timestamp' => 1494002936099,
-	// 	'search_engine' => 'google',
-	// 	'client' => 'Rachel',
-	// 	'query' => 'smog',
-	// 	'translation' => '烟雾',
-	// 	'testing' => 'test',
-	// 	'google_images' => '["https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fen%2F0%2F0d%2FEnemy_poster.jpg","https%3A%2F%2Fimages-na.ssl-images-amazon.com%2Fimages%2FM%2FMV5BMTQ2NzA5NjE4N15BMl5BanBnXkFtZTgwMjQ4NzMxMTE%40._V1_UY1200_CR92%2C0%2C630%2C1200_AL_.jpg","https%3A%2F%2Fimg.clipartfest.com%2F0c170ac7dd190527f5170a84b1b16506_chess-two-rows-of-pawns-with-enemy_2716-1810.jpeg","http%3A%2F%2Fwiki.teamliquid.net%2Fcommons%2Fimages%2Fthumb%2Fa%2Fa6%2FEnemyGG.png%2F600px-EnemyGG.png","https%3A%2F%2Ffateclick.com%2Fimages%2Farticle%2F20160629173902286.jpg"]',
-	// 	'baidu_images' => '["https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3001856329,28893401&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=399869671,3588326122&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=4059498633,2217812550&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3044178884,1121413162&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=1038633627,702716351&fm=23&gp=0.jpg"]',
-	// 	'lang_from' => 'en',
-	// 	'lang_confidence' => '0.98828125',
-	// 	'lang_alternate' => '',
-	// );
+	// $row = fwc_test_post_data();
 
 	fwc_import_post($row);
+
 	die(1);
 }
 add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');
+
+function fwc_test_post_data() {
+	$row = (object) array(
+		'timestamp' => 1494002936099,
+		'search_engine' => 'google',
+		'client' => 'Rachel',
+		'query' => 'smog',
+		'translation' => '烟雾',
+		'testing' => 'test',
+		'google_images' => '["https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fen%2F0%2F0d%2FEnemy_poster.jpg","https%3A%2F%2Fimages-na.ssl-images-amazon.com%2Fimages%2FM%2FMV5BMTQ2NzA5NjE4N15BMl5BanBnXkFtZTgwMjQ4NzMxMTE%40._V1_UY1200_CR92%2C0%2C630%2C1200_AL_.jpg","https%3A%2F%2Fimg.clipartfest.com%2F0c170ac7dd190527f5170a84b1b16506_chess-two-rows-of-pawns-with-enemy_2716-1810.jpeg","http%3A%2F%2Fwiki.teamliquid.net%2Fcommons%2Fimages%2Fthumb%2Fa%2Fa6%2FEnemyGG.png%2F600px-EnemyGG.png","https%3A%2F%2Ffateclick.com%2Fimages%2Farticle%2F20160629173902286.jpg"]',
+		'baidu_images' => '["https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3001856329,28893401&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=399869671,3588326122&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=4059498633,2217812550&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3044178884,1121413162&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=1038633627,702716351&fm=23&gp=0.jpg"]',
+		'lang_from' => 'en',
+		'lang_confidence' => '0.98828125',
+		'lang_alternate' => '',
+	);
+	return $row;
+}
 
 function fwc_intermediate_image_sizes($sizes) {
 	if (defined('FWC_IMPORTING_IMAGES')) {
@@ -514,7 +531,6 @@ function fwc_enable_cors() {
 add_action('wp_headers', 'fwc_enable_cors');
 
 class CSV_File {
-
 	function __construct($path) {
 		$this->path = $path;
 		$this->fh = fopen($path, 'r');
@@ -541,5 +557,4 @@ class CSV_File {
 			echo "returning labeled\n";
 		return (object) $labeled;
 	}
-
 }
