@@ -26,8 +26,8 @@ function wpghci_update() {
 	// More info
 	// https://developer.github.com/webhooks/
 
-	$cwd = '/home/firewallcafe/src';
-	$log = '/home/firewallcafe/logs/github.log';
+	$cwd = '/home/firewallcafe/stag_src';
+	$log = '/home/firewallcafe/github.log';
 
 	if (empty($_POST['payload'])) {
 		echo 'No payload found.';
@@ -35,7 +35,8 @@ function wpghci_update() {
 	}
 
 	ignore_user_abort(true);
-	$payload = json_decode($_POST['payload']);
+	$payload = stripslashes($_POST['payload']);
+	$payload = json_decode($payload);
 
 	// which branch was committed?
 	$branch = 'unknown';
@@ -45,8 +46,9 @@ function wpghci_update() {
 	}
 
 	// only pull if we are on the same branch
-	if ($branch != wpghci_current_branch($cwd)) {
-		echo "Wrong branch.";
+	$curr_branch = wpghci_current_branch($cwd);
+	if ($branch != $curr_branch) {
+		echo "Wrong branch. ($payload->ref / $branch vs $curr_branch)";
 		exit;
 	}
 	
