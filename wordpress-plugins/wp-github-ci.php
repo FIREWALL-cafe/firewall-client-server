@@ -17,7 +17,7 @@ function wpghci_update() {
 	$log = '/home/firewallcafe/github.log';
 
 	if (empty($_POST['payload'])) {
-		'No payload found.';
+		echo 'No payload found.';
 		exit;
 	}
 
