@@ -22,8 +22,7 @@ function wpghci_update() {
 	}
 
 	ignore_user_abort(true);
-	$input = file_get_contents('php://input');
-	$payload = json_decode($input);
+	$payload = json_decode($_POST['payload']);
 
 	// which branch was committed?
 	$branch = 'unknown';
@@ -40,7 +39,7 @@ function wpghci_update() {
 	
 	// pull from $branch
 	$cmd = sprintf('git pull origin %s', $branch);
-	$result = syscall($cmd, $cwd);
+	$result = wpghci_call($cmd, $cwd);
 	$output = '';
 	// append commits
 	foreach ($payload->commits as $commit) {
@@ -75,4 +74,22 @@ function wpghci_current_branch($cwd) {
 		return $matches[1];
 	}
 	return 'master';
+}
+
+function wpghci_call($cmd, $cwd) {
+	$descriptorspec = array(
+		1 => array('pipe', 'w'), // stdout is a pipe that the child will write to
+		2 => array('pipe', 'w')  // stderr
+	);
+	$resource = proc_open($cmd, $descriptorspec, $pipes, $cwd);
+	if (is_resource($resource)) {
+		$output = stream_get_contents($pipes[2]);
+		$output .= PHP_EOL;
+		$output .= stream_get_contents($pipes[1]);
+		$output .= PHP_EOL;
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		proc_close($resource);
+		return $output;
+	}
 }
