@@ -22,7 +22,8 @@ function wpghci_update() {
 	}
 
 	ignore_user_abort(true);
-	$payload = json_decode($_POST['payload']);
+	$input = file_get_contents('php://input');
+	$payload = json_decode($input);
 
 	// which branch was committed?
 	$branch = 'unknown';
