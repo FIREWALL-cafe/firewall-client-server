@@ -1,6 +1,6 @@
 <?php
 
-// Make sure FWC_SHARED_SECRET is defined in wp-config.
+define(FWC_SHARED_SECRET, 'b43ce0bdfb64d54130679f9632f37de94cfe2032');
 
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
