@@ -98,17 +98,120 @@ add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
 /////////////////////////////////////////////////
 //// Sets up metadata for individual search display. ////
 /////////////////////////////////////////////////
+function fwc_get_latest_value($array) {
+	$data = end($array);
+	if (gettype($data) == 'string' || gettype($data) == 'boolean') {
+		return $data;
+	} else {
+		return end($data);
+	}
+}
+
+function fwc_get_latest_timestamp() {
+	$timestamps = get_post_meta(get_the_ID(), 'timestamp');
+	$timestamp = fwc_get_latest_value($timestamps);
+	return $timestamp;
+}
+
+function fwc_get_first_timestamp() {
+	return array_values(get_post_meta(get_the_ID(), 'timestamp'))[0];
+}
+
+function fwc_get_first_meta($key) {
+	$meta = get_post_meta(get_the_ID(), $key);
+	return array_values($meta)[0];
+}
+
+function fwc_get_latest_meta($key) {
+	$meta = get_post_meta(get_the_ID(), $key);
+	return fwc_get_latest_value($meta);
+}
+
+function fwc_get_meta_by_timestamp($key, $timestamp) {
+	$dataset = get_post_meta(get_the_ID(), $key);
+	$meta = array_filter($dataset, function($data) use ($timestamp) {
+		return key($data) == $timestamp;
+	});
+	return fwc_get_latest_value($meta);
+}
+
+function fwc_get_search_count() {
+	$timestamps = get_post_meta(get_the_ID(), 'timestamp');
+	$count = count($timestamps);
+	return $count;
+}
+
+function fwc_format_date($timestamp) {
+	return date('M j, Y, g:ia', $timestamp - (5*60*60));
+}
+
+function fwc_post_vote_buttons() {
+	fwc_post_vote_button('Censored', fwc_get_latest_meta('censored_votes'));
+	fwc_post_vote_button('Not Censored', fwc_get_latest_meta('uncensored_votes'));
+	fwc_post_vote_button('May Be Censored', fwc_get_latest_meta('maybe_censored_votes'));
+}
+
+function fwc_post_vote_button($button_text, $count) {
+	echo "<div class=\"vote-button-container\">";
+	echo "<p>".$count."</p>";
+	echo "<button>".$button_text."</button>";
+	echo "</div>";
+}
+
+function fwc_post_search_history() {
+  $count = fwc_get_search_count();
+  $initial_search_date = fwc_get_first_timestamp();
+
+  // Display chart of search history here.
+  if ($count > 1) {
+	echo "<p>This term has been searched ".$count." times, most recently by ".fwc_get_latest_meta('client')." on ".fwc_format_date(fwc_get_latest_timestamp()).".</br>";
+	echo "It was first searched by ".fwc_get_meta_by_timestamp('client', $initial_search_date)." on ".fwc_format_date($initial_search_date).".</br>";
+  } else {
+  	echo "<p>This term was searched by ".fwc_get_latest_meta('client')." on ".fwc_format_date($initial_search_date).".</p>";
+  }
+
+
+  // echo "This is the [ranking]th most popular search using Firewall.</p>";
+}
+
+function fwc_post_search_language() {
+  $search_language = fwc_get_latest_meta('search_language');
+  echo $search_language;
+}
+
+function fwc_post_search_engine() {
+	$search_engine = fwc_get_latest_meta('search_engine');
+	echo $search_engine;
+}
+
+function fwc_post_translation_history() {
+	// $translation_history =
+}
+
+function fwc_post_previous_searches() {
+	$timestamps = get_post_meta(get_the_ID(), 'timestamp');
+
+	array_pop($timestamps);
+	$timestamps = array_reverse($timestamps);
+
+	foreach ($timestamps as $timestamp) {
+		echo "<div class=\"post-history\">";
+		echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
+		echo "<em>Search Engine:</em> ".fwc_get_meta_by_timestamp('search_engine', $timestamp)."</br>";
+		print_r(fwc_get_meta_by_timestamp('google_images', $timestamp));
+		print_r(fwc_get_meta_by_timestamp('baidu_images', $timestamp));
+		echo "</div>";
+	}
+}
+
+//TODO: REVISE BELOW
 function fwc_post_meta() {
 	$client = get_post_meta(get_the_ID(), 'client', true);
 	?>
 	Search by <?php echo esc_html($client); ?>
-	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_get_search_timestamp(); ?></a>
-	<?php echo fwc_get_search_popularity();
+	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_format_date(fwc_get_latest_timestamp()); ?></a>
+	<?php // echo fwc_get_search_popularity();
 	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
-}
-
-function fwc_post_language_meta() {
-
 }
 
 function fwc_post_popularity_meta() {
@@ -131,51 +234,6 @@ function fwc_post_popularity_meta() {
 	That means it's the <?php
 }
 
-function fwc_get_search_ranking() {
-	// Get the search ranking among all searches in terms of popularity.
-}
-
-// Total times the term has been searched.
-function fwc_get_search_count() {
-	$count = get_post_meta(get_the_ID(), 'count', true);
-	return $count;
-}
-
-function fwc_get_initial_search_date() {
-	$initial_search_date = get_post_meta(get_the_ID(), 'initial_search_date', true);
-	return $initial_search_date;
-}
-
-// Total times the term has been searched through Google.
-function fwc_get_search_count_google() {
-	$count_google = get_post_meta(get_the_ID(), 'count_google', true);
-	return $count_google;
-}
-
-// Total times the term has been searched through Baidu.
-function fwc_get_search_count_baidu() {
-	$count_baidu = get_post_meta(get_the_ID(), 'count_baidu', true);
-	return $count_baidu;
-}
-
-function fwc_get_search_popularity() {
-	$popularity = get_post_meta(get_the_ID(), 'popularity', true);
-	if ($popularity > 1) {
-		return "($popularity overall searches)";
-	} else {
-		return '';
-	}
-}
-
-// Most recent search datetime.
-function fwc_get_search_timestamp() {
-	$timestamp = get_post_meta(get_the_ID(), 'timestamp', true);
-	if ($timestamp) {
-		echo date('M j, Y, g:ia', round($timestamp / 1000));
-	} else {
-		the_time('M j, Y, g:ia');
-	}
-}
 
 /////////////////////////////////////////////////
 //// Imports images from CSV file. ////
@@ -256,10 +314,10 @@ function fwc_import_post($row) {
 	echo "Query: ".$slug."</br>";
 
 	$post = get_page_by_path($slug, OBJECT, 'post');
-	$post_id = $post->ID;
-	echo "Post ID: ".$post_id."</br>";
 
 	if ($post) {
+		$post_id = $post->ID;
+		echo "Post ID: ".$post_id."</br>";
 		echo "Post already exists. Updating post with new data.</br>";
 		fwc_update_post_content($post_id, $row);
 	} else {
@@ -269,6 +327,8 @@ function fwc_import_post($row) {
 			'post_name' => $slug,
 			'post_status' => 'draft'
 		));
+		echo "Post ID: ".$post_id."</br>";
+		echo "New post. Adding post with current data.</br>";
 
 		if (!empty($post_id)) {
 			fwc_initialize_post_content($post_id, $row);
@@ -284,30 +344,19 @@ function fwc_initialize_post_content($post_id, $row) {
 function fwc_initialize_post_metadata($post_id, $row) {
 	fwc_update_post_metadata($post_id, $row);
 
-	$timestamp = round($row->timestamp / 1000);
-	$initial_search_date = date('Y-m-d H:i:s', $timestamp - (5 * 60 * 60));
-	$initial_search_date_gmt = date('Y-m-d H:i:s', $timestamp);
-
-	add_post_meta( $post_id, 'initial_search_date', $initial_search_date, true);
-	add_post_meta( $post_id, 'initial_search_date_gmt', $initial_search_date_gmt, true);
-
 	add_post_meta( $post_id, 'censored_votes', 0, true);
 	add_post_meta( $post_id, 'uncensored_votes', 0, true);
 	add_post_meta( $post_id, 'maybe_censored_votes', 0, true);
 }
 
 function fwc_update_post_metadata($post_id, $row) {
-
 	$timestamp = round($row->timestamp / 1000);
-	// $client = array( $timestamp => $row->client );
-	// $translation = array( $timestamp => $row->translation );
-	// $search_engine = array( $timestamp => $row->search_engine );
-	// $google_images = array( $timestamp => $row->google_images );
-	// $baidu_images = array( $timestamp => $row->baidu_images );
+	add_post_meta($post_id, 'timestamp', $timestamp, false);
+
 	$search_language = $row->lang_from;
+	fwc_update_post_search_language($post_id, $search_language);
 
 	$metadata = array(
-		'timestamp' => $timestamp,
 		'client' => $row->client,
 		'translation' => $row->translation,
 		'search_engine' => $row->search_engine,
@@ -317,16 +366,7 @@ function fwc_update_post_metadata($post_id, $row) {
 		'search_language_confidence' => $row->lang_confidence,
 		'search_language_alternate' => $row->lang_alternate,
 	);
-
-	// add_post_meta( $post_id, 'timestamp', $timestamp, false );
-	// add_post_meta( $post_id, 'client', $client, false );
-	// add_post_meta( $post_id, 'translation', $translation, false );
-	// add_post_meta( $post_id, 'search_engine', $search_engine, false );
-	// add_post_meta( $post_id, 'google_images', $google_images, false);
-	// add_post_meta( $post_id, 'baidu_images', $baidu_images, false);
-
 	fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
-	fwc_update_post_search_language($post_id, $search_language);
 }
 
 function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {
@@ -355,9 +395,11 @@ function fwc_update_post_content($post_id, $row) {
 }
 
 function fwc_build_post_content($post_id, $row) {
+	$google_images = json_decode($row->google_images);
+	$baidu_images = json_decode($row->baidu_images);
 
-	$google_images_html = fwc_build_image_set($post_id, $row, $row->google_images, 'google');
-	$baidu_images_html = fwc_build_image_set($post_id, $row, $row->baidu_images, 'baidu');
+	$google_images_html = fwc_build_image_set($post_id, $row, $google_images, 'google');
+	$baidu_images_html = fwc_build_image_set($post_id, $row, $baidu_images, 'baidu');
 
 	$post_content = $google_images_html . $baidu_images_html;
 
@@ -377,13 +419,16 @@ function fwc_build_post_content($post_id, $row) {
 	wp_update_post($post_data);
 }
 
-function fwc_build_image_set($post_id, $row, $images, $label) {
+function fwc_build_image_set($post_id, $row, $urls, $label) {
+	echo "Building ".$label." image set</br>";
 	if ($label == $row->search_engine) {
 		$term = $row->query;
 	} else {
 		$term = $row->translation;
 	}
-	$urls = json_decode($images);
+	echo "Term: ".$term."</br>";
+	echo "URLS: ".$urls."</br>";
+
 	$attachments = fwc_download_images($post_id, $urls, "$label-$row->timestamp");
 
 	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong>" .
@@ -409,6 +454,7 @@ function fwc_download_images($parent_id, $urls, $prefix) {
 	$upload_dir = wp_upload_dir();
 	$num = 0;
 	foreach ($urls as $url) {
+		// $url = urldecode($url);
 		echo "$url: ";
 		$response = wp_remote_get($url, array(
 			'timeout' => '30',
@@ -441,20 +487,20 @@ function fwc_download_images($parent_id, $urls, $prefix) {
 			$path = "$dir/$prefix-$image_num.$ext";
 			file_put_contents($path, $body);
 			echo "Saved: $path<br>";
-			$image_ids[] = fwc_attach_image($parent_id, $path);
+			$image_ids[] = fwc_attach_image($parent_id, $path, $url);
 		}
 	}
 	return $image_ids;
 }
 
-function fwc_attach_image($parent_id, $path) {
+function fwc_attach_image($parent_id, $path, $url) {
 	$filetype = wp_check_filetype(basename( $path ), null);
 	$wp_upload_dir = wp_upload_dir();
 	$attachment = array(
 		'guid'           => $wp_upload_dir['url'] . '/' . basename( $path ),
 		'post_mime_type' => $filetype['type'],
 		'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $path ) ),
-		'post_content'   => '',
+		'post_content'   => $url,
 		'post_status'    => 'inherit'
 	);
 	$attach_id = wp_insert_attachment( $attachment, $path, $parent_id );
@@ -489,7 +535,6 @@ function fwc_submit_images() {
 		'lang_alternate' => $_POST['lang_alternate'],
 	);
 	// $row = fwc_test_post_data();
-
 	fwc_import_post($row);
 
 	die(1);
@@ -499,16 +544,16 @@ add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');
 
 function fwc_test_post_data() {
 	$row = (object) array(
-		'timestamp' => 1494002936099,
+		'timestamp' => 1494457634573,
 		'search_engine' => 'google',
 		'client' => 'Rachel',
-		'query' => 'smog',
-		'translation' => '烟雾',
+		'query' => 'resist',
+		'translation' => '抗',
 		'testing' => 'test',
-		'google_images' => '["https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fen%2F0%2F0d%2FEnemy_poster.jpg","https%3A%2F%2Fimages-na.ssl-images-amazon.com%2Fimages%2FM%2FMV5BMTQ2NzA5NjE4N15BMl5BanBnXkFtZTgwMjQ4NzMxMTE%40._V1_UY1200_CR92%2C0%2C630%2C1200_AL_.jpg","https%3A%2F%2Fimg.clipartfest.com%2F0c170ac7dd190527f5170a84b1b16506_chess-two-rows-of-pawns-with-enemy_2716-1810.jpeg","http%3A%2F%2Fwiki.teamliquid.net%2Fcommons%2Fimages%2Fthumb%2Fa%2Fa6%2FEnemyGG.png%2F600px-EnemyGG.png","https%3A%2F%2Ffateclick.com%2Fimages%2Farticle%2F20160629173902286.jpg"]',
-		'baidu_images' => '["https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3001856329,28893401&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=399869671,3588326122&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=4059498633,2217812550&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3044178884,1121413162&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=1038633627,702716351&fm=23&gp=0.jpg"]',
+		'google_images' => '["https%3A%2F%2Fi.kinja-img.com%2Fgawker-media%2Fimage%2Fupload%2Fs--41FDizDL--%2Fc_scale%2Cfl_progressive%2Cq_80%2Cw_800%2Focib1pq0fvtrducbxl7d.png","http%3A%2F%2Fnoorimages.com%2Fwp-content%2Fuploads%2F2017%2F02%2FResist-COVER-584x389.jpg","https%3A%2F%2Fsecure3.convio.net%2Fgpeace%2Fimages%2Fcontent%2Fpagebuilder%2FBanner_870x215.jpeg","https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F691718142842818560%2FM4uF-40W.jpg","http%3A%2F%2Fmurverse.com%2Fwp-content%2Fuploads%2F2017%2F02%2Fdevelopers-will-resist.gif","https%3A%2F%2Factionnetwork.org%2Fuser_files%2Fuser_files%2F000%2F010%2F929%2Foriginal%2Fresisttrump_torch_s.png","https%3A%2F%2Ffrontierpartisans.com%2Fwp-content%2Fuploads%2F2017%2F03%2Fresist.jpg","http%3A%2F%2Fjannaldredgeclanton.com%2Fblog%2Fwp-content%2Fuploads%2F2017%2F02%2Fresist_together.jpeg","http%3A%2F%2Fi299.photobucket.com%2Falbums%2Fmm295%2Fnateblackwood%2Fresist-4.gif","http%3A%2F%2Fi3.cpcache.com%2Fproduct_zoom%2F2044095010%2Fresist_womens_light_tshirt.jpg%3Fcolor%3DLightPink%26c%3Dfalse","http%3A%2F%2Fwww.resistsubmission.com%2Fuploads%2F1%2F2%2F5%2F6%2F12564774%2F1479833405.png","https%3A%2F%2Fcdn-images-1.medium.com%2Fmax%2F800%2F1*wb21Tt9cJpHJsvIg4uPl9A.png","http%3A%2F%2Fresist.org%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fresponsive_large__normal%2Fpublic%2Fresist_logo_about.png%3Fitok%3DwtOJjWZl","http%3A%2F%2Ftrailmix.cc%2Fhome%2Fwp-content%2Fuploads%2F2016%2F11%2Fresist-t-shirts-men-s-premium-t-shirt.jpg","https%3A%2F%2Fresistmedia.org%2Fwp-content%2Fuploads%2F2016%2F10%2FRESIST-Logo-Large.png","http%3A%2F%2Fwww.configuringlight.org%2Fwp-content%2Fuploads%2FProject-Resist-9-of-37.jpg","http%3A%2F%2Fd3n8a8pro7vhmx.cloudfront.net%2Fshowingupforracialjustice%2Fpages%2F289%2Fmeta_images%2Foriginal%2FRESIST.jpg%3F1449689832","http%3A%2F%2Fwww.greenpeace.org%2Fusa%2Fwp-content%2Fuploads%2F2017%2F01%2FRESIST_digital_1200x1200_8.png","https%3A%2F%2Fsecure.meetupstatic.com%2Fs%2Fimg%2F44714141242236135880%2Fpro%2Fresist%2Fresist-emoji-site-gif.gif","http%3A%2F%2Fi3.cpcache.com%2Fproduct%2F2044406379%2Fkeep_calm_and_resist_button.jpg"]',
+		'baidu_images' => '["https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=1661433408,841215226&fm=23&gp=0.jpg","https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=397247676,4141938607&fm=23&gp=0.jpg","https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=3432971353,2951899866&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=1381996996,2638262872&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=3953418884,2574051217&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=2567270588,2987941832&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=4289996477,835387402&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=1049604512,740526578&fm=23&gp=0.jpg","https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3887855297,599606009&fm=23&gp=0.jpg","https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2627347408,4170062475&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=2977936469,3441322417&fm=23&gp=0.jpg","https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=2043553209,347159970&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=2002118507,2942484244&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=144345291,2844992582&fm=23&gp=0.jpg","https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=3830985130,4095017312&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=2749677791,1561546566&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=1154095850,504966351&fm=23&gp=0.jpg","https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=1388251949,3163270590&fm=23&gp=0.jpg"]',
 		'lang_from' => 'en',
-		'lang_confidence' => '0.98828125',
+		'lang_confidence' => '1',
 		'lang_alternate' => '',
 	);
 	return $row;

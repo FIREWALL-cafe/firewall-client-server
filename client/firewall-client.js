@@ -438,19 +438,21 @@ function submitImages(callback) {
 		lang_to: pendingQuery.langTo,
 		lang_confidence: pendingQuery.langConfidence,
 		lang_alternate: pendingQuery.langAlternate,
+		google_images: JSON.stringify(pendingQuery.googleImages),
+		baidu_images: JSON.stringify(pendingQuery.baiduImages),
 	};
 
-	if (pendingQuery.googleImages == 'empty') {
-		data.google_images = null;
-	} else {
-		data.google_images = JSON.stringify(pendingQuery.googleImages);
-	}
+	// if (pendingQuery.googleImages == 'empty') {
+	// 	data.google_images = null;
+	// } else {
+	// 	data.google_images = JSON.stringify(pendingQuery.googleImages);
+	// }
 
-	if (pendingQuery.baiduImages == 'empty') {
-		data.baidu_images = null;
-	} else {
-		data.baidu_images = JSON.stringify(pendingQuery.baiduImages);
-	}
+	// if (pendingQuery.baiduImages == 'empty') {
+	// 	data.baidu_images = null;
+	// } else {
+	// 	data.baidu_images = JSON.stringify(pendingQuery.baiduImages);
+	// }
 
 	console.log('Sending draft post to WP.');
 	var url = config.libraryURL;
@@ -460,6 +462,7 @@ function submitImages(callback) {
 		data: data,
 	}).done(function(){
 		console.log('Done sending draft post to WP.');
+		console.log(data);
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
 	});
