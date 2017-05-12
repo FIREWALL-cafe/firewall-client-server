@@ -5,8 +5,10 @@
   $post_id = get_the_ID();
   $post = get_post($post_id);
 
+  $new_template_style = get_post_meta(get_the_ID(), 'new_template_style');
+
   $translation_data = get_post_meta(get_the_ID(), 'translation');
-  if ($translation_data) {
+  if ($translation_data && $new_template_style) {
     $translation = array_values($translation_data[0])[0];
   }
 ?>
@@ -14,7 +16,7 @@
   <div class="container">
     <?php
       the_title('<h2>', '</h2>');
-      if ($translation_data) {
+      if ($new_template_style) {
         echo "<h2>".$translation."</h2>";
       }
     ?>
@@ -25,6 +27,9 @@
     <div class="post-vote-buttons-container">
       <?php fwc_post_vote_buttons($post_id); ?>
     </div>
+
+    <?php if ($new_template_style) { ?>
+
     <div class="post-section">
       <h3>Search History</h3>
       <?php fwc_post_search_history(); ?>
@@ -38,13 +43,17 @@
       <?php fwc_post_search_engine(); ?>
     </div>
     <div class="post-meta">
-      <?php // fwc_post_meta(); ?>
+      <pre>
+        <?php // fwc_post_meta(); ?>
+      </pre>
     </div>
     <?php if (fwc_get_search_count() > 1) { ?>
       <div class="post-histories-container post-section">
         <h3>Previous Searches</h3>
         <?php fwc_post_previous_searches(); ?>
       </div>
+    <?php } ?>
+
     <?php } ?>
   </div>
 </section>
