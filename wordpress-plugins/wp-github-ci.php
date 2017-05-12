@@ -26,6 +26,9 @@ function wpghci_update() {
 	// More info
 	// https://developer.github.com/webhooks/
 
+	// Make sure you can actually reach GitHub
+	// ssh -T git@github.com
+
 	// These are just hardcoded for now
 	$cwd = '/home/firewallcafe/stag_src';
 	$log = '/home/firewallcafe/github.log';
@@ -49,7 +52,7 @@ function wpghci_update() {
 	// only pull if we are on the same branch
 	$curr_branch = wpghci_current_branch($cwd);
 	if ($branch != $curr_branch) {
-		echo "Wrong branch. ($payload->ref / $branch vs $curr_branch)";
+		echo "Wrong branch.";
 		exit;
 	}
 	
