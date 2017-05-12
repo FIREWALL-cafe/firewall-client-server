@@ -2,6 +2,7 @@
 
 * [Joyce Yu-Jean Lee](http://www.joyceyujeanlee.com/)
 * [Dan Phiffer](https://phiffer.org/)
+* [Rachel Nackman](http://www.rachelnackman.com/)
 
 ## Project description
 
