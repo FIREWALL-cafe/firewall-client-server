@@ -26,6 +26,7 @@ function wpghci_update() {
 	// More info
 	// https://developer.github.com/webhooks/
 
+	// These are just hardcoded for now
 	$cwd = '/home/firewallcafe/stag_src';
 	$log = '/home/firewallcafe/github.log';
 
