@@ -8,10 +8,6 @@
 
 A month-long Pop-Up Internet Cafe, FIREWALL is a socially engaged research and interactive art installation designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in the U.S.A. versus Baidu searches in China.
 
-This software is composed of a server and client, and currently relies on a [uProxy Cloud](https://www.uproxy.org/) service hosted from the China side of the [Great Firewall](https://en.wikipedia.org/wiki/Great_Firewall).
-
-![Screenshot](https://raw.githubusercontent.com/dphiffer/firewall-cafe/master/screenshot.png)
-
 ## Clone the repository
 
 If you're okay with the command line and `git` commands, use this method:
