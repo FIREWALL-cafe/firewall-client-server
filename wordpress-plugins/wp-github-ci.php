@@ -69,7 +69,7 @@ add_action( 'wp_ajax_nopriv_wpghci_update', 'wpghci_update' );
 add_action( 'wp_ajax_wpghci_update', 'wpghci_update' );
 
 function wpghci_current_branch($cwd) {
-	$result = syscall('git branch', $cwd);
+	$result = wpghci_call('git branch', $cwd);
 	if (preg_match('/\\* (.*)/', $result, $matches)) {
 		return $matches[1];
 	}
