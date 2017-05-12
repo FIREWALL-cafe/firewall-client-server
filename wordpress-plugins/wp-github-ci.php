@@ -10,7 +10,20 @@ License: GPLv2 or later
 function wpghci_update() {
 
 	// GitHub will hit us with POST
+	//
+	// Payload URL
 	// https://example.com/wp-admin/admin-ajax.php?action=wpghci_update
+	//
+	// Content type
+	// application/x-www-form-urlencoded
+	//
+	// Secret
+	// (not used)
+	//
+	// [x] Just the push event
+	// [x] Active
+	//
+	// More info
 	// https://developer.github.com/webhooks/
 
 	$cwd = '/home/firewallcafe/src';
