@@ -79,3 +79,5 @@ Load up https://localhost:4430/ and you should see a mostly blank page. We're al
 When you load up [Google Image](https://www.google.com/imghp) or [Baidu Image](http://image.baidu.com/) search pages with your browser extension installed, you should see a discreet __Firewall__ link in the footer of the page. For each browser client, assign your desired server URL and the language translation pairs (e.g., `en` to `zh-CN` and `zh-CN` to `en`).
 
 If you search for something in one browser, that phrase should be translated by the server and plugged into the other search engine. A comparison of the resulting images will appear on the server's home page.
+
+(the end)
