@@ -14,7 +14,7 @@ function wpghci_update() {
 	// https://developer.github.com/webhooks/
 
 	$cwd = '/home/firewallcafe/src';
-	$log = '/home/firewallcafe/github.log';
+	$log = '/home/firewallcafe/logs/github.log';
 
 	if (empty($_POST['payload'])) {
 		echo 'No payload found.';
