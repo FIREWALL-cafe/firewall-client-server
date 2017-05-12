@@ -23,37 +23,41 @@
     <div class="post-content">
       <?php the_content(); ?>
     </div>
+
     <br><br>
+
     <div class="post-vote-buttons-container">
       <?php fwc_post_vote_buttons($post_id); ?>
     </div>
 
     <?php if ($new_template_style) { ?>
+      <div class="post-section">
+        <h3>Search History</h3>
+        <?php fwc_post_search_history(); ?>
+      </div>
+      <div class="post-section">
+        <h3>Search Language</h3>
+        <?php fwc_post_search_language(); ?>
+      </div>
+      <div class="post-section">
+        <h3>Search Engine</h3>
+        <?php fwc_post_search_engine(); ?>
+      </div>
+    <?php } ?>
 
-    <div class="post-section">
-      <h3>Search History</h3>
-      <?php fwc_post_search_history(); ?>
-    </div>
-    <div class="post-section">
-      <h3>Search Language</h3>
-      <?php fwc_post_search_language(); ?>
-    </div>
-    <div class="post-section">
-      <h3>Search Engine</h3>
-      <?php fwc_post_search_engine(); ?>
-    </div>
     <div class="post-meta">
       <pre>
         <?php // fwc_post_meta(); ?>
       </pre>
     </div>
-    <?php if (fwc_get_search_count() > 1) { ?>
-      <div class="post-histories-container post-section">
-        <h3>Previous Searches</h3>
-        <?php fwc_post_previous_searches(); ?>
-      </div>
-    <?php } ?>
 
+    <?php if ($new_template_style) { ?>
+      <?php if (fwc_get_search_count() > 1) { ?>
+        <div class="post-histories-container post-section">
+          <h3>Previous Searches</h3>
+          <?php fwc_post_previous_searches(); ?>
+        </div>
+      <?php } ?>
     <?php } ?>
   </div>
 </section>

@@ -281,10 +281,11 @@ footer {
 	text-align: center;
 }
 
-.vote-button-container p {
+.vote-button-container p.vote-count {
 	margin-bottom: 5px;
 	font-size: 18px;
 	font-weight: lighter;
+	min-height: 20px;
 }
 
 .post-section {

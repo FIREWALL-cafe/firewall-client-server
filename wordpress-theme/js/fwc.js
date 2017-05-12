@@ -6,7 +6,7 @@ $(document).ready(function() {
 		});
 		$(gallery).width(w);
 	});
-	
+
 	$('section.search').each(function(i, search) {
 		var url = $(search).find('a.permalink').attr('href');
 		$(search).find('.query-label strong').each(function(j, query) {
