@@ -52,14 +52,14 @@
       </div>
     <?php } ?>
 
-    <?php# if ($new_template_style) { ?>
+    <?php if ($new_template_style) { ?>
       <?php if (fwc_get_search_count() > 1) { ?>
         <div class="post-histories-container post-section">
           <h3>Previous Searches</h3>
           <?php fwc_post_previous_searches(); ?>
         </div>
       <?php } ?>
-    <?php# } ?>
+    <?php } ?>
   </div>
 </section>
 <?php
