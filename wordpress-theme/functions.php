@@ -185,7 +185,16 @@ function fwc_post_previous_searches() {
 		echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
 		echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
 
-		echo fwc_build_previous_search_content($timestamp);
+		$previous_search_content = fwc_build_previous_search_content($timestamp);
+
+		if ($previous_search_content['google_gallery']) {
+			echo $previous_search_content['google_heading'];
+			echo do_shortcode($previous_search_content['google_gallery']);
+		}
+		if ($previous_search_content['baidu_gallery']) {
+			echo $previous_search_content['baidu_heading'];
+			echo do_shortcode($previous_search_content['baidu_gallery']);
+		}
 	}
 }
 
@@ -227,7 +236,7 @@ function fwc_build_previous_search_content($timestamp) {
 	} else {
 		$google_heading .= esc_html($translation);
 	}
-	$google_heading .= "</strong></h3>";
+	$google_heading .= "</strong></h3>\n";
 
 	$baidu_heading = "<h3 class=\"query-label\">Baidu: <strong>";
 	if ($search_engine == 'google') {
@@ -235,23 +244,27 @@ function fwc_build_previous_search_content($timestamp) {
 	} else {
 		$baidu_heading .= esc_html($query);
 	}
-	$baidu_heading .= "</strong></h3>";
+	$baidu_heading .= "</strong></h3>\n";
 
 	$google_ids = implode(',', $google_ids);
 	$baidu_ids = implode(',', $baidu_ids);
 
-	$google_image_set = "$google_heading\n[gallery ids=\"$google_ids\" link=\"none\"]\n\n";
-	$baidu_image_set = "$baidu_heading\n[gallery ids=\"$baidu_ids\" link=\"none\"]\n\n";
-
-	$html = '';
 	if (strlen($google_ids)) {
-		$html .= $google_image_set;
-	}
-	if (strlen($baidu_ids)) {
-		$html .= $baidu_image_set;
+		$google_gallery = "[gallery ids=\"$google_ids\" link=\"none\"]";
 	}
 
-	return $html;
+	if (strlen($baidu_ids)) {
+		$baidu_gallery = "[gallery ids=\"$baidu_ids\" link=\"none\"]";
+	}
+
+	$return = array(
+		'google_heading' => $google_heading,
+		'baidu_heading' => $baidu_heading,
+		'google_gallery' => $google_gallery,
+		'baidu_gallery' => $baidu_gallery,
+	);
+
+	return $return;
 }
 
 //TODO: REVISE BELOW
