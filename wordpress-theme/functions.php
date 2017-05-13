@@ -322,7 +322,8 @@ function fwc_post_tags() {
 		'censorship_status',
 		'translation_status',
 		'search_language',
-		'search_engine'
+		'search_engine',
+		'post_tag'
 	);
 
 	foreach ($taxonomies as $tax) {
@@ -343,7 +344,7 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
 		fwc_set_censorship_status($post_id, 'not censored');
 	} else if ($censored > $uncensored) {
 		fwc_set_censorship_status($post_id, 'censored');
-	} else if ($censored == $uncensored && $censored > 0) {
+	} else if ($censored == $uncensored && intval($censored) > 0) {
 		fwc_set_censorship_status($post_id, 'may be censored');
 	} else {
 		fwc_set_censorship_status($post_id, '');
@@ -360,10 +361,23 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
 		fwc_set_translation_status($post_id, '');
 	}
 
-	// $nsfw = get_post_meta($post_id, 'nsfw_votes');
-	// if ($nsfw > 0) {
-	// 	fwc_set_nsfw_status($post_id, 'nsfw');
-	// }
+	$tag_by_count = array(
+		'nsfw',
+		'lost-in-translation',
+		'firewall-bug',
+		'user-error'
+	);
+
+	$keep_tags = array();
+
+	foreach ($tag_by_count as $tag) {
+		$key = str_replace ( '-' , '_' , $tag ) . "_votes";
+		$count = intval(get_post_meta($post_id, $key));
+		if ($count > 0) {
+			$keep_tags[] = $tag;
+		}
+	}
+	wp_set_post_terms( $post_id, $keep_tags, 'post_tag', false );
 }
 
 /////////////////////////////////////////////////
