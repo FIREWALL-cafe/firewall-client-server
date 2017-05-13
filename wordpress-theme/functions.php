@@ -382,14 +382,16 @@ function fwc_submit_images() {
 		return false;
 	}
 
+	echo "images: " . substr($_POST['google_images'], 0, 100) . "\n";
+
 	$row = (object) array(
 		'timestamp' => $_POST['timestamp'],
 		'search_engine' => $_POST['search_engine'],
 		'client' => $_POST['client'],
 		'query' => $_POST['query'],
 		'translation' => $_POST['translated'],
-		'google_images' => $_POST['google_images'],
-		'baidu_images' => $_POST['baidu_images'],
+		'google_images' => stripslashes($_POST['google_images']),
+		'baidu_images' => stripslashes($_POST['baidu_images']),
 		'lang_from' => $_POST['lang_from'],
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
@@ -456,8 +458,8 @@ function fwc_initialize_post_metadata($post_id, $row) {
 }
 
 function fwc_build_post_content($post_id, $row) {
-	$google_images = json_decode($row->google_images);
-	$baidu_images = json_decode($row->baidu_images);
+	$google_images = json_decode($row->google_images, 'as hash');
+	$baidu_images = json_decode($row->baidu_images, 'as hash');
 
 	$google_images_html = fwc_build_image_set($post_id, $row, $google_images, 'google');
 	$baidu_images_html = fwc_build_image_set($post_id, $row, $baidu_images, 'baidu');
@@ -480,17 +482,19 @@ function fwc_build_post_content($post_id, $row) {
 	wp_update_post($post_data);
 }
 
-function fwc_build_image_set($post_id, $row, $urls, $label) {
+function fwc_build_image_set($post_id, $row, $images, $label) {
 	echo "Building ".$label." image set</br>";
 	if ($label == $row->search_engine) {
 		$term = $row->query;
 	} else {
 		$term = $row->translation;
 	}
-	echo "Term: ".$term."</br>";
-	echo "URLS: ".$urls."</br>";
 
-	$attachments = fwc_download_images($post_id, $urls, "$label-$row->timestamp");
+	$urls = array_keys($images);
+	echo "Term: ".$term."</br>";
+	echo "URLS: ".implode(', ', $urls)."</br>";
+
+	$attachments = fwc_save_images($post_id, $images, "$label-$row->timestamp");
 
 	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong>" .
 		esc_html($term) . "</strong></h3>";
@@ -563,48 +567,103 @@ function fwc_update_popularity($post_id) {
 //// Manage WP Media Library.
 /////////////////////////////////////////////////
 
-function fwc_download_images($parent_id, $urls, $prefix) {
+function fwc_save_images($parent_id, $images, $prefix) {
 	$image_ids = array();
 	$upload_dir = wp_upload_dir();
 	$num = 0;
-	foreach ($urls as $url) {
-		// $url = urldecode($url);
+	foreach ($images as $url => $data) {
+
 		echo "$url: ";
-		$response = wp_remote_get($url, array(
-			'timeout' => '30',
-			'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0'
-		));
-		$status = wp_remote_retrieve_response_code($response);
-		echo $status . "<br>";
-		if ($status == 200) {
+		if (substr($data, 0, 5) == 'data:') {
+			echo "data URI<br>";
+			$image = fwc_derive_data_uri($data);
+		} else {
+			echo "download<br>";
+			$image = fwc_download_image($data);
+		}
+
+		if (is_array($image)) {
+			extract($image);
+
+			// Now we have:
+			// $binary_data
+			// $content_type
+
 			$num++;
 			$image_num = $num;
 			if ($image_num < 10) {
 				$image_num = '0' . $image_num;
 			}
-			if ($response['headers']['content-type'] == 'image/jpeg') {
+			if ($content_type == 'image/jpeg') {
 				$ext = 'jpg';
-			} else if ($response['headers']['content-type'] == 'image/gif') {
+			} else if ($content_type == 'image/gif') {
 				$ext = 'gif';
-			} else if ($response['headers']['content-type'] == 'image/png') {
+			} else if ($content_type == 'image/png') {
 				$ext = 'png';
 			} else {
-				echo "Unexpected content-type: {$response['headers']['content-type']}<br>";
+				echo "Unexpected content-type: $content_type<br>";
 				continue;
 			}
-			$body = wp_remote_retrieve_body($response);
 			$date = current_time('d');
 			$dir = $upload_dir['path'] . "/$date/$parent_id";
-			if (!file_exists($dir)) {
+			if (! file_exists($dir)) {
 				wp_mkdir_p($dir);
 			}
 			$path = "$dir/$prefix-$image_num.$ext";
-			file_put_contents($path, $body);
+			file_put_contents($path, $binary_data);
 			echo "Saved: $path<br>";
-			$image_ids[] = fwc_attach_image($parent_id, $path, $url);
+			$image_id = fwc_attach_image($parent_id, $path, $url);
+			$image_ids[] = $image_id;
 		}
 	}
 	return $image_ids;
+}
+
+function fwc_derive_data_uri($data) {
+
+	// Example $data:
+	// data:image/jpeg;base64,[base64 data]
+	// data:image/jpeg;charset=utf8;base64,[base64 data]
+
+	// Remove the "data:" prefix
+	$data = substr($data, 5);
+
+	// Derive the type
+	$semicolon_pos = strpos($data, ';');
+	$content_type = substr($data, 0, $semicolon_pos);
+
+	// Remove the header
+	$comma_pos = strpos($data, ',');
+	$base64_data = substr($data, $comma_pos);
+
+	$binary_data = base64_decode($base64_data);
+
+	if ($binary_data) {
+		return array(
+			'binary_data' => $binary_data,
+			'content_type' => $content_type
+		);
+	}
+	return null;
+}
+
+function fwc_download_image($url) {
+	// $url = urldecode($url);
+	echo "downloading $url: ";
+	$response = wp_remote_get($url, array(
+		'timeout' => '30',
+		'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0'
+	));
+	$status = wp_remote_retrieve_response_code($response);
+	echo $status . "<br>";
+	if ($status == 200) {
+		$body = wp_remote_retrieve_body($response);
+		return array(
+			'binary_data' => $body,
+			'content_type' => $response['headers']['content-type']
+		);
+	}
+	return null;
 }
 
 function fwc_attach_image($parent_id, $path, $url) {
