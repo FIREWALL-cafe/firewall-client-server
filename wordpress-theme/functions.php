@@ -251,10 +251,14 @@ function fwc_build_previous_search_content($timestamp) {
 
 	if (strlen($google_ids)) {
 		$google_gallery = "[gallery ids=\"$google_ids\" link=\"none\"]";
+	} else {
+		$google_gallery = null;
 	}
 
 	if (strlen($baidu_ids)) {
 		$baidu_gallery = "[gallery ids=\"$baidu_ids\" link=\"none\"]";
+	} else {
+		$baidu_gallery = null;
 	}
 
 	$return = array(
