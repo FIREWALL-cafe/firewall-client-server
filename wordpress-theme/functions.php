@@ -373,7 +373,8 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
 	foreach ($tag_by_count as $tag) {
 		$key = str_replace ( '-' , '_' , $tag ) . "_votes";
 		$count = get_post_meta($post_id, $key);
-		if ($count && intval($count) > 0) {
+		$count = intval(fwc_get_latest_value($count));
+		if ($count > 0) {
 			$keep_tags[] = $tag;
 		}
 	}
