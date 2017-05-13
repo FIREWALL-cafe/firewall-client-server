@@ -337,54 +337,70 @@ function findInputField() {
 }
 
 function getImages() {
-	if (!pendingQuery || !pendingQuery.query) {
+
+	if (! pendingQuery ||
+	    ! pendingQuery.query) {
 		return;
 	}
 
 	var imagesKey = getSource() + 'Images';
+	var retryKey = getSource() + 'Retries';
 	var numImages = 20;
-	var charLimit = 50000;
+	var maxRetries = 5;
+
+	if (! pendingQuery[retryKey]) {
+		pendingQuery[retryKey] = 0;
+	}
 
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
+	function _deriveUrl(image) {
+		var parent = image.parentNode;
+		if (parent.nodeName != 'A') {
+			return null;
+		}
+		// The URL is buried in an attribute of the parent link's href.
+		var href = $(parent).attr('href');
+		if (href.match(/url=([^&]+)/)) {
+			// Baidu uses 'objurl', Google uses 'imgurl'
+			var url = href.match(/url=([^&]+)/)[1];
+			return decodeURIComponent(url);
+		}
+		return null;
+	}
+
 	function _dedupeLimitedSet(imageSet, image) {
-		if (imageSet.length < numImages &&
-			image.length < charLimit/numImages &&
-			imageSet.indexOf(image) == -1) {
-			imageSet.push(image);
+		var url = _deriveUrl(image);
+		if (url &&
+		    ! imageSet[url] &&
+		    Object.keys(imageSet).length < numImages) {
+			imageSet[url] = image.src;
 		}
 	}
 
-	var images = [];
+	if (pendingQuery[imagesKey]) {
+		var images = pendingQuery[imagesKey];
+	} else {
+		var images = {};
+	}
 	$('.imglist img').each(function(i, img) {
-		_dedupeLimitedSet(images, img.src);
+		// Baidu images
+		_dedupeLimitedSet(images, img);
 	});
-	$('#rg .rg_l').each(function(i, link) {
-		var href = $(link).attr('href');
-		if (!href) {
-			return;
-		}
-		var src = href.match(/imgurl=([^&]+)/);
-
-		if (src) {
-			_dedupeLimitedSet(images, src[1]);
-		}
+	$('#rg .rg_l img').each(function(i, img) {
+		// Google images
+		_dedupeLimitedSet(images, img);
 	});
 
-	if (images.length == 0) {
-		// Set images key to show that we looked for images but came up empty.
-		// Then let this run its course.
-		pendingQuery[imagesKey] = 'empty';
-
-		console.log('Still no images. Waiting 2 seconds and trying again.');
-		startGettingImages();
-		return;
-	}
-
-	console.log('Found ' + images.length + ' images from', getSource());
+	console.log('Found ' + Object.keys(images).length + ' images from', getSource());
 	pendingQuery[imagesKey] = images;
 
-	if (!checkPendingImages()) {
+	if (Object.keys(images).length < numImages &&
+	    pendingQuery[retryKey] < maxRetries) {
+		pendingQuery[retryKey]++;
+		console.log('Still only have ' + Object.keys(images).length + ' images; retry in 2 seconds (' + pendingQuery[retryKey] + ' of ' + maxRetries + ')');
+		startGettingImages();
+	} else if (! checkPendingImages()) {
 		// If we don't have all the images yet, save the first crop of them to storage
 		storage.set({
 			pendingQuery: pendingQuery
@@ -398,14 +414,14 @@ function checkPendingImages() {
 	if (pendingQuery && pendingQuery.googleImages && pendingQuery.baiduImages) {
 		console.log('Image gathering complete.');
 
-		if (pendingQuery.googleImages.length) {
-			console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google!');
+		if (Object.keys(pendingQuery.googleImages).length) {
+			console.log('Looks like we have', Object.keys(pendingQuery.googleImages).length, 'images from Google!');
 		} else {
 			console.log('No image results from Google. :(');
 		}
 
-		if (pendingQuery.baiduImages.length) {
-			console.log('Looks like we have', pendingQuery.baiduImages.length, 'images from Baidu!');
+		if (Object.keys(pendingQuery.baiduImages).length) {
+			console.log('Looks like we have', Object.keys(pendingQuery.baiduImages).length, 'images from Baidu!');
 		} else {
 			console.log('No image results from Baidu. :(');
 		}
@@ -427,7 +443,9 @@ function checkPendingImages() {
 }
 
 function submitImages(callback) {
-	var data = {
+
+	// WordPress will get all of the data-URI image data
+	var wp_data = {
 		timestamp: pendingQuery.timestamp,
 		client: clientId,
 		secret: config.sharedSecret,
@@ -441,6 +459,17 @@ function submitImages(callback) {
 		google_images: JSON.stringify(pendingQuery.googleImages),
 		baidu_images: JSON.stringify(pendingQuery.baiduImages),
 	};
+
+	// Google Sheets will get *just* the image URLs
+	var gs_data = jQuery.extend(true, {}, wp_data);
+	gs_data.google_images = JSON.stringify(Object.keys(pendingQuery.googleImages));
+	gs_data.baidu_images = JSON.stringify(Object.keys(pendingQuery.baiduImages));
+
+	console.log('google images');
+	console.log(wp_data.google_images.substr(0, 100));
+
+	console.log('google image urls');
+	console.log(gs_data.google_images.substr(0, 100));
 
 	// if (pendingQuery.googleImages == 'empty') {
 	// 	data.google_images = null;
@@ -459,10 +488,10 @@ function submitImages(callback) {
 	$.ajax({
 		url: url,
 		method: 'POST',
-		data: data,
-	}).done(function(){
+		data: wp_data,
+	}).done(function(rsp){
 		console.log('Done sending draft post to WP.');
-		console.log(data);
+		console.log(rsp);
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
 	});
@@ -473,7 +502,7 @@ function submitImages(callback) {
 	$.ajax({
 		url: url,
 		method: 'POST',
-		data: data
+		data: gs_data
 	}).done(function() {
 		console.log('Done saving images to spreadsheet');
 		callback();
