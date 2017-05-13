@@ -10,7 +10,6 @@ class PrefixFilter {
         }
 
         function hasPrefix($i) {
-        	echo $i->post_name."</br>";
         	return strpos($i->post_name, $this->prefix) !== false;
         }
 }
