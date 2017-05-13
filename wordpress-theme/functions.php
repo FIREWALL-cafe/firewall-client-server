@@ -191,6 +191,7 @@ function fwc_post_previous_searches() {
 
 function fwc_build_previous_search_content($timestamp) {
 	$post = get_post(get_the_ID());
+	$timestamp = intval($timestamp) * 1000;
 
 	$google_prefix = 'google-'.$timestamp.'-';
 	$baidu_prefix = 'baidu-'.$timestamp.'-';
