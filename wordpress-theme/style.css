@@ -288,6 +288,10 @@ footer {
 	min-height: 20px;
 }
 
+.fwc-vote-button:disabled {
+	background-color: #dedede;
+}
+
 .post-section {
 	margin-bottom: 30px;
 }

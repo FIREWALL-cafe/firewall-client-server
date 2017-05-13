@@ -45,6 +45,26 @@ function fwc_add_custom_taxonomies() {
     ),
   ));
 
+  register_taxonomy('translation_status', 'post', array(
+    'hierarchical' => false,
+    'labels' => array(
+      'name' => _x( 'Translation Statuses', 'taxonomy general name' ),
+      'singular_name' => _x( 'Translation Status', 'taxonomy singular name' ),
+      'search_items' =>  __( 'Search By Translation Status' ),
+      'all_items' => __( 'All Translation Statuses' ),
+      'edit_item' => __( 'Edit Translation Status' ),
+      'update_item' => __( 'Update Translation Status' ),
+      'add_new_item' => __( 'Add New Translation Status' ),
+      'new_item_name' => __( 'New Translation Status' ),
+      'menu_name' => __( 'Translation Statuses' ),
+    ),
+    'rewrite' => array(
+      'slug' => 'translation',
+      'with_front' => false,
+      'hierarchical' => false
+    ),
+  ));
+
   // Add Search Language taxonomy to searches.
   register_taxonomy('search_language', 'post', array(
     // Hierarchical taxonomy (like categories)
@@ -94,6 +114,13 @@ function fwc_add_custom_taxonomies() {
 }
 add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
 
+function fwc_set_censorship_status($post_id, $status) {
+	wp_set_post_terms( $post_id, $status, 'censorship_status', false );
+}
+
+function fwc_set_translation_status($post_id, $status) {
+	wp_set_post_terms( $post_id, $status, 'translation_status', false );
+}
 
 /////////////////////////////////////////////////
 //// Post metadata.
@@ -153,7 +180,7 @@ function fwc_post_previous_searches() {
 
 //TODO: REVISE BELOW
 function fwc_post_meta() {
-	$client = get_post_meta(get_the_ID(), 'client', true);
+	$client = fwc_get_latest_meta('client');
 	?>
 	Search by <?php echo esc_html($client); ?>
 	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_format_date(fwc_get_latest_timestamp()); ?></a>
@@ -231,9 +258,20 @@ function fwc_format_date($timestamp) {
 /////////////////////////////////////////////////
 
 function fwc_post_vote_buttons() {
-	fwc_post_vote_button('Censored', 'censored_votes', fwc_get_latest_meta('censored_votes'));
-	fwc_post_vote_button('Not Censored', 'uncensored_votes', fwc_get_latest_meta('uncensored_votes'));
-	fwc_post_vote_button('May Be Censored', 'maybe_censored_votes', fwc_get_latest_meta('maybe_censored_votes'));
+
+	$vote_buttons = array(
+		'censored_votes' => 'Censored',
+		'uncensored_votes' => 'Not Censored',
+		'bad_translation_votes' => 'Bad Translation',
+		'good_translation_votes' => 'Good Translation',
+		'lost_in_translation_votes' => 'Lost in Translation',
+		'firewall_bug_votes' => 'Firewall Bug',
+		'nsfw_votes' => 'NSFW',
+	);
+
+	foreach ($vote_buttons as $key => $button_text) {
+		fwc_post_vote_button($button_text, $key, fwc_get_latest_meta($key));
+	}
 }
 
 function fwc_post_vote_button($button_text, $key, $count) {
@@ -273,7 +311,59 @@ function fwc_post_vote_update($post_id, $meta_key) {
 
 	$new = $curr + 1;
 	update_post_meta($post_id, $meta_key, $new);
+
+	fwc_post_update_tags($post_id, $meta_key, $new);
+
 	die((string)$new);
+}
+
+function fwc_post_tags() {
+	$taxonomies = array(
+		'censorship_status',
+		'translation_status',
+		'search_language',
+		'search_engine'
+	);
+
+	foreach ($taxonomies as $tax) {
+		$terms = get_the_terms(get_the_ID(), $tax);
+		if ($terms) {
+			foreach ($terms as $term) {
+				echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
+			}
+		}
+	}
+}
+
+function fwc_post_update_tags($post_id, $meta_key, $count) {
+	$uncensored = get_post_meta($post_id, 'uncensored_votes');
+	$censored = get_post_meta($post_id, 'censored_votes');
+
+	if ($uncensored > $censored) {
+		fwc_set_censorship_status($post_id, 'not censored');
+	} else if ($censored > $uncensored) {
+		fwc_set_censorship_status($post_id, 'censored');
+	} else if ($censored == $uncensored && $censored > 0) {
+		fwc_set_censorship_status($post_id, 'may be censored');
+	} else {
+		fwc_set_censorship_status($post_id, '');
+	}
+
+	$bad_translation = get_post_meta($post_id, 'bad_translation_votes');
+	$good_translation = get_post_meta($post_id, 'good_translation_votes');
+
+	if ($bad_translation > $good_translation) {
+		fwc_set_translation_status($post_id, 'bad translation');
+	} else if ($good_translation > $bad_translation) {
+		fwc_set_translation_status($post_id, 'good translation');
+	} else {
+		fwc_set_translation_status($post_id, '');
+	}
+
+	// $nsfw = get_post_meta($post_id, 'nsfw_votes');
+	// if ($nsfw > 0) {
+	// 	fwc_set_nsfw_status($post_id, 'nsfw');
+	// }
 }
 
 /////////////////////////////////////////////////
@@ -349,9 +439,20 @@ function fwc_initialize_post_metadata($post_id, $row) {
 
 	add_post_meta( $post_id, 'new_template_style', 1, true);
 
-	add_post_meta( $post_id, 'censored_votes', 0, true);
-	add_post_meta( $post_id, 'uncensored_votes', 0, true);
-	add_post_meta( $post_id, 'maybe_censored_votes', 0, true);
+	$zero_votes = array(
+		'censored_votes',
+		'uncensored_votes',
+		'maybe_censored_votes',
+		'bad_translation_votes',
+		'good_translation_votes',
+		'lost_in_translation_votes',
+		'firewall_bug_votes',
+		'nsfw_votes',
+	);
+
+	foreach ($zero_votes as $key) {
+		add_post_meta( $post_id, $key, 0, true);
+	}
 }
 
 function fwc_build_post_content($post_id, $row) {

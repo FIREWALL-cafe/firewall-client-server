@@ -20,6 +20,9 @@
         echo "<h2>".$translation."</h2>";
       }
     ?>
+    <div class="post-tags">
+      <?php fwc_post_tags(); ?>
+    </div>
     <div class="post-content">
       <?php the_content(); ?>
     </div>
@@ -46,9 +49,7 @@
     <?php } ?>
 
     <div class="post-meta">
-      <pre>
-        <?php // fwc_post_meta(); ?>
-      </pre>
+      <?php fwc_post_meta(); ?>
     </div>
 
     <?php if ($new_template_style) { ?>
