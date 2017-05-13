@@ -292,6 +292,18 @@ footer {
 	background-color: #dedede;
 }
 
+.post-tags {
+	margin-bottom: 30px;
+}
+
+.post-tag {
+	background-color: #e60011;
+	color: #fff;
+	margin-right: 5px;
+	line-height: 2;
+	padding: 2.5px 7.5px;
+}
+
 .post-section {
 	margin-bottom: 30px;
 }
