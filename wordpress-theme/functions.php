@@ -155,7 +155,7 @@ function fwc_post_search_language() {
 
 function fwc_post_search_engine() {
 	$search_engine = fwc_get_latest_meta('search_engine');
-	echo $search_engine;
+	echo ucwords($search_engine);
 }
 
 function fwc_post_translation_history() {
@@ -171,7 +171,7 @@ function fwc_post_previous_searches() {
 	foreach ($timestamps as $timestamp) {
 		echo "<div class=\"post-history\">";
 		echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
-		echo "<em>Search Engine:</em> ".fwc_get_meta_by_timestamp('search_engine', $timestamp)."</br>";
+		echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
 		print_r(fwc_get_meta_by_timestamp('google_images', $timestamp));
 		print_r(fwc_get_meta_by_timestamp('baidu_images', $timestamp));
 		echo "</div>";
@@ -372,8 +372,8 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
 
 	foreach ($tag_by_count as $tag) {
 		$key = str_replace ( '-' , '_' , $tag ) . "_votes";
-		$count = intval(get_post_meta($post_id, $key));
-		if ($count > 0) {
+		$count = get_post_meta($post_id, $key);
+		if (intval($count) > 0 && ! count($count) == 0) {
 			$keep_tags[] = $tag;
 		}
 	}
