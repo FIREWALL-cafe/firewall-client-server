@@ -571,15 +571,18 @@ function fwc_save_images($parent_id, $images, $prefix) {
 	$image_ids = array();
 	$upload_dir = wp_upload_dir();
 	$num = 0;
-	foreach ($images as $url => $data) {
+	foreach ($images as $image) {
 
-		echo "$url: ";
-		if (substr($data, 0, 5) == 'data:') {
+		$href = $image['href'];
+		$src = $image['src'];
+
+		echo "$href: ";
+		if (substr($src, 0, 5) == 'data:') {
 			echo "data URI<br>";
-			$image = fwc_derive_data_uri($data);
+			$image = fwc_derive_data_uri($src);
 		} else {
 			echo "download<br>";
-			$image = fwc_download_image($data);
+			$image = fwc_download_image($src);
 		}
 
 		if (is_array($image)) {
@@ -612,21 +615,21 @@ function fwc_save_images($parent_id, $images, $prefix) {
 			$path = "$dir/$prefix-$image_num.$ext";
 			file_put_contents($path, $binary_data);
 			echo "Saved: $path<br>";
-			$image_id = fwc_attach_image($parent_id, $path, $url);
+			$image_id = fwc_attach_image($parent_id, $path, $href);
 			$image_ids[] = $image_id;
 		}
 	}
 	return $image_ids;
 }
 
-function fwc_derive_data_uri($data) {
+function fwc_derive_data_uri($src) {
 
 	// Example $data:
 	// data:image/jpeg;base64,[base64 data]
 	// data:image/jpeg;charset=utf8;base64,[base64 data]
 
 	// Remove the "data:" prefix
-	$data = substr($data, 5);
+	$data = substr($src, 5);
 
 	// Derive the type
 	$semicolon_pos = strpos($data, ';');
@@ -647,10 +650,10 @@ function fwc_derive_data_uri($data) {
 	return null;
 }
 
-function fwc_download_image($url) {
+function fwc_download_image($src) {
 	// $url = urldecode($url);
-	echo "downloading $url: ";
-	$response = wp_remote_get($url, array(
+	echo "downloading $src: ";
+	$response = wp_remote_get($src, array(
 		'timeout' => '30',
 		'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0'
 	));
@@ -666,14 +669,14 @@ function fwc_download_image($url) {
 	return null;
 }
 
-function fwc_attach_image($parent_id, $path, $url) {
+function fwc_attach_image($parent_id, $path, $href) {
 	$filetype = wp_check_filetype(basename( $path ), null);
 	$wp_upload_dir = wp_upload_dir();
 	$attachment = array(
 		'guid'           => $wp_upload_dir['url'] . '/' . basename( $path ),
 		'post_mime_type' => $filetype['type'],
 		'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $path ) ),
-		'post_content'   => $url,
+		'post_content'   => $href,
 		'post_status'    => 'inherit'
 	);
 	$attach_id = wp_insert_attachment( $attachment, $path, $parent_id );

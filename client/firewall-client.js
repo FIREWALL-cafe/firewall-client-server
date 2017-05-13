@@ -354,12 +354,12 @@ function getImages() {
 
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
-	function _deriveUrl(image) {
+	function _deriveHref(image) {
 		var parent = image.parentNode;
 		if (parent.nodeName != 'A') {
 			return null;
 		}
-		// The URL is buried in an attribute of the parent link's href.
+		// The URL is buried in a query arg of the parent link's href.
 		var href = $(parent).attr('href');
 		if (href.match(/url=([^&]+)/)) {
 			// Baidu uses 'objurl', Google uses 'imgurl'
@@ -370,18 +370,26 @@ function getImages() {
 	}
 
 	function _dedupeLimitedSet(imageSet, image) {
-		var url = _deriveUrl(image);
-		if (url &&
-		    ! imageSet[url] &&
-		    Object.keys(imageSet).length < numImages) {
-			imageSet[url] = image.src;
+		var href = _deriveHref(image);
+		var dupe = false;
+		$.each(imageSet, function(i, img) {
+			if (img.href == href) {
+				dupe = true;
+			}
+		});
+		if (href && ! dupe &&
+		    imageSet.length < numImages) {
+			imageSet.push({
+				href: href,
+				src: image.src
+			});
 		}
 	}
 
 	if (pendingQuery[imagesKey]) {
 		var images = pendingQuery[imagesKey];
 	} else {
-		var images = {};
+		var images = [];
 	}
 	$('.imglist img').each(function(i, img) {
 		// Baidu images
@@ -392,13 +400,13 @@ function getImages() {
 		_dedupeLimitedSet(images, img);
 	});
 
-	console.log('Found ' + Object.keys(images).length + ' images from', getSource());
+	console.log('Found ' + images.length + ' images from', getSource());
 	pendingQuery[imagesKey] = images;
 
-	if (Object.keys(images).length < numImages &&
+	if (images.length < numImages &&
 	    pendingQuery[retryKey] < maxRetries) {
 		pendingQuery[retryKey]++;
-		console.log('Still only have ' + Object.keys(images).length + ' images; retry in 2 seconds (' + pendingQuery[retryKey] + ' of ' + maxRetries + ')');
+		console.log('Still only have ' + images.length + ' images; retry in 2 seconds (' + pendingQuery[retryKey] + ' of ' + maxRetries + ')');
 		startGettingImages();
 	} else if (! checkPendingImages()) {
 		// If we don't have all the images yet, save the first crop of them to storage
@@ -414,14 +422,14 @@ function checkPendingImages() {
 	if (pendingQuery && pendingQuery.googleImages && pendingQuery.baiduImages) {
 		console.log('Image gathering complete.');
 
-		if (Object.keys(pendingQuery.googleImages).length) {
-			console.log('Looks like we have', Object.keys(pendingQuery.googleImages).length, 'images from Google!');
+		if (pendingQuery.googleImages.length) {
+			console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google!');
 		} else {
 			console.log('No image results from Google. :(');
 		}
 
-		if (Object.keys(pendingQuery.baiduImages).length) {
-			console.log('Looks like we have', Object.keys(pendingQuery.baiduImages).length, 'images from Baidu!');
+		if (pendingQuery.baiduImages.length) {
+			console.log('Looks like we have', pendingQuery.baiduImages.length, 'images from Baidu!');
 		} else {
 			console.log('No image results from Baidu. :(');
 		}
@@ -460,10 +468,19 @@ function submitImages(callback) {
 		baidu_images: JSON.stringify(pendingQuery.baiduImages),
 	};
 
+	var googleImageUrls = [];
+	$.each(pendingQuery.googleImages, function(i, image) {
+		googleImageUrls.push(image.href);
+	});
+	var baiduImageUrls = [];
+	$.each(pendingQuery.baiduImages, function(i, image) {
+		baiduImageUrls.push(image.href);
+	});
+
 	// Google Sheets will get *just* the image URLs
 	var gs_data = jQuery.extend(true, {}, wp_data);
-	gs_data.google_images = JSON.stringify(Object.keys(pendingQuery.googleImages));
-	gs_data.baidu_images = JSON.stringify(Object.keys(pendingQuery.baiduImages));
+	gs_data.google_images = JSON.stringify(googleImageUrls);
+	gs_data.baidu_images = JSON.stringify(baiduImageUrls);
 
 	console.log('google images');
 	console.log(wp_data.google_images.substr(0, 100));
