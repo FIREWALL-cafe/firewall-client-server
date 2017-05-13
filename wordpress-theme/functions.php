@@ -10,6 +10,7 @@ class PrefixFilter {
         }
 
         function hasPrefix($i) {
+        	echo $i->post_name."</br>";
         	return strpos($i->post_name, $this->prefix) !== false;
         }
 }
@@ -191,7 +192,7 @@ function fwc_post_previous_searches() {
 
 function fwc_build_previous_search_content($timestamp) {
 	$post = get_post(get_the_ID());
-	$timestamp = intval($timestamp) * 1000;
+	$timestamp = intval($timestamp);
 
 	$google_prefix = 'google-'.$timestamp.'-';
 	$baidu_prefix = 'baidu-'.$timestamp.'-';
