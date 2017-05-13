@@ -538,14 +538,6 @@ function fwc_update_post_search_language($post_id, $search_language) {
 	if ($search_language == 'en') {
 		// Attach to appropriate Search Language taxonomy.
 	}
-
-	// $search_language = array( $timestamp => $search_language );
-	// $search_language_confidence = array( $timestamp => $row->lang_confidence );
-	// $search_language_alternate = array( $timestamp => $row->lang_alternate );
-
-	// add_post_meta( $post_id, 'search_language', $search_language, false);
-	// add_post_meta( $post_id, 'search_language_confidence', $search_language_confidence, false);
-	// add_post_meta( $post_id, 'search_language_alternate', $search_language_alternate, false);
 }
 
 function fwc_update_post_content($post_id, $row) {
