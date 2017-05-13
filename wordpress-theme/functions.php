@@ -373,11 +373,11 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
 	foreach ($tag_by_count as $tag) {
 		$key = str_replace ( '-' , '_' , $tag ) . "_votes";
 		$count = get_post_meta($post_id, $key);
-		if (intval($count) > 0 && ! count($count) == 0) {
+		if ($count && intval($count) > 0) {
 			$keep_tags[] = $tag;
 		}
 	}
-	wp_set_post_terms( $post_id, $keep_tags, 'post_tag', false );
+	wp_set_post_terms( $post_id, $keep_tags, 'post_tag');
 }
 
 /////////////////////////////////////////////////
