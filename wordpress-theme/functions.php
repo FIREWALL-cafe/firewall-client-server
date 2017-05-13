@@ -183,7 +183,7 @@ function fwc_post_meta() {
 	$client = fwc_get_latest_meta('client');
 	?>
 	Search by <?php echo esc_html($client); ?>
-	on <a href="<?php the_permalink(); ?>" class="permalink"><?php fwc_format_date(fwc_get_latest_timestamp()); ?></a>
+	on <a href="<?php the_permalink(); ?>" class="permalink"><?php echo fwc_format_date(fwc_get_latest_meta('timestamp')); ?></a>
 	<?php // echo fwc_get_search_popularity();
 	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
 }
@@ -250,7 +250,7 @@ function fwc_get_meta_by_timestamp($key, $timestamp) {
 }
 
 function fwc_format_date($timestamp) {
-	return date('M j, Y, g:ia', $timestamp - (5*60*60));
+	return date('M j, Y, g:ia', $timestamp - (4*60*60));
 }
 
 /////////////////////////////////////////////////
