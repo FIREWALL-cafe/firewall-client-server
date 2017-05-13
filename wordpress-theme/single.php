@@ -46,20 +46,20 @@
         <h3>Search Engine</h3>
         <?php fwc_post_search_engine(); ?>
       </div>
+    <?php } else { ?>
+      <div class="post-meta">
+        <?php fwc_post_meta(); ?>
+      </div>
     <?php } ?>
 
-    <div class="post-meta">
-      <?php fwc_post_meta(); ?>
-    </div>
-
-    <?php if ($new_template_style) { ?>
+    <?php# if ($new_template_style) { ?>
       <?php if (fwc_get_search_count() > 1) { ?>
         <div class="post-histories-container post-section">
           <h3>Previous Searches</h3>
           <?php fwc_post_previous_searches(); ?>
         </div>
       <?php } ?>
-    <?php } ?>
+    <?php# } ?>
   </div>
 </section>
 <?php

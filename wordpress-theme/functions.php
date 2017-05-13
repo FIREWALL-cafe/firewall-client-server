@@ -2,6 +2,18 @@
 
 define('FWC_SHARED_SECRET', 'b43ce0bdfb64d54130679f9632f37de94cfe2032');
 
+class PrefixFilter {
+        private $prefix;
+
+        function __construct($prefix) {
+                $this->prefix = $prefix;
+        }
+
+        function hasPrefix($i) {
+        	return strpos($i->post_name, $this->prefix) !== false;
+        }
+}
+
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
 	add_filter('wp_get_attachment_image_attributes', function($attr) {
@@ -172,10 +184,68 @@ function fwc_post_previous_searches() {
 		echo "<div class=\"post-history\">";
 		echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
 		echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
-		print_r(fwc_get_meta_by_timestamp('google_images', $timestamp));
-		print_r(fwc_get_meta_by_timestamp('baidu_images', $timestamp));
-		echo "</div>";
+
+		echo fwc_build_previous_search_content($timestamp);
 	}
+}
+
+function fwc_build_previous_search_content($timestamp) {
+	$post = get_post(get_the_ID());
+
+	$google_prefix = 'google-'.$timestamp.'-';
+	$baidu_prefix = 'baidu-'.$timestamp.'-';
+
+	$args = array(
+	   'post_type' => 'attachment',
+	   'numberposts' => -1,
+	   'post_status' => null,
+	   'post_parent' => $post->ID,
+	);
+	$attachments = get_posts( $args );
+
+	$google_attachments = array_filter($attachments, array(new PrefixFilter($google_prefix), 'hasPrefix'));
+	$baidu_attachments = array_filter($attachments, array(new PrefixFilter($baidu_prefix), 'hasPrefix'));
+
+	$google_ids = array();
+	$baidu_ids = array();
+
+	foreach ($google_attachments as $att) {
+		$google_ids[] = $att->ID;
+	}
+
+	foreach ($baidu_attachments as $att) {
+		$baidu_ids[] = $att->ID;
+	}
+
+	$query = $post->name;
+	$translation = fwc_get_meta_by_timestamp('translation', $timestamp);
+	$search_engine = fwc_get_meta_by_timestamp('search_engine', $timestamp);
+
+	$google_heading = "<h3 class=\"query-label\">Google: <strong>";
+	if ($search_engine == 'google') {
+		$google_heading .= esc_html($query);
+	} else {
+		$google_heading .= esc_html($translation);
+	}
+	$google_heading .= "</strong></h3>";
+
+	$baidu_heading = "<h3 class=\"query-label\">Baidu: <strong>";
+	if ($search_engine == 'google') {
+		$baidu_heading .= esc_html($translation);
+	} else {
+		$baidu_heading .= esc_html($query);
+	}
+	$baidu_heading .= "</strong></h3>";
+
+	$google_ids = implode(',', $google_ids);
+	$baidu_ids = implode(',', $baidu_ids);
+
+	$google_image_set = "$google_heading\n[gallery ids=\"$google_ids\" link=\"none\"]\n\n";
+	$baidu_image_set = "$baidu_heading\n[gallery ids=\"$baidu_ids\" link=\"none\"]\n\n";
+
+	$html = $google_image_set . $baidu_image_set;
+
+	return $html;
 }
 
 //TODO: REVISE BELOW
