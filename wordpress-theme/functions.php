@@ -197,6 +197,8 @@ function fwc_build_previous_search_content($timestamp) {
 	$google_prefix = 'google-'.$timestamp.'-';
 	$baidu_prefix = 'baidu-'.$timestamp.'-';
 
+	echo $google_prefix;
+
 	$args = array(
 	   'post_type' => 'attachment',
 	   'numberposts' => -1,
