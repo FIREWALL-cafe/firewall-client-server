@@ -192,12 +192,9 @@ function fwc_post_previous_searches() {
 
 function fwc_build_previous_search_content($timestamp) {
 	$post = get_post(get_the_ID());
-	$timestamp = intval($timestamp);
 
 	$google_prefix = 'google-'.$timestamp.'-';
 	$baidu_prefix = 'baidu-'.$timestamp.'-';
-
-	echo $google_prefix;
 
 	$args = array(
 	   'post_type' => 'attachment',
@@ -247,7 +244,13 @@ function fwc_build_previous_search_content($timestamp) {
 	$google_image_set = "$google_heading\n[gallery ids=\"$google_ids\" link=\"none\"]\n\n";
 	$baidu_image_set = "$baidu_heading\n[gallery ids=\"$baidu_ids\" link=\"none\"]\n\n";
 
-	$html = $google_image_set . $baidu_image_set;
+	$html = '';
+	if (strlen($google_ids)) {
+		$html .= $google_image_set;
+	}
+	if (strlen($baidu_ids)) {
+		$html .= $baidu_image_set;
+	}
 
 	return $html;
 }
@@ -583,7 +586,9 @@ function fwc_build_image_set($post_id, $row, $images, $label) {
 	echo "Term: ".$term."</br>";
 	echo "URLS: ".implode(', ', $urls)."</br>";
 
-	$attachments = fwc_save_images($post_id, $images, "$label-$row->timestamp");
+	$timestamp = round($row->timestamp / 1000);
+
+	$attachments = fwc_save_images($post_id, $images, "$label-$timestamp");
 
 	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong>" .
 		esc_html($term) . "</strong></h3>";
