@@ -11,11 +11,13 @@ function fwc_post_search_details() {
 
   $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
 
-  if ($censorship_status->name == 'censored' ||
-      $censorship_status->name == 'not censored' ) {
-    echo "Most people think this search term is&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
-  } else if ($censorship_status->name == 'may be censored') {
-    echo "People think this search term&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+  if ($censorship_status) {
+    if ($censorship_status->name == 'censored' ||
+        $censorship_status->name == 'not censored' ) {
+      echo "Most people think this search term is&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+    } else if ($censorship_status->name == 'may be censored') {
+      echo "People think this search term&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+    }
   }
 
   $terms = get_the_terms($post_id, 'post_tag');
