@@ -23,7 +23,9 @@ function fwc_post_search_history() {
 
 function fwc_post_search_language() {
   $search_language = fwc_get_latest_meta('search_language_name');
-  echo $search_language;
+  if ($search_language) {
+    echo $search_language;
+  }
 }
 
 function fwc_post_search_engine() {
