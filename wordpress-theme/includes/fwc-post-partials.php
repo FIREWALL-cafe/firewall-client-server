@@ -34,3 +34,20 @@ function fwc_post_search_engine() {
 function fwc_post_translation_history() {
   // $translation_history =
 }
+
+function fwc_get_reverse_search($slug) {
+  $args = array(
+    'name'        => $slug,
+    'post_type'   => 'post',
+    'post_status' => 'publish',
+    'numberposts' => 1
+  );
+  $reverse_search = get_posts($args)[0];
+  if ($reverse_search) {
+    $link = get_permalink($reverse_search->ID);
+
+    $translation = fwc_get_latest_meta('translation', $reverse_search->ID);
+
+    echo "<h3>See reverse search: <a href=\"$link\">$slug / $translation </a></h3>";
+  }
+}

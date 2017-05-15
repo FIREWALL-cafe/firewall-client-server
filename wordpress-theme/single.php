@@ -5,19 +5,21 @@
   $post_id = get_the_ID();
   $post = get_post($post_id);
 
-  $new_template_style = get_post_meta(get_the_ID(), 'new_template_style');
+  $new_template_style = get_post_meta($post_id, 'new_template_style');
 
-  $translation_data = get_post_meta(get_the_ID(), 'translation');
-  if ($translation_data && $new_template_style) {
+  if ($new_template_style) {
+    $translation_data = get_post_meta($post_id, 'translation');
     $translation = array_values($translation_data[0])[0];
   }
 ?>
 <section id="library" class="search">
   <div class="container">
     <?php
-      the_title('<h2>', '</h2>');
       if ($new_template_style) {
-        echo "<h2>".$translation."</h2>";
+        the_title('<h2>', " / $translation</h2>");
+        fwc_get_reverse_search($translation);
+      } else {
+        the_title('<h2>', '</h2>');
       }
     ?>
     <div class="post-tags">
