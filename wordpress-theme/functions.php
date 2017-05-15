@@ -213,7 +213,7 @@ function fwc_build_image_set($post_id, $row, $images, $label) {
 
    $link = get_the_permalink($post_id);
 
-	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong><a href=\"".esc_url($link)."\">$term</a>") . "</strong></h3>";
+	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong><a href=\"".esc_url($link)."\">$term</a></strong></h3>";
 	$ids = implode(',', $attachments);
 
 	$image_set = "$heading\n[gallery ids=\"$ids\" link=\"none\"]\n\n";
