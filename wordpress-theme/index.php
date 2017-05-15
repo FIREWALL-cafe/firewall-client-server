@@ -14,9 +14,6 @@ while ( have_posts() ) {
 			<?php
 			if ($first) {
 				$first = false;
-
-
-
 				?>
 				<h2>Search Library</h2>
 				<div class="library-nav">

@@ -211,7 +211,7 @@ function fwc_build_image_set($post_id, $row, $images, $label) {
 
 	$attachments = fwc_save_images($post_id, $images, "$label-$timestamp");
 
-   $link = get_the_permalink();
+   $link = get_the_permalink($post_id);
 
 	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong>" .
 		esc_html("<a href=\"$link\">$term</a>") . "</strong></h3>";
