@@ -6,6 +6,32 @@ function fwc_get_search_count() {
   return $count;
 }
 
+function fwc_post_search_details() {
+  $post_id = get_the_ID();
+
+  $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
+
+  if ($censorship_status->name == 'censored' ||
+      $censorship_status->name == 'not censored' ) {
+    echo "Most people think this search term is&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+  } else if ($censorship_status->name == 'may be censored') {
+    echo "People think this search term&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+  }
+
+  $terms = get_the_terms($post_id, 'post_tag');
+  if ($terms) {
+    foreach($terms as $term) {
+      if ($term->name == 'nsfw') {
+        echo "People think this search yields&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> results.<br>";
+      } else if ($term->name == 'firewall bug') {
+        echo "These results indicate that there might have been a&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> with this search.<br>";
+      } else if ($term->name == 'lost in translation') {
+        echo "People think this search term gets culturally&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>.<br>";
+      }
+    }
+  }
+}
+
 function fwc_post_search_history() {
   $count = fwc_get_search_count();
   $initial_search_date = fwc_get_first_timestamp();
@@ -22,15 +48,27 @@ function fwc_post_search_history() {
 }
 
 function fwc_post_search_language() {
-  $search_language = fwc_get_latest_meta('search_language_name');
+  $post_id = get_the_ID();
+  $search_language = get_the_terms($post_id, 'search_language')[0];
+  $translation_status = get_the_terms($post_id, 'translation_status')[0];
+
   if ($search_language) {
-    echo $search_language;
+    echo "The search language is&nbsp;&nbsp;<a href=\"".get_term_link($search_language->term_id)."\" class=\"post-tag\">$search_language->name</a>.&nbsp;&nbsp;";
+  }
+
+  if ($translation_status) {
+    echo "Most people think this is a&nbsp;&nbsp;<a href=\"".get_term_link($translation_status->term_id)."\" class=\"post-tag\">$translation_status->name</a>.";
   }
 }
 
 function fwc_post_search_engine() {
-  $search_engine = fwc_get_latest_meta('search_engine');
-  echo ucwords($search_engine);
+  $search_engine = get_the_terms(get_the_ID(), 'search_engine')[0];
+  if ($search_engine) {
+    echo "This search was most recently performed using&nbsp;&nbsp;<a href=\"".get_term_link($search_engine->term_id)."\" class=\"post-tag\">$search_engine->name</a>.";
+  } else {
+    $search_engine = fwc_get_latest_meta('search_engine');
+    echo "This search was most recently performed using ".ucwords($search_engine).".";
+  }
 }
 
 function fwc_post_translation_history() {
@@ -51,6 +89,6 @@ function fwc_get_reverse_search($slug) {
 
     $translation = fwc_get_latest_meta('translation', $reverse_search->ID);
 
-    echo "<h3>See reverse search: <a href=\"$link\">$slug / $translation </a></h3>";
+    echo "<p>See reverse search: <a href=\"$link\">$slug / $translation </a></p>";
   }
 }

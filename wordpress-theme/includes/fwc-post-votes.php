@@ -58,6 +58,7 @@ function fwc_post_vote_update($post_id, $meta_key) {
 }
 
 function fwc_post_tags() {
+  $post_id = get_the_ID();
   $taxonomies = array(
     'censorship_status',
     'translation_status',
@@ -67,7 +68,7 @@ function fwc_post_tags() {
   );
 
   foreach ($taxonomies as $tax) {
-    $terms = get_the_terms(get_the_ID(), $tax);
+    $terms = get_the_terms($post_id, $tax);
     if ($terms) {
       foreach ($terms as $term) {
         echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";

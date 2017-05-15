@@ -37,8 +37,8 @@
 
     <?php if ($new_template_style) { ?>
       <div class="post-section">
-        <h3>Search History</h3>
-        <?php fwc_post_search_history(); ?>
+        <h3>Search Details</h3>
+        <?php fwc_post_search_details(); ?>
       </div>
       <div class="post-section">
         <h3>Search Language</h3>
@@ -47,6 +47,10 @@
       <div class="post-section">
         <h3>Search Engine</h3>
         <?php fwc_post_search_engine(); ?>
+      </div>
+      <div class="post-section">
+        <h3>Search History</h3>
+        <?php fwc_post_search_history(); ?>
       </div>
     <?php } else { ?>
       <div class="post-meta">
@@ -57,7 +61,6 @@
     <?php if ($new_template_style) { ?>
       <?php if (fwc_get_search_count() > 1) { ?>
         <div class="post-histories-container post-section">
-          <h3>Previous Searches</h3>
           <?php fwc_post_previous_searches(); ?>
         </div>
       <?php } ?>

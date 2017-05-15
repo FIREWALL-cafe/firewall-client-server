@@ -101,4 +101,8 @@ function fwc_set_search_language($post_id, $lang) {
   wp_set_post_terms( $post_id, $lang, 'search_language', false );
 }
 
+function fwc_get_censorship_status($post_id) {
+  wp_get_post_terms($post_id, 'censorship_status');
+}
+
 ?>

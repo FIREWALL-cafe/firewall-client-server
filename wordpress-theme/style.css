@@ -303,6 +303,9 @@ footer {
 	line-height: 2;
 	padding: 2.5px 7.5px;
 }
+.post-section .post-tag {
+	margin-right: 1px;
+}
 
 .post-section {
 	margin-bottom: 30px;
@@ -313,7 +316,11 @@ footer {
 }
 
 .post-history {
-	margin-bottom: 15px;
+	margin-bottom: 30px;
+}
+
+.post-history .post-content {
+	margin-top: 30px;
 }
 
 .library-nav {

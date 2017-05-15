@@ -8,7 +8,7 @@ function fwc_post_previous_searches() {
 
   foreach ($timestamps as $timestamp) {
     echo "<div class=\"post-history\">";
-    echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
+    echo "<h3>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h3>";
     echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
        echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
 
@@ -57,23 +57,25 @@ function fwc_build_previous_search_content($timestamp) {
     $baidu_ids[] = $att->ID;
   }
 
-  $query = $post->name;
+  $query = $post->post_title;
+  $link = get_the_permalink();
+
   $translation = fwc_get_meta_by_timestamp('translation', $timestamp);
   $search_engine = fwc_get_meta_by_timestamp('search_engine', $timestamp);
 
   $google_heading = "<h3 class=\"query-label\">Google: <strong>";
   if ($search_engine == 'google') {
-    $google_heading .= esc_html($query);
+    $google_heading .= "<a href=\"$link\">$query</a>";
   } else {
-    $google_heading .= esc_html($translation);
+    $google_heading .= "<a href=\"$link\">$translation</a>";
   }
   $google_heading .= "</strong></h3>\n";
 
   $baidu_heading = "<h3 class=\"query-label\">Baidu: <strong>";
   if ($search_engine == 'google') {
-    $baidu_heading .= esc_html($translation);
+    $baidu_heading .= "<a href=\"$link\">$translation</a>";
   } else {
-    $baidu_heading .= esc_html($query);
+    $baidu_heading .= "<a href=\"$link\">$query</a>";
   }
   $baidu_heading .= "</strong></h3>\n";
 
