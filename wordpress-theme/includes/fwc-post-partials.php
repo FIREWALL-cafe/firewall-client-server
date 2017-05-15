@@ -44,8 +44,9 @@ function fwc_get_reverse_search($slug) {
     'post_status' => 'publish',
     'numberposts' => 1
   );
-  $reverse_search = get_posts($args)[0];
+  $reverse_search = get_posts($args);
   if ($reverse_search) {
+    $reverse_search = $reverse_search[0];
     $link = get_permalink($reverse_search->ID);
 
     $translation = fwc_get_latest_meta('translation', $reverse_search->ID);
