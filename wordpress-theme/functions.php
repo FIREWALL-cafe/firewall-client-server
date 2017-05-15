@@ -308,6 +308,74 @@ function fwc_post_popularity_meta() {
 //// Metadata & formatting utilities
 /////////////////////////////////////////////////
 
+function fwc_post_meta_boxes_setup() {
+  add_action( 'add_meta_boxes', 'fwc_add_post_meta_boxes' );
+}
+add_action( 'load-post.php', 'fwc_post_meta_boxes_setup' );
+add_action( 'load-post-new.php', 'fwc_post_meta_boxes_setup' );
+
+function fwc_add_post_meta_boxes() {
+  $meta_keys = array(
+    'censored_votes' => 'Censored Votes',
+    'uncensored_votes' => 'Uncensored Votes',
+    'bad_translation_votes' => 'Bad Translation Votes',
+    'good_translation_votes' => 'Good Translation Votes',
+    'lost_in_translation_votes' => 'Lost in Translation Votes',
+    'firewall_bug_votes' => 'Firewall Bug Votes',
+    'nsfw_votes' => 'NSFW Votes',
+  );
+
+  foreach ($meta_keys as $key => $title) {
+    $function = "fwc_" . $key . "_meta_box";
+    add_meta_box( $key, esc_html__( $title, '0' ), $function, 'post', 'side', 'default' );
+  }
+}
+
+function fwc_censored_votes_meta_box( $post ) {
+  $nonce = 'fwc_censored_votes_nonce';
+  $name = 'fwc_censored_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_uncensored_votes_meta_box( $post ) {
+  $nonce = 'fwc_uncensored_votes_nonce';
+  $name = 'fwc_uncensored_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_bad_translation_votes_meta_box( $post ) {
+  $nonce = 'fwc_bad_translation_votes_nonce';
+  $name = 'fwc_bad_translation_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_good_translation_votes_meta_box( $post ) {
+  $nonce = 'fwc_good_translation_votes_nonce';
+  $name = 'fwc_good_translation_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_lost_in_translation_votes_meta_box( $post ) {
+  $nonce = 'fwc_lost_in_translation_votes_nonce';
+  $name = 'fwc_lost_in_translation_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_firewall_bug_votes_meta_box( $post ) {
+  $nonce = 'fwc_firewall_bug_votes_nonce';
+  $name = 'fwc_firewall_bug_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+function fwc_nsfw_votes_meta_box( $post ) {
+  $nonce = 'fwc_nsfw_votes_nonce';
+  $name = 'fwc_nsfw_votes';
+  fwc_build_meta_box($nonce, $name, $post->ID);
+}
+
+function fwc_build_meta_box($nonce, $name, $post_id) {
+  ?><?php wp_nonce_field( basename( __FILE__ ), $nonce ); ?>
+  <p>
+    <label for="<?php echo $name; ?>"></label>
+    <input class="widefat" type="text" name="<?php echo $name; ?>" id="<?php echo $name; ?>" value="<?php echo esc_attr( get_post_meta( $post_id, $name, true ) ); ?>" size="30" />
+  </p>
+  <?php
+}
+
 function fwc_get_latest_value($array) {
 	$data = end($array);
 	if (gettype($data) == 'string' || gettype($data) == 'boolean') {
