@@ -316,6 +316,10 @@ footer {
 	margin-bottom: 15px;
 }
 
+.library-nav {
+	margin-bottom: 30px;
+}
+
 @media (min-width: 540px) {
 
 	header .details {
