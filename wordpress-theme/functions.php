@@ -308,13 +308,7 @@ function fwc_post_popularity_meta() {
 //// Metadata & formatting utilities
 /////////////////////////////////////////////////
 
-function fwc_post_meta_boxes_setup() {
-  add_action( 'add_meta_boxes', 'fwc_add_post_meta_boxes' );
-}
-add_action( 'load-post.php', 'fwc_post_meta_boxes_setup' );
-add_action( 'load-post-new.php', 'fwc_post_meta_boxes_setup' );
-
-function fwc_add_post_meta_boxes() {
+function fwc_get_vote_meta_keys() {
   $meta_keys = array(
     'censored_votes' => 'Censored Votes',
     'uncensored_votes' => 'Uncensored Votes',
@@ -325,55 +319,105 @@ function fwc_add_post_meta_boxes() {
     'nsfw_votes' => 'NSFW Votes',
   );
 
+  return $meta_keys;
+}
+
+function fwc_post_meta_boxes_setup() {
+
+  add_action( 'add_meta_boxes', 'fwc_add_post_meta_boxes' );
+
+  $meta_keys = fwc_get_vote_meta_keys();
+  foreach ($meta_keys as $key => $title) {
+    $function = "fwc_save_" . $key . "_meta";
+    add_action( 'save_post', $function, 10, 2 );
+  }
+}
+add_action( 'load-post.php', 'fwc_post_meta_boxes_setup' );
+add_action( 'load-post-new.php', 'fwc_post_meta_boxes_setup' );
+
+function fwc_add_post_meta_boxes() {
+  $meta_keys = fwc_get_vote_meta_keys();
   foreach ($meta_keys as $key => $title) {
     $function = "fwc_" . $key . "_meta_box";
-    add_meta_box( $key, esc_html__( $title, '0' ), $function, 'post', 'side', 'default' );
+    add_meta_box( $key, esc_html__( $title, '' ), $function, 'post', 'side', 'default' );
   }
 }
 
-function fwc_censored_votes_meta_box( $post ) {
-  $nonce = 'fwc_censored_votes_nonce';
-  $name = 'fwc_censored_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_uncensored_votes_meta_box( $post ) {
-  $nonce = 'fwc_uncensored_votes_nonce';
-  $name = 'fwc_uncensored_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_bad_translation_votes_meta_box( $post ) {
-  $nonce = 'fwc_bad_translation_votes_nonce';
-  $name = 'fwc_bad_translation_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_good_translation_votes_meta_box( $post ) {
-  $nonce = 'fwc_good_translation_votes_nonce';
-  $name = 'fwc_good_translation_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_lost_in_translation_votes_meta_box( $post ) {
-  $nonce = 'fwc_lost_in_translation_votes_nonce';
-  $name = 'fwc_lost_in_translation_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_firewall_bug_votes_meta_box( $post ) {
-  $nonce = 'fwc_firewall_bug_votes_nonce';
-  $name = 'fwc_firewall_bug_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
-function fwc_nsfw_votes_meta_box( $post ) {
-  $nonce = 'fwc_nsfw_votes_nonce';
-  $name = 'fwc_nsfw_votes';
-  fwc_build_meta_box($nonce, $name, $post->ID);
-}
+function fwc_build_meta_box($key, $post_id) {
+  $name = 'fwc_' . $key;
+  $nonce = $name . "_nonce";
+  $value = fwc_get_latest_meta($key, $post_id);
 
-function fwc_build_meta_box($nonce, $name, $post_id) {
   ?><?php wp_nonce_field( basename( __FILE__ ), $nonce ); ?>
   <p>
     <label for="<?php echo $name; ?>"></label>
-    <input class="widefat" type="text" name="<?php echo $name; ?>" id="<?php echo $name; ?>" value="<?php echo esc_attr( get_post_meta( $post_id, $name, true ) ); ?>" size="30" />
+    <input class="widefat" type="text" name="<?php echo $name; ?>" id="<?php echo $name; ?>" value="<?php echo $value; ?>" size="30" />
   </p>
   <?php
+}
+
+function fwc_censored_votes_meta_box( $post ) {
+  fwc_build_meta_box('censored_votes', $post->ID);
+}
+function fwc_uncensored_votes_meta_box( $post ) {
+  fwc_build_meta_box('uncensored_votes', $post->ID);
+}
+function fwc_bad_translation_votes_meta_box( $post ) {
+  fwc_build_meta_box('bad_translation_votes', $post->ID);
+}
+function fwc_good_translation_votes_meta_box( $post ) {
+  fwc_build_meta_box('good_translation_votes', $post->ID);
+}
+function fwc_lost_in_translation_votes_meta_box( $post ) {
+  fwc_build_meta_box('lost_in_translation_votes', $post->ID);
+}
+function fwc_firewall_bug_votes_meta_box( $post ) {
+  fwc_build_meta_box('firewall_bug_votes', $post->ID);
+}
+function fwc_nsfw_votes_meta_box( $post ) {
+  fwc_build_meta_box('nsfw_votes', $post->ID);
+}
+
+function fwc_save_meta($post_id, $post, $key) {
+  $name = "fwc_" . $key;
+  $nonce = $name . "_nonce";
+  if ( !isset( $_POST[$nonce] ) || !wp_verify_nonce( $_POST[$nonce], basename( __FILE__ ) ) ) {
+    return $post_id;
+  }
+
+  $post_type = get_post_type_object( $post->post_type );
+  if ( !current_user_can( $post_type->cap->edit_post, $post_id ) ) {
+    return $post_id;
+  }
+
+  $value = intval(fwc_get_latest_meta($key, $post_id));
+  $new_value = intval( isset( $_POST[$name] ) ? $_POST[$name] : $value );
+
+  if ( $new_value != $value ) {
+    update_post_meta( $post_id, $key, $new_value );
+  }
+}
+
+function fwc_save_censored_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'censored_votes');
+}
+function fwc_save_uncensored_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'uncensored_votes');
+}
+function fwc_save_bad_translation_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'bad_translation_votes');
+}
+function fwc_save_good_translation_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'good_translation_votes');
+}
+function fwc_save_lost_in_translation_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'lost_in_translation_votes');
+}
+function fwc_save_firewall_bug_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'firewall_bug_votes');
+}
+function fwc_save_nsfw_votes_meta($post_id, $post) {
+  fwc_save_meta($post_id, $post, 'nsfw_votes');
 }
 
 function fwc_get_latest_value($array) {
@@ -400,8 +444,12 @@ function fwc_get_first_meta($key) {
 	return array_values($meta)[0];
 }
 
-function fwc_get_latest_meta($key) {
-	$meta = get_post_meta(get_the_ID(), $key);
+function fwc_get_latest_meta($key, $post_id=null) {
+    if ($post_id) {
+      $meta = get_post_meta($post_id, $key);
+    } else {
+      $meta = get_post_meta(get_the_ID(), $key);
+    }
 	return fwc_get_latest_value($meta);
 }
 
