@@ -27,20 +27,30 @@ function fwc_library_nav_tags() {
     'hide_empty' => true,
   ));
 
+  $location = get_terms(array(
+    'taxonomy' => 'locations',
+    'hide_empty' => true,
+  ));
+
   $tag_sets = array(
     $censorship,
     $translation,
     $search_language,
     $search_engine,
+    $location,
     $tags,
   );
 
   foreach($tag_sets as $tag_set) {
-    foreach ($tag_set as $term) {
-      echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
-    }
-    if (count($tag_set)) {
-      echo "</br>";
+    if ($tag_set) {
+      foreach ($tag_set as $term) {
+        if ($term && $term->term_id) {
+          echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
+        }
+      }
+      if (count($tag_set)) {
+        echo "</br>";
+      }
     }
   }
 }

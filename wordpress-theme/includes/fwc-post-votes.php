@@ -10,6 +10,10 @@ function fwc_post_vote_buttons() {
     'lost_in_translation_votes' => 'Lost in Translation',
     'firewall_bug_votes' => 'Firewall Bug',
     'nsfw_votes' => 'NSFW',
+    'bad_result' => 'Bad Result',
+    'banned_search' => 'Banned Search',
+    'slow_search' => 'Slow Search',
+    'no_result' => 'No Result'
   );
 
   foreach ($vote_buttons as $key => $button_text) {
@@ -62,6 +66,7 @@ function fwc_post_tags() {
   $taxonomies = array(
     'censorship_status',
     'translation_status',
+    'locations',
     'search_language',
     'search_engine',
     'post_tag'
@@ -106,7 +111,11 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
     'nsfw',
     'lost-in-translation',
     'firewall-bug',
-    'user-error'
+    'user-error',
+    'bad-result',
+    'banned-search',
+    'slow-search',
+    'no-result'
   );
 
   $keep_tags = array();

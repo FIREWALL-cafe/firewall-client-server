@@ -163,6 +163,10 @@ function fwc_initialize_post_metadata($post_id, $row) {
 		'lost_in_translation_votes',
 		'firewall_bug_votes',
 		'nsfw_votes',
+      'bad_result_votes',
+      'banned_search_votes',
+      'slow_search_votes',
+      'no_result_votes'
 	);
 
 	foreach ($zero_votes as $key) {
@@ -242,6 +246,8 @@ function fwc_update_post_metadata($post_id, $row) {
 
   fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
   fwc_set_search_language($post_id, $row->lang_name);
+  fwc_set_search_engine($post_id, $row->search_engine);
+  fwc_set_location($post_id, 'Oslo, Norway');
 }
 
 function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {

@@ -87,6 +87,28 @@ function fwc_add_custom_taxonomies() {
       'hierarchical' => false
     ),
   ));
+  register_taxonomy('locations', 'post', array(
+    // Hierarchical taxonomy (like categories)
+    'hierarchical' => false,
+    // This array of options controls the labels displayed in the WordPress Admin UI
+    'labels' => array(
+      'name' => _x( 'Locations', 'taxonomy general name' ),
+      'singular_name' => _x( 'Location', 'taxonomy singular name' ),
+      'search_items' =>  __( 'Search By Location' ),
+      'all_items' => __( 'All Locations' ),
+      'edit_item' => __( 'Edit Location' ),
+      'update_item' => __( 'Update Location' ),
+      'add_new_item' => __( 'Add New Location' ),
+      'new_item_name' => __( 'New Location' ),
+      'menu_name' => __( 'Locations' ),
+    ),
+    // Control the slugs used for this taxonomy
+    'rewrite' => array(
+      'slug' => 'location',
+      'with_front' => false,
+      'hierarchical' => false
+    ),
+  ));
 }
 
 function fwc_set_censorship_status($post_id, $status) {
@@ -99,6 +121,14 @@ function fwc_set_translation_status($post_id, $status) {
 
 function fwc_set_search_language($post_id, $lang) {
   wp_set_post_terms( $post_id, $lang, 'search_language', false );
+}
+
+function fwc_set_search_engine($post_id, $search_engine) {
+  wp_set_post_terms( $post_id, $search_engine, 'search_engine', false);
+}
+
+function fwc_set_location($post_id, $location) {
+  wp_set_post_terms( $post_id, $location, 'location', false);
 }
 
 function fwc_get_censorship_status($post_id) {
