@@ -395,6 +395,7 @@ function fwc_save_meta($post_id, $post, $key) {
 
   if ( $new_value != $value ) {
     update_post_meta( $post_id, $key, $new_value );
+    fwc_post_update_tags($post_id, $key, $new_value);
   }
 }
 
