@@ -7,7 +7,7 @@ function fwc_post_previous_searches() {
   $timestamps = array_reverse($timestamps);
 
   foreach ($timestamps as $timestamp) {
-    echo "<div class=\"post-history\">";
+    echo "<div class=\"post-history post-content\">";
     echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
     echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
        echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
