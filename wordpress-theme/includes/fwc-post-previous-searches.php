@@ -7,20 +7,24 @@ function fwc_post_previous_searches() {
   $timestamps = array_reverse($timestamps);
 
   foreach ($timestamps as $timestamp) {
-    echo "<div class=\"post-history post-content\">";
+    echo "<div class=\"post-history\">";
     echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
     echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
        echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
 
     $previous_search_content = fwc_build_previous_search_content($timestamp);
 
-    if ($previous_search_content['google_gallery']) {
-      echo $previous_search_content['google_heading'];
-      echo do_shortcode($previous_search_content['google_gallery']);
-    }
-    if ($previous_search_content['baidu_gallery']) {
-      echo $previous_search_content['baidu_heading'];
-      echo do_shortcode($previous_search_content['baidu_gallery']);
+    if ($previous_search_content['google_gallery'] || $previous_search_content['baidu_gallery']) {
+      echo "<div class=\"post-content\">";
+      if ($previous_search_content['google_gallery']) {
+        echo $previous_search_content['google_heading'];
+        echo do_shortcode($previous_search_content['google_gallery']);
+      }
+      if ($previous_search_content['baidu_gallery']) {
+        echo $previous_search_content['baidu_heading'];
+        echo do_shortcode($previous_search_content['baidu_gallery']);
+      }
+      echo "</div>";
     }
   }
 }
