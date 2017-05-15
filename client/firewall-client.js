@@ -464,6 +464,7 @@ function submitImages(callback) {
 		lang_to: pendingQuery.langTo,
 		lang_confidence: pendingQuery.langConfidence,
 		lang_alternate: pendingQuery.langAlternate,
+		lang_name: pendingQuery.langName,
 		google_images: JSON.stringify(pendingQuery.googleImages),
 		baidu_images: JSON.stringify(pendingQuery.baiduImages),
 	};

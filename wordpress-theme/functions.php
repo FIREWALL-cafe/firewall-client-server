@@ -3,15 +3,14 @@
 define('FWC_SHARED_SECRET', 'b43ce0bdfb64d54130679f9632f37de94cfe2032');
 
 class PrefixFilter {
-        private $prefix;
+  private $prefix;
+  function __construct($prefix) {
+    $this->prefix = $prefix;
+  }
 
-        function __construct($prefix) {
-                $this->prefix = $prefix;
-        }
-
-        function hasPrefix($i) {
-        	return strpos($i->post_name, $this->prefix) !== false;
-        }
+  function hasPrefix($i) {
+  	return strpos($i->post_name, $this->prefix) !== false;
+  }
 }
 
 function fwc_after_setup_theme() {
@@ -127,11 +126,15 @@ function fwc_add_custom_taxonomies() {
 add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
 
 function fwc_set_censorship_status($post_id, $status) {
-	wp_set_post_terms( $post_id, $status, 'censorship_status', false );
+  wp_set_post_terms( $post_id, $status, 'censorship_status', false );
 }
 
 function fwc_set_translation_status($post_id, $status) {
-	wp_set_post_terms( $post_id, $status, 'translation_status', false );
+  wp_set_post_terms( $post_id, $status, 'translation_status', false );
+}
+
+function fwc_set_search_language($post_id, $lang) {
+  wp_set_post_terms( $post_id, $lang, 'search_language', false );
 }
 
 /////////////////////////////////////////////////
@@ -156,12 +159,11 @@ function fwc_post_search_history() {
   	echo "<p>This term was searched by ".fwc_get_latest_meta('client')." on ".fwc_format_date($initial_search_date).".</p>";
   }
 
-
   // echo "This is the [ranking]th most popular search using Firewall.</p>";
 }
 
 function fwc_post_search_language() {
-  $search_language = fwc_get_latest_meta('search_language');
+  $search_language = fwc_get_latest_meta('search_language_name');
   echo $search_language;
 }
 
@@ -184,6 +186,7 @@ function fwc_post_previous_searches() {
 		echo "<div class=\"post-history\">";
 		echo "<h4>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h4>";
 		echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
+       echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
 
 		$previous_search_content = fwc_build_previous_search_content($timestamp);
 
@@ -503,6 +506,7 @@ function fwc_submit_images() {
 		'lang_from' => $_POST['lang_from'],
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
+       'lang_name' => $_POST['lang_name'],
 	);
 	// $row = fwc_test_post_data();
 	fwc_import_post($row);
@@ -622,31 +626,25 @@ function fwc_update_post_metadata($post_id, $row) {
 	$timestamp = round($row->timestamp / 1000);
 	add_post_meta($post_id, 'timestamp', $timestamp, false);
 
-	$search_language = $row->lang_from;
-	fwc_update_post_search_language($post_id, $search_language);
-
 	$metadata = array(
 		'client' => $row->client,
 		'translation' => $row->translation,
 		'search_engine' => $row->search_engine,
 		'google_images' => $row->google_images,
 		'baidu_images' => $row->baidu_images,
-		'search_language' => $search_language,
+		'search_language' => $row->lang_from,
 		'search_language_confidence' => $row->lang_confidence,
 		'search_language_alternate' => $row->lang_alternate,
+       'search_language_name' => $row->lang_name,
 	);
-	fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
+
+  fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
+  fwc_set_search_language($post_id, $row->lang_name);
 }
 
 function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {
 	foreach ($metadata as $meta_key => $data) {
 		add_post_meta( $post_id, $meta_key, array( $timestamp => $data ), false );
-	}
-}
-
-function fwc_update_post_search_language($post_id, $search_language) {
-	if ($search_language == 'en') {
-		// Attach to appropriate Search Language taxonomy.
 	}
 }
 
@@ -815,6 +813,7 @@ function fwc_test_post_data() {
 		'lang_from' => 'en',
 		'lang_confidence' => '1',
 		'lang_alternate' => '',
+       'lang_name' => 'English',
 	);
 	return $row;
 }

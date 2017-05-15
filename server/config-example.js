@@ -13,9 +13,4 @@ module.exports = {
 	// For SSL
 	sslKey: '...',
 	sslCert: '...',
-
-	  // For WPAPI
-	wp_api_endpoint: '',
-	wp_username: '',
-	wp_password: '',
 };

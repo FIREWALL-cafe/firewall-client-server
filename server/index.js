@@ -18,7 +18,8 @@ var http = require('http');
 var https = require('https');
 var qs = require('querystring');
 var GoogleSpreadsheet = require('google-spreadsheet');
-var WPAPI = require('wpapi');
+var ISO6391 = require('iso-639-1');
+var BCP47 = require('bcp-47');
 
 if (config.port == 80 ||
     !config.sslCert) {
@@ -32,13 +33,6 @@ if (config.port == 80 ||
 }
 var io = require('socket.io')(app);
 var spreadsheet = new GoogleSpreadsheet(config.spreadsheetId);
-
-var wp = new WPAPI({
-	endpoint: config.wp_api_endpoint,
-	username: config.wp_username,
-	password: config.wp_password,
-	auth: true
-});
 
 // Store a locally cached copy of the Google Spreadsheet
 var doc = {};
@@ -186,6 +180,7 @@ function handleQuery(req, res, headers) {
 								langTo: translationSearch.langTo,
 								langConfidence: translationSearch.langConfidence,
 								langAlternate: translationSearch.langAlternate,
+								langName: translationSearch.langName,
 								translated: translation.value
 							});
 						}
@@ -237,6 +232,7 @@ function setupTranslation(query, detections) {
 		langFrom: language,
 		langConfidence: detections.confidence,
 		langAlternate: detections.alternate,
+		langName: detections.languageName,
 	};
 
 	// Simplified or traditional Chinese queries are translated to English.
@@ -331,7 +327,8 @@ function getTranslation(search, callback) {
 				langFrom: search.langFrom,
 				langTo: search.langTo,
 				langConfidence: search.langConfidence,
-				langAlternate: search.langAlternate
+				langAlternate: search.langAlternate,
+				langName: search.langName,
 			});
 		}
 	});
@@ -402,6 +399,7 @@ function setTranslation(search, translation) {
 			langTo: search.langTo,
 			langConfidence: search.langConfidence,
 			langAlternate: search.langAlternate,
+			langName: search.langName,
 			override: null,
 		};
 	} else {
@@ -426,6 +424,7 @@ function saveTranslation(search, translation) {
 		langTo: search.langTo,
 		langConfidence: search.langConfidence,
 		langAlternate: search.langAlternate,
+		langName: search.langName,
 	});
 }
 
@@ -449,7 +448,8 @@ function handleDetectLanguage(req, res, headers) {
 				ok: 1,
 				language: detections.language,
 				confidence: detections.confidence,
-				alternate: detections.alternate
+				alternate: detections.alternate,
+				name: detections.languageName,
 			});
 		}
 	});
@@ -490,6 +490,8 @@ function detectLanguage(search, callback) {
 					detections.alternate = response.data.detections[1][0].language;
 				}
 
+				detections.languageName = getLanguageName(detections.language);
+
 				callback(null, detections); // Send more data about language detection.
 			} else if (response &&
 			           response.error) {
@@ -503,6 +505,27 @@ function detectLanguage(search, callback) {
 		console.log(err);
 		callback(err);
 	});
+}
+
+function getLanguageName(langCode) {
+	if (ISO6391.validate(langCode)) {
+		return ISO6391.getName(langCode);
+	} else {
+		var langInfo = BCP47.parse(langCode);
+		if (ISO6391.validate(langInfo.language)) {
+			var name = ISO6391.getName(langInfo.language);
+			if (name == 'Chinese') {
+				if (langInfo.region == 'CN') {
+					name += ' (Simplified)';
+				} else if (langInfo.region == 'TW') {
+					name += ' (Traditional)';
+				}
+			}
+			return name;
+		} else {
+			return langCode;
+		}
+	}
 }
 
 //////// IMAGES /////////
@@ -593,6 +616,7 @@ function handleIndex(req, res, headers) {
 						lang_to: row.langto,
 						lang_confidence: row.langconfidence,
 						lang_alternate: row.langalternate,
+						lang_name: row.langname,
 						remove: row.remove
 					});
 				}
