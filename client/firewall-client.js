@@ -155,6 +155,11 @@ function checkPendingQuery() {
 	if (pendingQuery.query) {
 		console.log("Pending query: ");
 		console.log(pendingQuery);
+	} else {
+		ignorePending = false;
+		toggleInputField(true, function(){
+			console.log('Input field enabled.');
+		});
 	}
 
 	// If we're ignoring incoming query data because we're in the middle of handling a query, move on.
@@ -191,6 +196,9 @@ function checkPendingQuery() {
 		}, function() {
 			console.log('Reset query.');
 		});
+		toggleInputField(true, function(){
+			console.log('Input field enabled.');
+		});
 	} else if (pendingQuery.query &&
 	           pendingQuery.searchEngine != getSource()) {
 		// If the origin of the search was in the other search engine,
@@ -213,13 +221,15 @@ function checkURLQuery() {
 	if (ignoreSubmit) {
 		query = queryMatch;
 		ignoreSubmit = false;
+		toggleInputField(true, function(){
+			console.log('Input field enabled.');
+		})
 		return;
 	}
 
 	// If the URL search term is not the query, that means we're about to start handling
 	// a new search.
 	if (queryMatch != query) {
-
 		// Update the query.
 		query = queryMatch;
 		if (!query) {
@@ -267,6 +277,7 @@ function checkURLQuery() {
 
 function startQuery(query, callback) {
 	console.log('Starting query for ' + query);
+
 	var data = {
 		query: query,
 		searchEngine: getSource(),
@@ -307,27 +318,25 @@ function checkPending(query) {
 
 function searchPendingQuery() {
 	console.log('Searching for', pendingQuery.translated, '(translation of', pendingQuery.query, ') in', getSource());
-	// var inputQuery = 'input[name=q], input[name=word]';
-	// if ($(inputQuery).length == 0 ||
-	//     $(inputQuery).first().closest('form').length == 0) {
-	// 	console.log('Could not find form input, giving up.');
-	// 	ignorePending = false;
-	// 	return;
-	// }
+
 	var $inputField = findInputField();
 
-	$inputField.val(pendingQuery.translated);
-	// $(inputQuery).first().val(pendingQuery.translated);
+	var inputQuery = 'input[name=q], input[name=word]';
+	if ($(inputQuery).length == 0 ||
+	    $(inputQuery).first().closest('form').length == 0) {
+		console.log('Could not find form input, giving up.');
+		ignorePending = false;
+		return;
+	}
 
-	// var $form = $inputField.first().closest('form');
-	// var $form = $(inputQuery).first().closest('form');
-	ignoreSubmit = true;
+	$(inputQuery).first().val(pendingQuery.translated);
 	$inputField.first().closest('form').submit();
 }
 
 function findInputField() {
 	var inputField = 'input[name=q], input[name=word]',
 		$inputField = $(inputField);
+
 	if ($inputField.length == 0 || $inputField.first().closest('form').length == 0) {
 		console.log('Could not find form input. Giving up.');
 		ignorePending = false;
@@ -337,7 +346,6 @@ function findInputField() {
 }
 
 function getImages() {
-
 	if (! pendingQuery ||
 	    ! pendingQuery.query) {
 		return;
@@ -351,6 +359,10 @@ function getImages() {
 	if (! pendingQuery[retryKey]) {
 		pendingQuery[retryKey] = 0;
 	}
+
+	toggleInputField(false, function(){
+		console.log('Disabled input field during image gathering');
+	});
 
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
@@ -443,6 +455,11 @@ function checkPendingImages() {
 			}, function() {
 				ignorePending = false;
 			});
+
+			// Enable input field to handle incoming searches again.
+			toggleInputField(true, function(){
+				console.log('Searching re-enabled.');
+			});
 		});
 		return true;
 	}
@@ -450,8 +467,19 @@ function checkPendingImages() {
 	return false;
 }
 
-function submitImages(callback) {
+function toggleInputField(enable, callback) {
+	var baiduInput = document.querySelector('input[name=word]');
+	if (baiduInput) {
+		baiduInput.disabled = ! enable;
+	}
+	var googleInput = document.querySelector('input[name=q]');
+	if (googleInput) {
+		googleInput.disabled = ! enable;
+	}
+	callback();
+}
 
+function submitImages(callback) {
 	// WordPress will get all of the data-URI image data
 	var wp_data = {
 		timestamp: pendingQuery.timestamp,
@@ -509,7 +537,8 @@ function submitImages(callback) {
 		data: wp_data,
 	}).done(function(rsp){
 		console.log('Done sending draft post to WP.');
-		console.log(rsp);
+		// console.log(rsp);
+		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
 	});
@@ -523,7 +552,7 @@ function submitImages(callback) {
 		data: gs_data
 	}).done(function() {
 		console.log('Done saving images to spreadsheet');
-		callback();
+		// callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed submitting images to library: ' + textStatus + ' / ' + xhr.responseText);
 	});
