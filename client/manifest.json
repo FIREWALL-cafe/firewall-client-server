@@ -11,13 +11,19 @@
     "permissions": [
         "activeTab",
         "storage",
+        "tabs",
         "https://www.googleapis.com/*",
         "https://localhost:4430/*",
         "https://fwc.phiffer.org/*"
     ],
+    "background": {
+        "scripts": ["events.js"],
+        "persistent": false
+    },
     "content_scripts": [{
         "matches": [
-            "https://www.google.com/imghp/*",
+            "https://www.google.com/imghp*",
+            "https://www.google.com/search?site=imghp*",
             "http://image.baidu.com/*",
             "https://image.baidu.com/*"
         ],

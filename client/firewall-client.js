@@ -54,6 +54,7 @@ storage.get([
 
 	setupUI();
 	setupStorageListener();
+	setupMessageListener();
 	checkPendingQuery();
 	setupInterval();
 });
@@ -151,15 +152,27 @@ function setupStorageListener() {
 	});
 }
 
+function setupMessageListener() {
+	console.log('Setting up messages listener...');
+
+	chrome.runtime.onMessage.addListener(
+	  function(message, sender, sendResponse) {
+	    if (message == "enable-input") {
+	    	toggleInputField(true, function(){
+	    		console.log('Reenabled inputs after search completion.');
+	    	});
+	    } else if (message == 'disable-input') {
+	    	toggleInputField(false, function(){
+	    		console.log('Disabled inputs during search.');
+	    	});
+	    }
+  });
+}
+
 function checkPendingQuery() {
 	if (pendingQuery.query) {
 		console.log("Pending query: ");
 		console.log(pendingQuery);
-	} else {
-		ignorePending = false;
-		toggleInputField(true, function(){
-			console.log('Input field enabled.');
-		});
 	}
 
 	// If we're ignoring incoming query data because we're in the middle of handling a query, move on.
@@ -196,9 +209,9 @@ function checkPendingQuery() {
 		}, function() {
 			console.log('Reset query.');
 		});
-		toggleInputField(true, function(){
-			console.log('Input field enabled.');
-		});
+		// toggleInputField(true, function(){
+		// 	console.log('Input field enabled.');
+		// });
 	} else if (pendingQuery.query &&
 	           pendingQuery.searchEngine != getSource()) {
 		// If the origin of the search was in the other search engine,
@@ -221,9 +234,9 @@ function checkURLQuery() {
 	if (ignoreSubmit) {
 		query = queryMatch;
 		ignoreSubmit = false;
-		toggleInputField(true, function(){
-			console.log('Input field enabled.');
-		})
+		// toggleInputField(true, function(){
+		// 	console.log('Input field enabled.');
+		// })
 		return;
 	}
 
@@ -237,6 +250,8 @@ function checkURLQuery() {
 		}
 
 		console.log('Detected a', getSource(),'search: ' + query);
+		chrome.runtime.sendMessage('disable-input');
+
 		var timestamp = (new Date().getTime());
 
 		// Check to see if the ongoing query has any history.
@@ -360,10 +375,6 @@ function getImages() {
 		pendingQuery[retryKey] = 0;
 	}
 
-	toggleInputField(false, function(){
-		console.log('Disabled input field during image gathering');
-	});
-
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
 	function _deriveHref(image) {
@@ -455,17 +466,15 @@ function checkPendingImages() {
 			}, function() {
 				ignorePending = false;
 			});
-
-			// Enable input field to handle incoming searches again.
-			toggleInputField(true, function(){
-				console.log('Searching re-enabled.');
-			});
 		});
 		return true;
 	}
 
 	return false;
 }
+
+
+
 
 function toggleInputField(enable, callback) {
 	var baiduInput = document.querySelector('input[name=word]');
@@ -537,7 +546,7 @@ function submitImages(callback) {
 		data: wp_data,
 	}).done(function(rsp){
 		console.log('Done sending draft post to WP.');
-		// console.log(rsp);
+		chrome.runtime.sendMessage('enable-input');
 		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
