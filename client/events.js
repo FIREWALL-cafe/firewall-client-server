@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener(function(message) {
     }, function(tabs){
         console.log(tabs);
         for (var i = 0; i < tabs.length; i++) {
-            chrome.tabs.sendMessage(tabs[i].id, message);
+            // chrome.tabs.sendMessage(tabs[i].id, message);
         }
 
         if (message == 'enable-input') {
