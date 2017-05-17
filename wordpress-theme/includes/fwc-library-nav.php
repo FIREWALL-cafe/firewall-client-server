@@ -4,7 +4,6 @@ function fwc_library_nav_tags() {
   $tags = get_terms( array(
     'taxonomy' => 'post_tag',
     'hide_empty' => true,
-    'exclude' => '1'
   ));
 
   $censorship = get_terms( array(
