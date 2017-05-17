@@ -372,7 +372,7 @@ function getImages() {
 	var maxRetries = 5;
 
 	// If getting images from Baidu, look for the phrase indicating banned search.
-	pendingQuery[isBanned] = false;
+	pendingQuery['isBanned'] = false;
 
 	if (! pendingQuery[retryKey]) {
 		pendingQuery[retryKey] = 0;
