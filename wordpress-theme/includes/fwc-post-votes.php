@@ -7,13 +7,9 @@ function fwc_post_vote_buttons() {
     'uncensored_votes' => 'Not Censored',
     'bad_translation_votes' => 'Bad Translation',
     'good_translation_votes' => 'Good Translation',
-    'lost_in_translation_votes' => 'Lost in Translation',
-    'firewall_bug_votes' => 'Firewall Bug',
+    'lost_in_translation_votes' => 'Lost in Cultural Translation',
     'nsfw_votes' => 'NSFW',
     'bad_result' => 'Bad Result',
-    'banned_search' => 'Banned Search',
-    'slow_search' => 'Slow Search',
-    'no_result' => 'No Result'
   );
 
   foreach ($vote_buttons as $key => $button_text) {
