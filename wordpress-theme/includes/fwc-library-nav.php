@@ -31,12 +31,18 @@ function fwc_library_nav_tags() {
     'hide_empty' => true,
   ));
 
+  $banned = get_terms(array(
+    'taxonomy' => 'banned_status',
+    'hide_empty' => true,
+  ));
+
   $tag_sets = array(
     $censorship,
     $translation,
     $search_language,
     $search_engine,
     $location,
+    $banned,
     $tags,
   );
 

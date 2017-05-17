@@ -8,9 +8,22 @@ function fwc_post_previous_searches() {
 
   foreach ($timestamps as $timestamp) {
     echo "<div class=\"post-history\">";
-    echo "<h3>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp)."</h3>";
+    echo "<h3>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp);
+
+    $location = fwc_get_meta_by_timestamp('location', $timestamp);
+    if ($location) {
+      echo " in ".$location;
+    }
+    echo "</h3>";
+
     echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
-       echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
+    echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
+
+    $banned = fwc_get_meta_by_timestamp('is_banned', $timestamp);
+    if ($banned) {
+      echo "At the time of this search, this search term was banned.";
+    }
+
 
     $previous_search_content = fwc_build_previous_search_content($timestamp);
 

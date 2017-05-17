@@ -546,6 +546,7 @@ function handleImages(req, res, headers) {
 				lang_from: data.lang_from,
 				lang_confidence: data.lang_confidence,
 				lang_alternate: data.lang_alternate,
+				is_banned: data.is_banned,
 			};
 
 			// Add row to Google spreadsheet.
@@ -617,7 +618,8 @@ function handleIndex(req, res, headers) {
 						lang_confidence: row.langconfidence,
 						lang_alternate: row.langalternate,
 						lang_name: row.langname,
-						remove: row.remove
+						remove: row.remove,
+						is_banned: row.isbanned
 					});
 				}
 			});

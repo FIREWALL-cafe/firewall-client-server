@@ -6,13 +6,13 @@ function fwc_get_vote_meta_keys() {
     'uncensored_votes' => 'Uncensored Votes',
     'bad_translation_votes' => 'Bad Translation Votes',
     'good_translation_votes' => 'Good Translation Votes',
-    'lost_in_translation_votes' => 'Lost in Translation Votes',
-    'firewall_bug_votes' => 'Firewall Bug Votes',
+    'lost_in_translation_votes' => 'Lost in Cultural Translation Votes',
+    // 'firewall_bug_votes' => 'Firewall Bug Votes',
     'nsfw_votes' => 'NSFW Votes',
     'bad_result_votes' => 'Bad Result Votes',
-    'banned_search_votes' => 'Banned Search Votes',
-    'slow_search_votes' => 'Slow Search Votes',
-    'no_result_votes' => 'No Result Votes',
+    // 'banned_search_votes' => 'Banned Search Votes',
+    // 'slow_search_votes' => 'Slow Search Votes',
+    // 'no_result_votes' => 'No Result Votes',
   );
 
   return $meta_keys;
@@ -73,12 +73,12 @@ function fwc_nsfw_votes_meta_box( $post ) {
 function fwc_bad_result_votes_meta_box( $post ) {
   fwc_build_meta_box('bad_result_votes', $post->ID);
 }
-function fwc_banned_search_votes_meta_box( $post ) {
-  fwc_build_meta_box('banned_search_votes', $post->ID);
-}
-function fwc_slow_search_votes_meta_box( $post ) {
-  fwc_build_meta_box('slow_search_votes', $post->ID);
-}
-function fwc_no_result_votes_meta_box( $post ) {
-  fwc_build_meta_box('no_result_votes', $post->ID);
-}
+// function fwc_banned_search_votes_meta_box( $post ) {
+//   fwc_build_meta_box('banned_search_votes', $post->ID);
+// }
+// function fwc_slow_search_votes_meta_box( $post ) {
+//   fwc_build_meta_box('slow_search_votes', $post->ID);
+// }
+// function fwc_no_result_votes_meta_box( $post ) {
+//   fwc_build_meta_box('no_result_votes', $post->ID);
+// }

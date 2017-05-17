@@ -108,6 +108,7 @@ function fwc_submit_images() {
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
        'lang_name' => $_POST['lang_name'],
+       'is_banned' => $_POST['is_banned'],
 	);
 	// $row = fwc_test_post_data();
 	fwc_import_post($row);
@@ -163,10 +164,9 @@ function fwc_initialize_post_metadata($post_id, $row) {
 		'lost_in_translation_votes',
 		'firewall_bug_votes',
 		'nsfw_votes',
-      'bad_result_votes',
-      'banned_search_votes',
-      'slow_search_votes',
-      'no_result_votes'
+		'bad_result_votes',
+		'slow_search_votes',
+		'no_result_votes'
 	);
 
 	foreach ($zero_votes as $key) {
@@ -232,6 +232,8 @@ function fwc_update_post_metadata($post_id, $row) {
 	$timestamp = round($row->timestamp / 1000);
 	add_post_meta($post_id, 'timestamp', $timestamp, false);
 
+	$location = 'Oslo, Norway';
+
 	$metadata = array(
 		'client' => $row->client,
 		'translation' => $row->translation,
@@ -242,12 +244,15 @@ function fwc_update_post_metadata($post_id, $row) {
 		'search_language_confidence' => $row->lang_confidence,
 		'search_language_alternate' => $row->lang_alternate,
        'search_language_name' => $row->lang_name,
+       'is_banned' => $row->is_banned,
+       'location' => $location,
 	);
 
   fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
   fwc_set_search_language($post_id, $row->lang_name);
   fwc_set_search_engine($post_id, $row->search_engine);
-  fwc_set_location($post_id, 'Oslo, Norway');
+  fwc_set_banned_status($post_id, $row->is_banned);
+  fwc_set_location($post_id, $location);
 }
 
 function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {

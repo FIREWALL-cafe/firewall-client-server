@@ -45,13 +45,13 @@ function fwc_save_nsfw_votes_meta($post_id, $post) {
 function fwc_save_bad_result_votes_meta($post_id, $post) {
   fwc_save_meta($post_id, $post, 'bad_result_votes');
 }
-function fwc_save_no_result_votes_meta($post_id, $post) {
-  fwc_save_meta($post_id, $post, 'no_result_votes');
-}
-function fwc_save_banned_search_votes_meta($post_id, $post) {
-  fwc_save_meta($post_id, $post, 'banned_search_votes');
-}
-function fwc_save_slow_search_votes_meta($post_id, $post) {
-  fwc_save_meta($post_id, $post, 'slow_search_votes');
-}
+// function fwc_save_no_result_votes_meta($post_id, $post) {
+//   fwc_save_meta($post_id, $post, 'no_result_votes');
+// }
+// function fwc_save_banned_search_votes_meta($post_id, $post) {
+//   fwc_save_meta($post_id, $post, 'banned_search_votes');
+// }
+// function fwc_save_slow_search_votes_meta($post_id, $post) {
+//   fwc_save_meta($post_id, $post, 'slow_search_votes');
+// }
 

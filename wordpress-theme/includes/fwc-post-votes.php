@@ -65,6 +65,7 @@ function fwc_post_tags() {
     'locations',
     'search_language',
     'search_engine',
+    'banned_status',
     'post_tag'
   );
 
@@ -103,15 +104,21 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
     fwc_set_translation_status($post_id, '');
   }
 
+  $banned = get_post_meta($post_id, 'is_banned');
+  if ($banned) {
+    fwc_set_banned_status($post_id, 'banned');
+  } else {
+    fwc_set_banned_status($post_id, 'not banned');
+  }
+
   $tag_by_count = array(
     'nsfw',
     'lost-in-translation',
     'firewall-bug',
-    'user-error',
+    // 'user-error',
     'bad-result',
-    'banned-search',
-    'slow-search',
-    'no-result'
+    // 'slow-search',
+    // 'no-result'
   );
 
   $keep_tags = array();

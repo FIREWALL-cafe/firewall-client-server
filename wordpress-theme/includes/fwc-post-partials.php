@@ -9,6 +9,11 @@ function fwc_get_search_count() {
 function fwc_post_search_details() {
   $post_id = get_the_ID();
 
+  $banned = get_the_terms($post_id, 'banned_status')[0];
+  if ($banned && $banned->name == 'banned') {
+    echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
+  }
+
   $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
 
   if ($censorship_status) {
@@ -26,9 +31,9 @@ function fwc_post_search_details() {
       if ($term->name == 'nsfw') {
         echo "People think this search yields&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> results.<br>";
       } else if ($term->name == 'firewall bug') {
-        echo "These results indicate that there might have been a&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> with this search.<br>";
-      } else if ($term->name == 'lost in translation') {
-        echo "People think this search term gets culturally&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>.<br>";
+        echo "We think there might have been a&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> with this search.<br>";
+      } else if ($term->name == 'lost in cultural translation') {
+        echo "People think this search term gets&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>.<br>";
       }
     }
   }
@@ -44,6 +49,11 @@ function fwc_post_search_history() {
   echo "It was first searched by ".fwc_get_meta_by_timestamp('client', $initial_search_date)." on ".fwc_format_date($initial_search_date).".</br>";
   } else {
     echo "<p>This term was searched by ".fwc_get_latest_meta('client')." on ".fwc_format_date($initial_search_date).".</p>";
+  }
+
+  $location = get_the_terms(get_the_ID(), 'locations')[0];
+  if ($location) {
+    echo "<p>This search was conducted in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>.</p>";
   }
 
   // echo "This is the [ranking]th most popular search using Firewall.</p>";

@@ -371,6 +371,9 @@ function getImages() {
 	var numImages = 20;
 	var maxRetries = 5;
 
+	// If getting images from Baidu, look for the phrase indicating banned search.
+	pendingQuery[isBanned] = false;
+
 	if (! pendingQuery[retryKey]) {
 		pendingQuery[retryKey] = 0;
 	}
@@ -504,6 +507,7 @@ function submitImages(callback) {
 		lang_name: pendingQuery.langName,
 		google_images: JSON.stringify(pendingQuery.googleImages),
 		baidu_images: JSON.stringify(pendingQuery.baiduImages),
+		is_banned: pendingQuery.isBanned
 	};
 
 	var googleImageUrls = [];
@@ -525,18 +529,6 @@ function submitImages(callback) {
 
 	console.log('google image urls');
 	console.log(gs_data.google_images.substr(0, 100));
-
-	// if (pendingQuery.googleImages == 'empty') {
-	// 	data.google_images = null;
-	// } else {
-	// 	data.google_images = JSON.stringify(pendingQuery.googleImages);
-	// }
-
-	// if (pendingQuery.baiduImages == 'empty') {
-	// 	data.baidu_images = null;
-	// } else {
-	// 	data.baidu_images = JSON.stringify(pendingQuery.baiduImages);
-	// }
 
 	console.log('Sending draft post to WP.');
 	var url = config.libraryURL;
