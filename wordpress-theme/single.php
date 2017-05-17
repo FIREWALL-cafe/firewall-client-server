@@ -37,7 +37,6 @@
 
     <?php if ($new_template_style) { ?>
       <div class="post-section">
-        <h3>Search Details</h3>
         <?php fwc_post_search_details(); ?>
       </div>
       <div class="post-section">

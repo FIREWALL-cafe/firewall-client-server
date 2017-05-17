@@ -10,11 +10,19 @@ function fwc_post_search_details() {
   $post_id = get_the_ID();
 
   $banned = get_the_terms($post_id, 'banned_status')[0];
+  $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
+  $terms = get_the_terms($post_id, 'post_tag');
+
+  if ($censorship_status || $terms || $banned->name == 'banned') {
+    echo "<h3>Search Details</h3>";
+  } else {
+    return;
+  }
+
+
   if ($banned && $banned->name == 'banned') {
     echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
   }
-
-  $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
 
   if ($censorship_status) {
     if ($censorship_status->name == 'censored' ||
@@ -25,7 +33,6 @@ function fwc_post_search_details() {
     }
   }
 
-  $terms = get_the_terms($post_id, 'post_tag');
   if ($terms) {
     foreach($terms as $term) {
       if ($term->name == 'nsfw') {
@@ -37,25 +44,45 @@ function fwc_post_search_details() {
       }
     }
   }
+
+
 }
 
 function fwc_post_search_history() {
+  $client = fwc_get_latest_meta('client');
+  $timestamp = fwc_format_date(fwc_get_latest_timestamp());
+  $location = get_the_terms(get_the_ID(), 'locations');
+  if (gettype($location) == 'array') {
+    $location = $location[0];
+  } else {
+    $location = null;
+  }
   $count = fwc_get_search_count();
-  $initial_search_date = fwc_get_first_timestamp();
+
+  $initial_timestamp = fwc_get_first_timestamp();
+  $initial_client = fwc_get_meta_by_timestamp('client', $initial_timestamp);
+  $initial_search_date = fwc_format_date($initial_timestamp);
+  $initial_search_location = fwc_get_meta_by_timestamp('location', $initial_timestamp);
 
   // Display chart of search history here.
   if ($count > 1) {
-  echo "<p>This term has been searched ".$count." times, most recently by ".fwc_get_latest_meta('client')." on ".fwc_format_date(fwc_get_latest_timestamp()).".</br>";
-  echo "It was first searched by ".fwc_get_meta_by_timestamp('client', $initial_search_date)." on ".fwc_format_date($initial_search_date).".</br>";
+    echo "<p>This term has been searched $count times, most recently by $client on $timestamp";
+    if ($location) { echo "in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>"; }
+    echo ".</br>";
+
+    echo "It was first searched by $initial_client on $initial_search_date";
+    if ($initial_search_location) {
+      echo " in $initial_search_location";
+    }
+    echo ".</p>";
   } else {
-    echo "<p>This term was searched by ".fwc_get_latest_meta('client')." on ".fwc_format_date($initial_search_date).".</p>";
-  }
+    echo "<p>This term was searched by $initial_client on $initial_search_date";
 
-  $location = get_the_terms(get_the_ID(), 'locations')[0];
-  if ($location) {
-    echo "<p>This search was conducted in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>.</p>";
+    if ($location) {
+      echo " in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>";
+    }
+    echo ".</p>";
   }
-
   // echo "This is the [ranking]th most popular search using Firewall.</p>";
 }
 

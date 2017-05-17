@@ -105,8 +105,8 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
   }
 
   $banned = get_post_meta($post_id, 'is_banned');
-  if ($banned) {
-    fwc_set_banned_status($post_id, 'banned');
+  if ($banned == 'banned') {
+    fwc_set_banned_status($post_id, $banned);
   } else {
     fwc_set_banned_status($post_id, 'not banned');
   }
