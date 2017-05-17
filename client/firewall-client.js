@@ -372,7 +372,14 @@ function getImages() {
 	var maxRetries = 5;
 
 	// If getting images from Baidu, look for the phrase indicating banned search.
-	pendingQuery['isBanned'] = 'not banned';
+	if (getSource() == 'baidu') {
+		var isBanned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
+		if (isBanned) {
+			pendingQuery['isBanned'] = 'banned';
+		} else {
+			pendingQuery['isBanned'] = 'not banned';
+		}
+	}
 
 	if (! pendingQuery[retryKey]) {
 		pendingQuery[retryKey] = 0;
