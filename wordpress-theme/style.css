@@ -302,7 +302,7 @@ footer {
 }
 
 .tag-navigation-container.open {
-	max-height: 38vw;
+	max-height: 52vw;
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
 
