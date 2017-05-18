@@ -19,8 +19,8 @@ function fwc_post_previous_searches() {
     echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
     echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
 
-    $banned = fwc_get_meta_by_timestamp('is_banned', $timestamp);
-    if ($banned == 'banned') {
+    $banned = fwc_get_meta_by_timestamp('banned', $timestamp);
+    if ($banned) {
       echo "At the time of this search, this term was banned.";
     }
 

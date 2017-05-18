@@ -233,7 +233,7 @@ function fwc_update_post_metadata($post_id, $row) {
 	$timestamp = round($row->timestamp / 1000);
 	add_post_meta($post_id, 'timestamp', $timestamp, false);
 
-	$location = 'Oslo, Norway';
+	$location = 'oslo';
 
 	$metadata = array(
 		'client' => $row->client,
@@ -253,9 +253,9 @@ function fwc_update_post_metadata($post_id, $row) {
   fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
   fwc_set_search_language($post_id, $row->lang_name);
   fwc_set_search_engine($post_id, $row->search_engine);
-  // fwc_set_banned_status($post_id, $row->banned);
-  // fwc_set_sensitive_status($post_id, $row->sensitive);
   fwc_set_location($post_id, $location);
+  fwc_set_banned($post_id, $row->banned);
+  fwc_set_sensitive($post_id, $row->sensitive);
 }
 
 function fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp) {

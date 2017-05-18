@@ -127,4 +127,17 @@ function fwc_set_search_engine($post_id, $search_engine) {
 function fwc_set_location($post_id, $location) {
   wp_set_post_terms( $post_id, $location, 'locations', false);
 }
+
+function fwc_set_banned($post_id, $banned) {
+  if ($banned == 'true') {
+    wp_set_post_terms( $post_id, 'banned', 'post_tag', true);
+  }
+}
+
+function fwc_set_sensitive($post_id, $sensitive) {
+  if ($sensitive == 'true') {
+    wp_set_post_terms( $post_id, 'sensitive', 'post_tag', true);
+  }
+}
+
 ?>
