@@ -306,8 +306,8 @@ footer {
 }
 
 .tag-navigation-opener {
+	margin-top: 30px;
 	color: #e60011;
-	text-decoration: underline;
 	cursor: pointer;
 }
 

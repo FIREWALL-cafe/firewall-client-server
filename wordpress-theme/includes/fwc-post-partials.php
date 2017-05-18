@@ -67,7 +67,7 @@ function fwc_post_search_history() {
   // Display chart of search history here.
   if ($count > 1) {
     echo "<p>This term has been searched $count times, most recently by $client on $timestamp";
-    if ($location) { echo "in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>"; }
+    if ($location) { echo " in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>"; }
     echo ".</br>";
 
     echo "It was first searched by $initial_client on $initial_search_date";
