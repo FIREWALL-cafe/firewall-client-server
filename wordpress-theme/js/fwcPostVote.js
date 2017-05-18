@@ -13,7 +13,7 @@ $(document).ready(function() {
       security: FWC.security,
     };
 
-    $this.prop('disabled', true);
+    $this.addClass('disabled');
 
     $.post(FWC.ajaxurl, data, function(response) {
       $this.prev('p.vote-count').text(response);

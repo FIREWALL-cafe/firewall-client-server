@@ -106,28 +106,6 @@ function fwc_add_custom_taxonomies() {
       'hierarchical' => false
     ),
   ));
-  // register_taxonomy('banned_status', 'post', array(
-  //   // Hierarchical taxonomy (like categories)
-  //   'hierarchical' => false,
-  //   // This array of options controls the labels displayed in the WordPress Admin UI
-  //   'labels' => array(
-  //     'name' => _x( 'Banned Status', 'taxonomy general name' ),
-  //     'singular_name' => _x( 'Banned Status', 'taxonomy singular name' ),
-  //     'search_items' =>  __( 'Search By Banned Status' ),
-  //     'all_items' => __( 'All Banned Statuses' ),
-  //     'edit_item' => __( 'Edit Banned Statuses' ),
-  //     'update_item' => __( 'Update Banned Statuses' ),
-  //     'add_new_item' => __( 'Add New Banned Status' ),
-  //     'new_item_name' => __( 'New Banned Status' ),
-  //     'menu_name' => __( 'Banned Status' ),
-  //   ),
-  //   // Control the slugs used for this taxonomy
-  //   'rewrite' => array(
-  //     'slug' => 'banned',
-  //     'with_front' => false,
-  //     'hierarchical' => false
-  //   ),
-  // ));
 }
 
 function fwc_set_censorship_status($post_id, $status) {
@@ -149,13 +127,4 @@ function fwc_set_search_engine($post_id, $search_engine) {
 function fwc_set_location($post_id, $location) {
   wp_set_post_terms( $post_id, $location, 'locations', false);
 }
-
-// function fwc_set_banned_status($post_id, $status) {
-//   wp_set_post_terms( $post_id, $status, 'banned_status', false);
-// }
-
-// function fwc_get_censorship_status($post_id) {
-//   wp_get_post_terms($post_id, 'censorship_status');
-// }
-
 ?>

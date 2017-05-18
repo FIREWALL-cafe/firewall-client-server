@@ -23,7 +23,7 @@ function fwc_library_nav_tags() {
 
   $i = 0;
   foreach ($nav_buttons as $slug) {
-    if ($i == 4) {
+    if ($i == 8) {
       fwc_more_button();
       fwc_get_nav_tag($slug);
     } else {
@@ -32,7 +32,6 @@ function fwc_library_nav_tags() {
     $i += 1;
   }
 }
-
 
 function fwc_more_button() {
   echo "<div class=\"fwc-nav-tag tag-navigation-opener\">";
@@ -53,5 +52,3 @@ function fwc_get_nav_tag($slug, $class='') {
   echo fwc_get_svg($slug);
   echo "</a>";
 }
-
-

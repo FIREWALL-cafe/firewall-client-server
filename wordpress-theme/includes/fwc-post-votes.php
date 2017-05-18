@@ -3,28 +3,38 @@
 function fwc_post_vote_buttons() {
 
   $vote_buttons = array(
-    'censored_votes' => 'Censored',
-    'uncensored_votes' => 'Uncensored',
-    'bad_translation_votes' => 'Bad Translation',
-    'good_translation_votes' => 'Good Translation',
-    'lost_in_translation_votes' => 'Lost in Cultural Translation',
-    'nsfw_votes' => 'NSFW',
-    'bad_result' => 'Bad Result',
+    'censored_votes' => 'censored',
+    // 'uncensored_votes' => 'uncensored',
+    'bad_translation_votes' => 'bad-translation',
+    'good_translation_votes' => 'good-translation',
+    'lost_in_translation_votes' => 'lost-in-translation',
+    'nsfw_votes' => 'nsfw',
+    'wtf_votes' => 'wtf',
   );
 
-  foreach ($vote_buttons as $key => $button_text) {
-    fwc_post_vote_button($button_text, $key, fwc_get_latest_meta($key));
+  foreach ($vote_buttons as $key => $slug) {
+    fwc_post_vote_button($slug, $key, fwc_get_latest_meta($key));
   }
 }
 
-function fwc_post_vote_button($button_text, $key, $count) {
+function fwc_post_vote_button($slug, $key, $count) {
   $post_id = get_the_ID();
   if (!$count) { $count = 0; }
+
+  $term = get_terms(array('slug' => $slug));
+  if (count($term)) {
+    $term = $term[0];
+    $link = get_term_link($term->term_id);
+  } else {
+    $link = '#';
+  }
 
   // TODO: Add vote button SVGs here.
   echo "<div class=\"vote-button-container\">";
   echo "<p class=\"vote-count\">".$count."</p>";
-  echo "<button class=\"fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">".$button_text."</button>";
+  echo "<span class=\"fwc-nav-tag fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">";
+  echo fwc_get_svg($slug);
+  echo "</span>";
   echo "</div>";
 }
 

@@ -296,13 +296,13 @@ footer {
 	align-items: center;
 	justify-content: flex-start;
 	overflow-y: hidden;
-	max-height: 12.5vw;
+	max-height: calc(800px/9 + 15px);
 	margin: 45px 0 30px 0;
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
 
 .tag-navigation-container.open {
-	max-height: 52vw;
+	max-height: calc(800px/4);
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
 
@@ -320,11 +320,11 @@ footer {
 .tag-navigation-container.open .tag-navigation-opener:before {
 	content: 'X';
 	color: #000;
-	font-size: 48px;
+	font-size: 22px;
 	padding-bottom: 15px;
 	position: absolute;
-	right: 6.5vw;
-	padding-top: 4.5vw;
+	right: calc(800px/13.5);
+	padding-top: calc(800px/25);
 }
 
 .sidebar .post-tag {
@@ -344,13 +344,15 @@ footer {
 	flex-direction: row;
 	align-items: center;
 	justify-content: flex-start;
-	margin-top: 15px;
-	margin-bottom: 30px;
+	width: 100%;
+	margin-top: 45px;
+	margin-bottom: 45px;
 }
 
 .vote-button-container {
 	margin-right: 10px;
 	text-align: center;
+	width: calc(100%/7 - 10px);
 }
 
 .vote-button-container p.vote-count {
@@ -360,18 +362,20 @@ footer {
 	min-height: 20px;
 }
 
-.fwc-vote-button {
+.fwc-vote-button.fwc-nav-tag {
 	height: 100px;
 	width: 100px;
-	border-radius: 50%;
+	cursor: pointer;
 }
-.fwc-vote-button:disabled {
-	background-color: #dedede;
+.fwc-vote-button.disabled svg {
+	fill-opacity: 0.5;
+	stroke-opacity: 0.5;
+	transition: fill-opacity 0.5s ease-out, stroke-opacity 0.5s ease-out;
 }
 
 .fwc-nav-tag {
-	width: calc(92%/5);
-	margin-right: 2%;
+	width: calc(92%/9);
+	margin-right: 1%;
 	height: auto;
 	border: none;
 	text-decoration: none;
@@ -380,12 +384,12 @@ footer {
 	text-decoration: none;
 	border: none;
 }
-.fwc-nav-tag:nth-of-type(5n-1),
+.fwc-nav-tag:nth-of-type(9n-1),
 .tag-navigation-opener {
 	margin-right: 0;
 }
-.fwc-nav-tag:nth-of-type(4) {
-	margin-right: 2%;
+.fwc-nav-tag:nth-of-type(8) {
+	margin-right: 1%;
 }
 
 
@@ -405,13 +409,13 @@ footer {
 	background-color: #e60011;
 }
 .post-tag.blue {
-	background-color: #1c184d;
+	/*background-color: #1c184d;*/
 }
 .post-tag.grey {
-	background-color: #939598;
+	/*background-color: #939598;*/
 }
 .post-tag.green {
-	background-color: #00a651;
+	/*background-color: #00a651;*/
 }
 
 .post-section .post-tag {
@@ -434,8 +438,17 @@ footer {
 	background-color: #00a651;
 }
 
-.post-histories-container {
+.post-section:last-of-type() {
+	margin-bottom: 60px;
+}
 
+h2.post-section-title {
+	padding-bottom: 30px;
+	border-bottom: 1px solid #dedede;
+	margin-bottom: 30px;
+}
+.post-histories-container {
+	margin-top
 }
 
 .post-history {
