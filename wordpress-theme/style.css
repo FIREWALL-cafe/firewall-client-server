@@ -392,7 +392,6 @@ footer {
 	margin-right: 1%;
 }
 
-
 .post-tags {
 	margin-bottom: 30px;
 }
@@ -443,12 +442,17 @@ footer {
 }
 
 h2.post-section-title {
-	padding-bottom: 30px;
-	border-bottom: 1px solid #dedede;
+	padding-top: 30px;
+	border-top: 1px solid #dedede;
 	margin-bottom: 30px;
 }
-.post-histories-container {
-	margin-top
+h2.post-section-title.no-border {
+	border-top: none;
+}
+
+.post-details {
+	max-height: 800px;
+	overflow-y: scroll;
 }
 
 .post-history {
