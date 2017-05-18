@@ -27,18 +27,9 @@ while ( have_posts() ) {
 	?>
 	<section id="search-<?php echo esc_attr($post->post_name); ?>" class="search">
 		<?php
-		// if ($first) {
-			// $first = false;
-			 ?>
-			<!-- <h2>Search Library</h2> -->
-			<!-- <div class="library-nav"> -->
-				<!-- <h3>View searches by category:</h3> -->
-				<!-- <div class="library-nav-tags-container"> -->
-					<?php // fwc_library_nav_tags(); ?>
-				<!-- </div> -->
-			<!-- </div> -->
-			<?php
-		// }
+			$link = get_the_permalink();
+			$prefix = "<h2 class=\"post-title\"><a href=\"$link\">";
+			the_title($prefix, '</a></h2>');
 		?>
 		<div class="post-content">
 			<?php the_content(); ?>
