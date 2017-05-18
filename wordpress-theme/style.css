@@ -263,6 +263,24 @@ footer {
 	margin-bottom: 1px;
 }
 
+#library .content {
+	max-width: none;
+}
+#library .post-content h3 {
+	position: relative;
+	left: 0;
+}
+#library .gallery {
+	padding-top: 0;
+}
+
+.sidebar .post-tag {
+	display: inline-block;
+	width: 100%;
+	margin-bottom: 5px;
+}
+
+
 .post-content ul li {
 	list-style: disc;
 	margin-left: 1em;

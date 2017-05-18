@@ -1,36 +1,50 @@
 <?php
 
+
 get_header();
+
 $first = true;
 global $post;
 
+
+
+?>
+<section id="library">
+	<div class="container">
+		<h2>Search Library</h2>
+		<div class="columns">
+			<div class="sidebar">
+			<h3>View searches by category:</h3>
+				<?php fwc_library_nav_tags(); ?>
+			</div>
+			<div class="content">
+
+<?php
 while ( have_posts() ) {
 
 	the_post();
 
 	?>
 	<section id="search-<?php echo esc_attr($post->post_name); ?>" class="search">
-		<div class="container">
+		<?php
+		// if ($first) {
+			// $first = false;
+			 ?>
+			<!-- <h2>Search Library</h2> -->
+			<!-- <div class="library-nav"> -->
+				<!-- <h3>View searches by category:</h3> -->
+				<!-- <div class="library-nav-tags-container"> -->
+					<?php // fwc_library_nav_tags(); ?>
+				<!-- </div> -->
+			<!-- </div> -->
 			<?php
-			if ($first) {
-				$first = false;
-				?>
-				<h2>Search Library</h2>
-				<div class="library-nav">
-					<h3>View searches by category:</h3>
-					<div class="library-nav-tags-container">
-						<?php fwc_library_nav_tags(); ?>
-					</div>
-				</div>
-				<?php
-			}
-			?>
-			<div class="post-content">
-				<?php the_content(); ?>
-			</div>
-			<div class="post-meta">
-				<?php fwc_post_meta(); ?>
-			</div>
+		// }
+		?>
+		<div class="post-content">
+			<?php the_content(); ?>
+		</div>
+		<div class="post-meta">
+			<?php fwc_post_meta(); ?>
 		</div>
 	</section>
 <?php
