@@ -12,6 +12,7 @@
         "activeTab",
         "storage",
         "tabs",
+        "proxy",
         "https://www.googleapis.com/*",
         "https://localhost:4430/*",
         "https://fwc.phiffer.org/*"
