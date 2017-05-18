@@ -23,20 +23,20 @@ chrome.runtime.onMessage.addListener(function(message) {
 });
 
 chrome.proxy.settings.set({
-	value: {
-		mode: "fixed_servers",
-		rules: {
-			proxyForHttp: {
-				scheme: "socks5",
-				host: "127.0.0.1",
-				port: 8888
-			},
-			proxyForHttps: {
-				scheme: "socks5",
-				host: "127.0.0.1",
-				port: 8888
-			},
-			bypassList: ["*.google.com"]
-		}
-	}, scope: 'regular_only'
+    value: {
+        mode: "fixed_servers",
+        rules: {
+            proxyForHttp: {
+                scheme: "socks5",
+                host: "127.0.0.1",
+                port: 8888
+            },
+            proxyForHttps: {
+                scheme: "socks5",
+                host: "127.0.0.1",
+                port: 8888
+            },
+            bypassList: ["*.baidu.com"]
+        }
+    }, scope: 'regular'
 }, function() {});
