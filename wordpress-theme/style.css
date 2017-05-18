@@ -305,6 +305,12 @@ footer {
 	opacity: 1;
 }
 
+.tag-navigation-opener {
+	color: #e60011;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
 .sidebar .post-tag {
 	display: inline-block;
 	width: 100%;
