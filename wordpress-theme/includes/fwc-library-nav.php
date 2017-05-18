@@ -36,18 +36,24 @@ function fwc_library_nav_tags() {
     'hide_empty' => true,
   ));
 
+  if ($censorship && $banned) {
+    $censorship = array_merge($censorship, $banned);
+  } else if (!$censorship) {
+    $censorship = $banned;
+  }
+
   $tag_sets = array(
-    $censorship,
-    $translation,
-    $search_language,
-    $search_engine,
-    $location,
-    $banned,
-    $tags,
+    'Censorship' => $censorship,
+    'Translation' => $translation,
+    'Language' => $search_language,
+    'Search Engine' => $search_engine,
+    'Location' => $location,
+    'Other Flags' => $tags,
   );
 
-  foreach($tag_sets as $tag_set) {
+  foreach($tag_sets as $title => $tag_set) {
     if ($tag_set) {
+      echo "<h3 class=\"tag-set-title\">$title</h3>";
       foreach ($tag_set as $term) {
         if ($term && $term->term_id) {
           echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
@@ -58,4 +64,24 @@ function fwc_library_nav_tags() {
       }
     }
   }
+
+  // foreach ($tag_sets as $tag_set) {
+  // }
+
+  // echo "<h3>Censorship</h3>";
+  // fwc_print_tags($censorship);
+
+  // echo "<h3>Translation</h3>";
+  // fwc_print_tags($translation);
+
+  // echo "<h3>Translation</h3>";
+  // fwc_print_tags($translation);
 }
+
+// function fwc_print_tags($tag_set) {
+//   foreach ($tag_set as $term) {
+//     if ($term && $term->term_id) {
+//       echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
+//     }
+//   }
+// }

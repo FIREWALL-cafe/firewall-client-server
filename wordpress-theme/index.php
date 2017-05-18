@@ -1,30 +1,19 @@
 <?php
-
-
 get_header();
-
 $first = true;
 global $post;
-
-
-
 ?>
+
 <section id="library">
 	<div class="container">
 		<h2>Search Library</h2>
 		<div class="columns">
 			<div class="sidebar">
-			<h3>View searches by category:</h3>
+			<!-- <h4>View searches by category</h4> -->
 				<?php fwc_library_nav_tags(); ?>
 			</div>
 			<div class="content">
-
-<?php
-while ( have_posts() ) {
-
-	the_post();
-
-	?>
+<?php while ( have_posts() ) { the_post(); ?>
 	<section id="search-<?php echo esc_attr($post->post_name); ?>" class="search">
 		<?php
 			$link = get_the_permalink();
@@ -38,11 +27,7 @@ while ( have_posts() ) {
 			<?php fwc_post_meta(); ?>
 		</div>
 	</section>
-<?php
-
-}
-
-?>
+<?php } ?>
 <section id="pagination">
 	<div class="container">
 		<div class="nav-previous"><?php next_posts_link( 'Older posts' ); ?></div>
