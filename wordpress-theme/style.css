@@ -271,7 +271,10 @@ footer {
 }
 
 #library .content {
+	float: none;
+	width: 100%;
 	max-width: none;
+	padding-left: 0;
 }
 #library .post-content h3 {
 	position: relative;
