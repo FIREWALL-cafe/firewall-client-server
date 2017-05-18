@@ -14,4 +14,10 @@ $(document).ready(function() {
 			$(query).html('<a href="' + url + '">' + queryHTML + '</a>');
 		});
 	});
+
+	$tagNav = $('.tag-navigation-container');
+	$tagNavOpener = $('.tag-navigation-opener');
+	$tagNavOpener.on('click', function(){
+		$tagNav.toggleClass('open');
+	});
 });

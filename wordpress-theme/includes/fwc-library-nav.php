@@ -48,7 +48,7 @@ function fwc_library_nav_tags() {
     'Language' => $search_language,
     'Search Engine' => $search_engine,
     'Location' => $location,
-    'Other Flags' => $tags,
+    'Other Tags' => $tags,
   );
 
   foreach($tag_sets as $title => $tag_set) {
@@ -64,24 +64,4 @@ function fwc_library_nav_tags() {
       }
     }
   }
-
-  // foreach ($tag_sets as $tag_set) {
-  // }
-
-  // echo "<h3>Censorship</h3>";
-  // fwc_print_tags($censorship);
-
-  // echo "<h3>Translation</h3>";
-  // fwc_print_tags($translation);
-
-  // echo "<h3>Translation</h3>";
-  // fwc_print_tags($translation);
 }
-
-// function fwc_print_tags($tag_set) {
-//   foreach ($tag_set as $term) {
-//     if ($term && $term->term_id) {
-//       echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
-//     }
-//   }
-// }
