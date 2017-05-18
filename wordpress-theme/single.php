@@ -16,10 +16,10 @@
   <div class="container">
     <?php
       if ($new_template_style) {
-        the_title('<h2>', " / $translation</h2>");
+        the_title('<h2 class="post-title"><span>', "</span> / <span>$translation</span></h2>");
         fwc_get_reverse_search($translation);
       } else {
-        the_title('<h2>', '</h2>');
+        the_title('<h2 class="post-title">', '</h2>');
       }
     ?>
     <div class="post-tags">

@@ -98,6 +98,10 @@ h2.post-title {
 	font-weight: 300;
 	width: auto;
 	display: inline-block;
+	line-height: 1.25;
+}
+h2.post-title span {
+	display: inline-block;
 }
 h2.post-title a {
 	border-color: #e60011;
@@ -300,7 +304,6 @@ footer {
 	margin: 45px 0 30px 0;
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
-
 .tag-navigation-container.open {
 	max-height: calc(800px/4);
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
@@ -333,7 +336,6 @@ footer {
 	margin-bottom: 5px;
 }
 
-
 .post-content ul li {
 	list-style: disc;
 	margin-left: 1em;
@@ -342,8 +344,9 @@ footer {
 .post-vote-buttons-container {
 	display: flex;
 	flex-direction: row;
+	flex-wrap: wrap;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: center;
 	width: 100%;
 	margin-top: 45px;
 	margin-bottom: 45px;
@@ -351,8 +354,10 @@ footer {
 
 .vote-button-container {
 	margin-right: 10px;
+	margin-bottom: 15px;
 	text-align: center;
 	width: calc(100%/7 - 10px);
+	min-width: 70px;
 }
 
 .vote-button-container p.vote-count {
@@ -397,11 +402,13 @@ footer {
 }
 
 .post-tag {
+	display: inline-block;
 	background-color: #e60011;
 	color: #fff;
 	margin-right: 5px;
+	margin-bottom: 5px;
 	line-height: 2;
-	padding: 2.5px 7.5px;
+	padding: 1px 7.5px;
 	border-radius: 3px;
 }
 .post-tag.red {
@@ -563,4 +570,26 @@ h2.post-section-title.no-border {
 		max-width: none;
 	}
 
+}
+
+@media screen and (max-width: 800px) {
+	.post-details {
+		overflow-y: visible;
+		max-height: none;
+	}
+	.tag-navigation-container {
+		max-height: calc(100vw/9 - 3px);
+	}
+}
+
+@media screen and (max-width: 567px) {
+	.fwc-nav-tag {
+	    width: calc(96%/4);
+	}
+	.tag-navigation-container {
+		max-height: none;
+	}
+	.tag-navigation-opener {
+		display: none;
+	}
 }

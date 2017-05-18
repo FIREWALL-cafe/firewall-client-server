@@ -4,7 +4,7 @@ function fwc_post_vote_buttons() {
 
   $vote_buttons = array(
     'censored_votes' => 'censored',
-    // 'uncensored_votes' => 'uncensored',
+    'uncensored_votes' => 'uncensored',
     'bad_translation_votes' => 'bad-translation',
     'good_translation_votes' => 'good-translation',
     'lost_in_translation_votes' => 'lost-in-translation',
