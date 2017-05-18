@@ -8,7 +8,6 @@ global $post;
 	<div class="container">
 		<h2>Search Library</h2>
 		<div class="columns">
-			<p class="tag-navigation-opener">Search By Category +</p>
 			<div class="tag-navigation-container">
 				<?php fwc_library_nav_tags(); ?>
 			</div>

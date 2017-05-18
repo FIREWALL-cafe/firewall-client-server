@@ -9,24 +9,25 @@ function fwc_get_search_count() {
 function fwc_post_search_details() {
   $post_id = get_the_ID();
 
-  $banned = get_the_terms($post_id, 'banned_status')[0];
+  $banned = has_tag('banned', $post_id);
+  $sensitive = has_tag('sensitive', $post_id);
+
   $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
   $terms = get_the_terms($post_id, 'post_tag');
 
-  if ($censorship_status || $terms || $banned->name == 'banned') {
-    echo "<h3>Search Details</h3>";
-  } else {
-    return;
+  if ($banned) {
+    $banned = get_term(array( 'slug' => 'banned' ));
+    echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
   }
 
-
-  if ($banned && $banned->name == 'banned') {
-    echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
+  if ($sensitive) {
+    $sensitive = get_term(array( 'slug' => 'sensitive' ));
+    echo "We have determined that this is a&nbsp;&nbsp;<a href=\"".get_term_link($sensitive->term_id)."\" class=\"post-tag\">$sensitive->name</a> term.</br>";
   }
 
   if ($censorship_status) {
     if ($censorship_status->name == 'censored' ||
-        $censorship_status->name == 'not censored' ) {
+        $censorship_status->name == 'uncensored' ) {
       echo "Most people think this search term is&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
     } else if ($censorship_status->name == 'may be censored') {
       echo "People think this search term&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
@@ -44,8 +45,6 @@ function fwc_post_search_details() {
       }
     }
   }
-
-
 }
 
 function fwc_post_search_history() {

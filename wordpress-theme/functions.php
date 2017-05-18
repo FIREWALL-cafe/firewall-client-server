@@ -62,7 +62,7 @@ function fwc_post_popularity_meta() {
 	$total_count = esc_html(fwc_get_search_count());
 	$google_count = esc_html(fwc_get_search_count_google());
 	$baidu_count = esc_html(fwc_get_search_count_baidu());
-	$ranking = esc_html(fwc_get_search_ranking());
+	// $ranking = esc_html(fwc_get_search_ranking());
 	// $initial_search_date = esc_html(fwc_get_initial_search_date());
 	?>
 	This term has been searched <?php echo $total_count; ?> times since <?php echo "initial_search_date"; ?>.
@@ -108,7 +108,8 @@ function fwc_submit_images() {
 		'lang_confidence' => $_POST['lang_confidence'],
 		'lang_alternate' => $_POST['lang_alternate'],
        'lang_name' => $_POST['lang_name'],
-       'is_banned' => $_POST['is_banned'],
+       'banned' => $_POST['banned'],
+       'sensitive' => $_POST['sensitive'],
 	);
 	// $row = fwc_test_post_data();
 	fwc_import_post($row);
@@ -244,14 +245,16 @@ function fwc_update_post_metadata($post_id, $row) {
 		'search_language_confidence' => $row->lang_confidence,
 		'search_language_alternate' => $row->lang_alternate,
        'search_language_name' => $row->lang_name,
-       'is_banned' => $row->is_banned,
+       'banned' => $row->banned,
+       'sensitive' => $row->sensitive,
        'location' => $location,
 	);
 
   fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
   fwc_set_search_language($post_id, $row->lang_name);
   fwc_set_search_engine($post_id, $row->search_engine);
-  fwc_set_banned_status($post_id, $row->is_banned);
+  // fwc_set_banned_status($post_id, $row->banned);
+  // fwc_set_sensitive_status($post_id, $row->sensitive);
   fwc_set_location($post_id, $location);
 }
 

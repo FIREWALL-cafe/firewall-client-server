@@ -31,11 +31,13 @@
 
     <br><br>
 
+    <h2>What do you think?</h2>
     <div class="post-vote-buttons-container">
       <?php fwc_post_vote_buttons($post_id); ?>
     </div>
 
     <?php if ($new_template_style) { ?>
+      <h2>Search Details</h2>
       <div class="post-section">
         <?php fwc_post_search_details(); ?>
       </div>
@@ -59,6 +61,7 @@
 
     <?php if ($new_template_style) { ?>
       <?php if (fwc_get_search_count() > 1) { ?>
+        <h2>Previous Searches</h2>
         <div class="post-histories-container post-section">
           <?php fwc_post_previous_searches(); ?>
         </div>

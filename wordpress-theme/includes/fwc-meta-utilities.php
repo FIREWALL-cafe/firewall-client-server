@@ -44,3 +44,8 @@ function fwc_get_meta_by_timestamp($key, $timestamp) {
 function fwc_format_date($timestamp) {
   return date('M j, Y, g:ia', $timestamp - (4*60*60));
 }
+
+function fwc_get_svg($slug) {
+  $svg = get_template_part("includes/icon", "$slug.svg");
+  return $svg;
+}

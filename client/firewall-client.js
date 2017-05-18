@@ -373,11 +373,11 @@ function getImages() {
 
 	// If getting images from Baidu, look for the phrase indicating banned search.
 	if (getSource() == 'baidu') {
-		var isBanned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
-		if (isBanned) {
-			pendingQuery['isBanned'] = 'banned';
+		var banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
+		if (banned) {
+			pendingQuery['banned'] = true;
 		} else {
-			pendingQuery['isBanned'] = 'not banned';
+			pendingQuery['banned'] = false;
 		}
 	}
 
@@ -514,7 +514,8 @@ function submitImages(callback) {
 		lang_name: pendingQuery.langName,
 		google_images: JSON.stringify(pendingQuery.googleImages),
 		baidu_images: JSON.stringify(pendingQuery.baiduImages),
-		is_banned: pendingQuery.isBanned
+		banned: pendingQuery.banned,
+		sensitive: pendingQuery.sensitive
 	};
 
 	var googleImageUrls = [];

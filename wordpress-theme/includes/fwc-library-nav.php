@@ -1,67 +1,57 @@
 <?php
 
 function fwc_library_nav_tags() {
-  $tags = get_terms( array(
-    'taxonomy' => 'post_tag',
-    'hide_empty' => true,
-  ));
-
-  $censorship = get_terms( array(
-    'taxonomy' => 'censorship_status',
-    'hide_empty' => true,
-  ));
-
-  $translation = get_terms( array(
-    'taxonomy' => 'translation_status',
-    'hide_empty' => true,
-  ));
-
-  $search_language = get_terms( array(
-    'taxonomy' => 'search_language',
-    'hide_empty' => true,
-  ));
-
-  $search_engine = get_terms( array(
-    'taxonomy' => 'search_engine',
-    'hide_empty' => true,
-  ));
-
-  $location = get_terms(array(
-    'taxonomy' => 'locations',
-    'hide_empty' => true,
-  ));
-
-  $banned = get_terms(array(
-    'taxonomy' => 'banned_status',
-    'hide_empty' => true,
-  ));
-
-  if ($censorship && $banned) {
-    $censorship = array_merge($censorship, $banned);
-  } else if (!$censorship) {
-    $censorship = $banned;
-  }
-
-  $tag_sets = array(
-    'Censorship' => $censorship,
-    'Translation' => $translation,
-    'Language' => $search_language,
-    'Search Engine' => $search_engine,
-    'Location' => $location,
-    'Other Tags' => $tags,
+  $nav_buttons = array(
+    'censored',
+    'bad-translation',
+    'sensitive',
+    'wtf',
+    'may-be-censored',
+    'good-translation',
+    'lost-in-translation',
+    'no-tag',
+    'nsfw',
+    'baidu',
+    'google',
+    'st-polten',
+    'nyc',
+    'oslo',
+    'english',
+    'chinese',
+    'other-language'
   );
 
-  foreach($tag_sets as $title => $tag_set) {
-    if ($tag_set) {
-      echo "<h3 class=\"tag-set-title\">$title</h3>";
-      foreach ($tag_set as $term) {
-        if ($term && $term->term_id) {
-          echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
-        }
-      }
-      if (count($tag_set)) {
-        echo "</br>";
-      }
+  $i = 0;
+  foreach ($nav_buttons as $slug) {
+    if ($i == 4) {
+      fwc_more_button();
+      fwc_get_nav_tag($slug);
+    } else {
+      fwc_get_nav_tag($slug);
     }
+    $i += 1;
   }
 }
+
+
+function fwc_more_button() {
+  echo "<div class=\"fwc-nav-tag tag-navigation-opener\">";
+  echo fwc_get_svg('more');
+  echo "</div>";
+}
+
+function fwc_get_nav_tag($slug, $class='') {
+  $term = get_terms(array('slug' => $slug));
+  if (count($term)) {
+    $term = $term[0];
+    $link = get_term_link($term->term_id);
+  } else {
+    $link = '#';
+  }
+
+  echo "<a href=\"$link\" class=\"fwc-nav-tag ". $class ."\">";
+  echo fwc_get_svg($slug);
+  echo "</a>";
+}
+
+

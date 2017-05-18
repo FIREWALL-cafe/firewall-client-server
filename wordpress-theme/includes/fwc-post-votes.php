@@ -4,7 +4,7 @@ function fwc_post_vote_buttons() {
 
   $vote_buttons = array(
     'censored_votes' => 'Censored',
-    'uncensored_votes' => 'Not Censored',
+    'uncensored_votes' => 'Uncensored',
     'bad_translation_votes' => 'Bad Translation',
     'good_translation_votes' => 'Good Translation',
     'lost_in_translation_votes' => 'Lost in Cultural Translation',
@@ -21,6 +21,7 @@ function fwc_post_vote_button($button_text, $key, $count) {
   $post_id = get_the_ID();
   if (!$count) { $count = 0; }
 
+  // TODO: Add vote button SVGs here.
   echo "<div class=\"vote-button-container\">";
   echo "<p class=\"vote-count\">".$count."</p>";
   echo "<button class=\"fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">".$button_text."</button>";
@@ -59,69 +60,82 @@ function fwc_post_vote_update($post_id, $meta_key) {
 
 function fwc_post_tags() {
   $post_id = get_the_ID();
+
+  // TODO: Update tag background colors here.
   $taxonomies = array(
-    'censorship_status',
-    'translation_status',
-    'locations',
-    'search_language',
-    'search_engine',
-    'banned_status',
-    'post_tag'
+    'censorship_status' => 'red',
+    'translation_status' => 'blue',
+    'locations' => 'grey',
+    'search_language' => 'blue',
+    'search_engine' => 'grey',
+    'post_tag' => 'red'
   );
 
-  foreach ($taxonomies as $tax) {
+  foreach ($taxonomies as $tax => $color) {
     $terms = get_the_terms($post_id, $tax);
     if ($terms) {
       foreach ($terms as $term) {
-        echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>";
+        echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag $color\">$term->name</a>";
       }
     }
   }
 }
 
 function fwc_post_update_tags($post_id, $meta_key, $count) {
+
+  // Look at censored/uncensored votes to set censorship status.
   $uncensored = get_post_meta($post_id, 'uncensored_votes');
   $censored = get_post_meta($post_id, 'censored_votes');
 
   if ($uncensored > $censored) {
-    fwc_set_censorship_status($post_id, 'not censored');
+    $censorship = 'uncensored';
   } else if ($censored > $uncensored) {
-    fwc_set_censorship_status($post_id, 'censored');
-  } else if ($censored == $uncensored && intval($censored) > 0) {
-    fwc_set_censorship_status($post_id, 'may be censored');
+    $censorship = 'censored';
+  } else if ($censored == $uncensored && $censored != 0) {
+    $censorship = 'may be censored';
   } else {
-    fwc_set_censorship_status($post_id, '');
+    $censorship = '';
   }
+  fwc_set_censorship_status($post_id, $censorship);
 
+  // Look at bad/good translation votes to set translation status.
   $bad_translation = get_post_meta($post_id, 'bad_translation_votes');
   $good_translation = get_post_meta($post_id, 'good_translation_votes');
 
   if ($bad_translation > $good_translation) {
-    fwc_set_translation_status($post_id, 'bad translation');
+    $translation = 'bad translation';
   } else if ($good_translation > $bad_translation) {
-    fwc_set_translation_status($post_id, 'good translation');
+    $translation = 'good translation';
   } else {
-    fwc_set_translation_status($post_id, '');
+    $translation = '';
+  }
+  fwc_set_translation_status($post_id, $translation);
+
+  $keep_tags = array();
+
+  // Add banned tag if search is banned.
+  $banned = get_post_meta($post_id, 'banned');
+  if ($banned) {
+    $keep_tags[] = 'banned';
   }
 
-  $banned = get_post_meta($post_id, 'is_banned');
-  if ($banned == 'banned') {
-    fwc_set_banned_status($post_id, $banned);
+  // Add sensitive tag if search is sensitive.
+  $sensitive = get_post_meta($post_id, 'sensitive');
+  if ($sensitive) {
+    $keep_tags[] = 'sensitive';
   }
 
-  $tag_by_count = array(
+  // Check for at least one vote to apply/remove these tags.
+  $tag_by_vote = array(
     'nsfw',
     'lost-in-translation',
     'firewall-bug',
-    // 'user-error',
     'bad-result',
     // 'slow-search',
     // 'no-result'
   );
 
-  $keep_tags = array();
-
-  foreach ($tag_by_count as $tag) {
+  foreach ($tag_by_vote as $tag) {
     $key = str_replace ( '-' , '_' , $tag ) . "_votes";
     $count = get_post_meta($post_id, $key);
     $count = intval(fwc_get_latest_value($count));
@@ -129,5 +143,6 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
       $keep_tags[] = $tag;
     }
   }
+
   wp_set_post_terms( $post_id, $keep_tags, 'post_tag');
 }

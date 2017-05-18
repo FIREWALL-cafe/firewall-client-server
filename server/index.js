@@ -181,7 +181,8 @@ function handleQuery(req, res, headers) {
 								langConfidence: translationSearch.langConfidence,
 								langAlternate: translationSearch.langAlternate,
 								langName: translationSearch.langName,
-								translated: translation.value
+								translated: translation.value,
+								sensitive: translation.sensitive
 							});
 						}
 					});
@@ -217,7 +218,8 @@ function handleTranslate(req, res, headers) {
 						query: search.query,
 						langFrom: search.langFrom,
 						langTo: search.langTo,
-						translated: translation.value
+						translated: translation.value,
+						sensitive: translation.sensitive
 					});
 				}
 			});
@@ -306,7 +308,13 @@ function getTranslation(search, callback) {
 		callback(null, {
 			query: search.query,
 			source: source,
-			value: value
+			value: value,
+			langFrom: search.langFrom,
+			langTo: search.langTo,
+			langConfidence: search.langConfidence,
+			langAlternate: search.langAlternate,
+			langName: search.langName,
+			sensitive: (source == 'sensitive')
 		});
 
 		return inSheet;
@@ -329,6 +337,7 @@ function getTranslation(search, callback) {
 				langConfidence: search.langConfidence,
 				langAlternate: search.langAlternate,
 				langName: search.langName,
+				sensitive: false
 			});
 		}
 	});
@@ -401,6 +410,7 @@ function setTranslation(search, translation) {
 			langAlternate: search.langAlternate,
 			langName: search.langName,
 			override: null,
+			sensitive: search.sensitive
 		};
 	} else {
 		console.log('')
@@ -546,7 +556,8 @@ function handleImages(req, res, headers) {
 				lang_from: data.lang_from,
 				lang_confidence: data.lang_confidence,
 				lang_alternate: data.lang_alternate,
-				is_banned: data.is_banned,
+				banned: data.banned,
+				sensitive: data.sensitive
 			};
 
 			// Add row to Google spreadsheet.
@@ -619,7 +630,8 @@ function handleIndex(req, res, headers) {
 						lang_alternate: row.langalternate,
 						lang_name: row.langname,
 						remove: row.remove,
-						is_banned: row.isbanned
+						banned: row.banned,
+						sensitive: row.sensitive
 					});
 				}
 			});
