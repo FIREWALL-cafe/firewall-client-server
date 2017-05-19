@@ -41,7 +41,7 @@ if (config.enableProxy) {
                     host: "127.0.0.1",
                     port: 8888
                 },
-                bypassList: ["*.baidu.com"]
+                bypassList: ["*.baidu.com", "pi.firewallcafe.com"]
             }
         }, scope: 'regular'
     }, function() {
