@@ -9,7 +9,7 @@ function fwc_post_vote_buttons() {
     'good_translation_votes' => 'good-translation',
     'lost_in_translation_votes' => 'lost-in-translation',
     'nsfw_votes' => 'nsfw',
-    'wtf_votes' => 'wtf',
+    'bad_result_votes' => 'bad-result',
   );
 
   foreach ($vote_buttons as $key => $slug) {
@@ -93,15 +93,18 @@ function fwc_post_tags() {
 
 function fwc_post_update_tags($post_id, $meta_key, $count) {
 
+  $has_votes = false;
+
   // Look at censored/uncensored votes to set censorship status.
   $uncensored = get_post_meta($post_id, 'uncensored_votes');
   $censored = get_post_meta($post_id, 'censored_votes');
+  if (intval($uncensored) == 0 || intval($censored) == 0) { $has_votes = true; }
 
   if ($uncensored > $censored) {
     $censorship = 'uncensored';
   } else if ($censored > $uncensored) {
     $censorship = 'censored';
-  } else if ($censored == $uncensored && $censored != 0) {
+  } else if ($censored == $uncensored && intval($censored) != 0) {
     $censorship = 'may be censored';
   } else {
     $censorship = '';
@@ -111,6 +114,7 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
   // Look at bad/good translation votes to set translation status.
   $bad_translation = get_post_meta($post_id, 'bad_translation_votes');
   $good_translation = get_post_meta($post_id, 'good_translation_votes');
+  if (intval($bad_translation) == 0 || intval($good_translation) == 0) { $has_votes = true; }
 
   if ($bad_translation > $good_translation) {
     $translation = 'bad translation';
@@ -124,15 +128,17 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
   $keep_tags = array();
 
   // Add banned tag if search is banned.
-  $banned = get_post_meta($post_id, 'banned');
-  if ($banned) {
+  $banned = fwc_get_latest_meta('banned', $post_id);
+  if ($banned == 'true') {
     $keep_tags[] = 'banned';
+    $has_votes = true;
   }
 
   // Add sensitive tag if search is sensitive.
-  $sensitive = get_post_meta($post_id, 'sensitive');
-  if ($sensitive) {
+  $sensitive = fwc_get_latest_meta('sensitive', $post_id);
+  if ($sensitive == 'true') {
     $keep_tags[] = 'sensitive';
+    $has_votes = true;
   }
 
   // Check for at least one vote to apply/remove these tags.
@@ -151,8 +157,12 @@ function fwc_post_update_tags($post_id, $meta_key, $count) {
     $count = intval(fwc_get_latest_value($count));
     if ($count > 0) {
       $keep_tags[] = $tag;
+      $has_votes = true;
     }
   }
 
   wp_set_post_terms( $post_id, $keep_tags, 'post_tag');
+  if ($has_votes) {
+    wp_delete_term(1, 'category');
+  }
 }

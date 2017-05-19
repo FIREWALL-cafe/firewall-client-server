@@ -42,7 +42,7 @@ function fwc_add_custom_taxonomies() {
   ));
 
   register_taxonomy('search_language', 'post', array(
-    'hierarchical' => false,
+    'hierarchical' => true,
     // This array of options controls the labels displayed in the WordPress Admin UI
     'labels' => array(
       'name' => _x( 'Search Languages', 'taxonomy general name' ),
@@ -59,7 +59,7 @@ function fwc_add_custom_taxonomies() {
     'rewrite' => array(
       'slug' => 'search-language',
       'with_front' => false,
-      'hierarchical' => false
+      'hierarchical' => true
     ),
   ));
   register_taxonomy('search_engine', 'post', array(
@@ -117,7 +117,36 @@ function fwc_set_translation_status($post_id, $status) {
 }
 
 function fwc_set_search_language($post_id, $lang) {
-  wp_set_post_terms( $post_id, $lang, 'search_language', false );
+  $taxonomy = 'search_language';
+  $lang = strtolower($lang);
+  $slug = preg_replace('/[^A-Za-z0-9-]+/', '-', $lang);
+
+  if ($lang !== 'english' && strpos($lang, 'chinese') == -1) {
+    $term = term_exists( $lang, $taxonomy );
+    if ($term) {
+      wp_set_post_terms( $post_id, $lang, $taxonomy, false);
+    } else {
+
+      $ol_title = 'Other Language';
+      $ol_slug = 'other-language';
+
+      $ol = term_exists('Other Language', $taxonomy);
+
+      if (! $ol) {
+        $ol = wp_insert_term( 'Other Language', $taxonomy, array(
+          'slug' => 'other-language'
+        ));
+      }
+
+      $ol_id = $ol->term_id;
+      wp_insert_term( $lang, $taxonomy, $args = array(
+        'slug' => $slug,
+        'parent' => $ol_id
+      ));
+    }
+  } else {
+    wp_set_post_terms( $post_id, $lang, $taxonomy, false );
+  }
 }
 
 function fwc_set_search_engine($post_id, $search_engine) {
@@ -129,14 +158,26 @@ function fwc_set_location($post_id, $location) {
 }
 
 function fwc_set_banned($post_id, $banned) {
-  if ($banned == 'true') {
+  $term = get_terms(array('slug' => 'banned'));
+  if (!$term) {
+    $term = wp_insert_term('banned', 'post_tag');
+  }
+  if ($banned === 'true' || $banned === true) {
     wp_set_post_terms( $post_id, 'banned', 'post_tag', true);
+  } else {
+    wp_delete_term($term->term_id, 'post_tag');
   }
 }
 
 function fwc_set_sensitive($post_id, $sensitive) {
-  if ($sensitive == 'true') {
+  $term = get_terms(array('slug' => 'sensitive'));
+  if (!$term) {
+    $term = wp_insert_term('sensitive', 'post_tag');
+  }
+  if ($sensitive === 'true' || $sensitive === true) {
     wp_set_post_terms( $post_id, 'sensitive', 'post_tag', true);
+  } else {
+    wp_delete_term($term->term_id, 'post_tag');
   }
 }
 

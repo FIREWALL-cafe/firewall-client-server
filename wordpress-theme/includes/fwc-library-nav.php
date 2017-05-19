@@ -3,22 +3,23 @@
 function fwc_library_nav_tags() {
   $nav_buttons = array(
     'censored',
-    'bad-translation',
-    'sensitive',
-    'wtf',
     'may-be-censored',
+    'uncensored',
+    'bad-translation',
     'good-translation',
     'lost-in-translation',
-    'no-tag',
-    'nsfw',
+    'sensitive',
+    'bad-result',
     'baidu',
     'google',
-    'st-polten',
+    // 'st-polten',
     'nyc',
     'oslo',
     'english',
     'chinese',
-    'other-language'
+    'other-language',
+    'nsfw',
+    'uncategorized',
   );
 
   $i = 0;

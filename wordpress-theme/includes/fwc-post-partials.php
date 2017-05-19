@@ -9,19 +9,18 @@ function fwc_get_search_count() {
 function fwc_post_search_details() {
   $post_id = get_the_ID();
 
-  $banned = has_tag('banned', $post_id);
-  $sensitive = has_tag('sensitive', $post_id);
-
+  $banned = has_term( 'banned', 'post_tag', $post_id );
+  $sensitive = has_term( 'sensitive', 'post_tag', $post_id );
   $censorship_status = get_the_terms($post_id, 'censorship_status')[0];
   $terms = get_the_terms($post_id, 'post_tag');
 
   if ($banned) {
-    $banned = get_term(array( 'slug' => 'banned' ));
+    $banned = get_term_by('slug', 'banned', 'post_tag' );
     echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
   }
 
   if ($sensitive) {
-    $sensitive = get_term(array( 'slug' => 'sensitive' ));
+    $sensitive = get_term_by('slug', 'sensitive', 'post_tag');
     echo "We have determined that this is a&nbsp;&nbsp;<a href=\"".get_term_link($sensitive->term_id)."\" class=\"post-tag\">$sensitive->name</a> term.</br>";
   }
 
