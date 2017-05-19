@@ -86,6 +86,7 @@ function fwc_post_search_history() {
 
 function fwc_post_search_language() {
   $post_id = get_the_ID();
+
   $search_language = get_the_terms($post_id, 'search_language')[0];
   $translation_status = get_the_terms($post_id, 'translation_status')[0];
 

@@ -118,15 +118,13 @@ function fwc_set_translation_status($post_id, $status) {
 
 function fwc_set_search_language($post_id, $lang) {
   $taxonomy = 'search_language';
-  $lang = strtolower($lang);
-  $slug = preg_replace('/[^A-Za-z0-9-]+/', '-', $lang);
+  $lower_lang = strtolower($lang);
+  $slug = preg_replace('/[^A-Za-z0-9-]+/', '-', $lower_lang);
 
-  if ($lang !== 'english' && strpos($lang, 'chinese') == -1) {
+  if ($lower_lang != 'english' && !strpos($lower_lang, 'chinese')) {
     $term = term_exists( $lang, $taxonomy );
-    if ($term) {
-      wp_set_post_terms( $post_id, $lang, $taxonomy, false);
-    } else {
 
+    if (!$term) {
       $ol_title = 'Other Language';
       $ol_slug = 'other-language';
 
@@ -138,15 +136,14 @@ function fwc_set_search_language($post_id, $lang) {
         ));
       }
 
-      $ol_id = $ol->term_id;
-      wp_insert_term( $lang, $taxonomy, $args = array(
+      $ol_id = $ol['term_id'];
+      $term = wp_insert_term( $lang, $taxonomy, $args = array(
         'slug' => $slug,
         'parent' => $ol_id
       ));
     }
-  } else {
-    wp_set_post_terms( $post_id, $lang, $taxonomy, false );
   }
+  wp_set_post_terms( $post_id, $term['term_id'], $taxonomy, false );
 }
 
 function fwc_set_search_engine($post_id, $search_engine) {
