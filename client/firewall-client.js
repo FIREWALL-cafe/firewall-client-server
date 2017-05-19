@@ -545,7 +545,8 @@ function submitImages(callback) {
 		method: 'POST',
 		data: wp_data,
 	}).done(function(rsp){
-		console.log('Done sending draft post to WP.');
+		console.log('Done sending post to WP.');
+		console.log(rsp);
 		chrome.runtime.sendMessage('enable-input');
 		callback();
 	}).fail(function(xhr, textStatus) {

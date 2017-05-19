@@ -83,6 +83,8 @@ function fwc_post_popularity_meta() {
 /////////////////////////////////////////////////
 
 function fwc_submit_images() {
+
+	$verbose = ! empty($_GET['verbose']);
 	fwc_enable_cors();
 
 	if (!defined('FWC_SHARED_SECRET')) {
@@ -94,7 +96,9 @@ function fwc_submit_images() {
 		return false;
 	}
 
-	echo "images: " . substr($_POST['google_images'], 0, 100) . "\n";
+	if ($verbose) {
+		echo "images: " . substr($_POST['google_images'], 0, 100) . "\n";
+	}
 
 	$row = (object) array(
 		'timestamp' => $_POST['timestamp'],
@@ -112,23 +116,36 @@ function fwc_submit_images() {
        'sensitive' => $_POST['sensitive'],
 	);
 	// $row = fwc_test_post_data();
-	fwc_import_post($row);
-
-	die(1);
+	$post_id = fwc_import_post($row);
+	$permalink = get_permalink($post_id);
+	header('Content-Type: application/json');
+	echo json_encode(array(
+		'ok' => 1,
+		'post_id' => $post_id,
+		'permalink' => $permalink
+	));
+	exit;
 }
 add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');
 
 function fwc_import_post($row) {
+
+	$verbose = ! empty($_GET['verbose']);
 	$slug = sanitize_title("$row->query");
-	echo "Query: ".$slug."</br>";
+
+	if ($verbose) {
+		echo "Query: ".$slug."</br>";
+	}
 
 	$post = get_page_by_path($slug, OBJECT, 'post');
 
 	if ($post) {
 		$post_id = $post->ID;
-		echo "Post ID: ".$post_id."</br>";
-		echo "Post already exists. Updating post with new data.</br>";
+		if ($verbose) {
+			echo "Post ID: ".$post_id."</br>";
+			echo "Post already exists. Updating post with new data.</br>";
+		}
 		fwc_update_post_content($post_id, $row);
 	} else {
 		$title = "$row->query";
@@ -137,13 +154,16 @@ function fwc_import_post($row) {
 			'post_name' => $slug,
 			'post_status' => 'draft'
 		));
-		echo "Post ID: ".$post_id."</br>";
-		echo "New post. Adding post with current data.</br>";
+		if ($verbose) {
+			echo "Post ID: ".$post_id."</br>";
+			echo "New post. Adding post with current data.</br>";
+		}
 
 		if (!empty($post_id)) {
 			fwc_initialize_post_content($post_id, $row);
 		}
 	}
+	return $post_id;
 }
 
 function fwc_initialize_post_content($post_id, $row) {
@@ -201,7 +221,10 @@ function fwc_build_post_content($post_id, $row) {
 }
 
 function fwc_build_image_set($post_id, $row, $images, $label) {
-	echo "Building ".$label." image set</br>";
+	$verbose = ! empty($_GET['verbose']);
+	if ($verbose) {
+		echo "Building ".$label." image set</br>";
+	}
 	if ($label == $row->search_engine) {
 		$term = $row->query;
 	} else {
@@ -209,8 +232,10 @@ function fwc_build_image_set($post_id, $row, $images, $label) {
 	}
 
 	$urls = array_keys($images);
-	echo "Term: ".$term."</br>";
-	echo "URLS: ".implode(', ', $urls)."</br>";
+	if ($verbose) {
+		echo "Term: ".$term."</br>";
+		echo "URLS: ".implode(', ', $urls)."</br>";
+	}
 
 	$timestamp = round($row->timestamp / 1000);
 
@@ -341,6 +366,7 @@ add_action('wp_ajax_fwc_migrate_categories', 'fwc_migrate_categories');
 /////////////////////////////////////////////////
 
 function fwc_save_images($parent_id, $images, $prefix) {
+	$verbose = ! empty($_GET['verbose']);
 	$image_ids = array();
 	$upload_dir = wp_upload_dir();
 	$num = 0;
@@ -349,12 +375,18 @@ function fwc_save_images($parent_id, $images, $prefix) {
 		$href = $image['href'];
 		$src = $image['src'];
 
-		echo "$href: ";
+		if ($verbose) {
+			echo "$href: ";
+		}
 		if (substr($src, 0, 5) == 'data:') {
-			echo "data URI<br>";
+			if ($verbose) {
+				echo "data URI<br>";
+			}
 			$image = fwc_derive_data_uri($src);
 		} else {
-			echo "download<br>";
+			if ($verbose) {
+				echo "download<br>";
+			}
 			$image = fwc_download_image($src);
 		}
 
@@ -377,7 +409,9 @@ function fwc_save_images($parent_id, $images, $prefix) {
 			} else if ($content_type == 'image/png') {
 				$ext = 'png';
 			} else {
-				echo "Unexpected content-type: $content_type<br>";
+				if ($verbose) {
+					echo "Unexpected content-type: $content_type<br>";
+				}
 				continue;
 			}
 			$date = current_time('d');
@@ -387,7 +421,9 @@ function fwc_save_images($parent_id, $images, $prefix) {
 			}
 			$path = "$dir/$prefix-$image_num.$ext";
 			file_put_contents($path, $binary_data);
-			echo "Saved: $path<br>";
+			if ($verbose) {
+				echo "Saved: $path<br>";
+			}
 			$image_id = fwc_attach_image($parent_id, $path, $href);
 			$image_ids[] = $image_id;
 		}
@@ -425,13 +461,17 @@ function fwc_derive_data_uri($src) {
 
 function fwc_download_image($src) {
 	// $url = urldecode($url);
-	echo "downloading $src: ";
+	if ($verbose) {
+		echo "downloading $src: ";
+	}
 	$response = wp_remote_get($src, array(
 		'timeout' => '30',
 		'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0'
 	));
 	$status = wp_remote_retrieve_response_code($response);
-	echo $status . "<br>";
+	if ($verbose) {
+		echo $status . "<br>";
+	}
 	if ($status == 200) {
 		$body = wp_remote_retrieve_body($response);
 		return array(
