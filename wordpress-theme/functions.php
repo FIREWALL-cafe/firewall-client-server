@@ -279,6 +279,63 @@ function fwc_update_popularity($post_id) {
 	}
 }
 
+// https://localhost:4747/wp-admin/admin-ajax.php?action=fwc_migrate_categories&page=1
+
+function fwc_migrate_categories() {
+	$page = $_GET['page'];
+	if (! $page) {
+		$page = 1;
+	}
+
+	// This is how we decide which categories get put into which new taxonomies
+	$migration = array(
+		'badtranslation' => array( // <--- category
+			'translation_status' => 'bad-translation' // <---- new taxonomy + value
+		),
+		'good' => array(
+			'translation_status' => 'good-translation'
+		),
+		'lost' => array(
+			'translation_status' => 'lost-in-translation'
+		),
+		'nyc' => array(
+			'locations' => 'nyc'
+		)
+	);
+
+	echo "<pre>";
+	echo "Page $page\n";
+	$posts = get_posts(array(
+		'paged' => $page,
+		'posts_per_page' => 500
+	));
+	$object_ids = array();
+	foreach ($posts as $post) {
+		echo "$post->post_title\n";
+		$categories = wp_get_object_terms($post->ID, 'category');
+		foreach ($categories as $cat) {
+			if ($migration[$cat->slug]) {
+				foreach ($migration[$cat->slug] as $tax => $value) {
+					echo "  $tax: $value\n";
+					wp_add_object_terms($post->ID, $value, $tax);
+					wp_remove_object_terms($post->ID, $cat->slug, 'category');
+				}
+			}
+		}
+	}
+	if (! empty($posts)) {
+		$page++;
+		echo "</pre>";
+		// It's cheesy but it works...
+		echo "<script>window.location = '/wp-admin/admin-ajax.php?action=fwc_migrate_categories&page=$page';</script>";
+	} else {
+		echo "All done";
+		echo "</pre>";
+	}
+	exit;
+}
+add_action('wp_ajax_fwc_migrate_categories', 'fwc_migrate_categories');
+
 /////////////////////////////////////////////////
 //// Manage WP Media Library.
 /////////////////////////////////////////////////
