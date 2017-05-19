@@ -28,7 +28,7 @@ chrome.runtime.onMessage.addListener(function(message) {
     });
 });
 
-if (config.enableProxy) {
+/*if (config.enableProxy) {
     chrome.proxy.settings.set({
         value: {
             mode: "fixed_servers",
@@ -57,4 +57,4 @@ if (config.enableProxy) {
     }, function() {
         console.log('proxy disabled');
     });
-}
+}*/
