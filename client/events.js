@@ -17,26 +17,29 @@ chrome.runtime.onMessage.addListener(function(message) {
 
         if (message == 'enable-input') {
             // open WP page
-            chrome.tabs.create({url: 'https://staging.firewallcafe.com/library'});
+            chrome.tabs.create({url: config.libraryURL});
         }
     });
 });
 
-chrome.proxy.settings.set({
-    value: {
-        mode: "fixed_servers",
-        rules: {
-            proxyForHttp: {
-                scheme: "socks5",
-                host: "127.0.0.1",
-                port: 8888
-            },
-            proxyForHttps: {
-                scheme: "socks5",
-                host: "127.0.0.1",
-                port: 8888
-            },
-            bypassList: ["*.baidu.com"]
-        }
-    }, scope: 'regular'
-}, function() {});
+if (config.enableProxy) {
+    console.log('Enabling proxy');
+    chrome.proxy.settings.set({
+        value: {
+            mode: "fixed_servers",
+            rules: {
+                proxyForHttp: {
+                    scheme: "socks5",
+                    host: "127.0.0.1",
+                    port: 8888
+                },
+                proxyForHttps: {
+                    scheme: "socks5",
+                    host: "127.0.0.1",
+                    port: 8888
+                },
+                bypassList: ["*.baidu.com"]
+            }
+        }, scope: 'regular'
+    }, function() {});
+}

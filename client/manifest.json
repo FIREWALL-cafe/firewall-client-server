@@ -18,7 +18,7 @@
         "https://fwc.phiffer.org/*"
     ],
     "background": {
-        "scripts": ["events.js"],
+        "scripts": ["config.js", "events.js"],
         "persistent": false
     },
     "content_scripts": [{
