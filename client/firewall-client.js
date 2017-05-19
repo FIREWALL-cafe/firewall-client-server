@@ -74,7 +74,7 @@ function setupUI() {
 			'</form>' +
 		'</div>'
 	);
-	
+
 	var $firewallShow = $('#firewall-show'),
 		 $firewallForm = $('#firewall-form'),
 		 $firewallClientId = $('#firewall-client-id'),
@@ -546,7 +546,7 @@ function submitImages(callback) {
 		data: wp_data,
 	}).done(function(rsp){
 		console.log('Done sending draft post to WP.');
-		chrome.runtime.sendMessage('enable-input');
+		chrome.runtime.sendMessage(['enable-input', pendingQuery.query]);
 		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);

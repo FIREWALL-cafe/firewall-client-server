@@ -2,6 +2,10 @@ console.log('loaded message listener');
 
 chrome.runtime.onMessage.addListener(function(message) {
     console.log(message);
+    if (Array.isArray(message)){
+        var query = message[1];
+        message = message[0];
+    }
     chrome.tabs.query({
         url: [
             "https://www.google.com/imghp*",
@@ -17,7 +21,9 @@ chrome.runtime.onMessage.addListener(function(message) {
 
         if (message == 'enable-input') {
             // open WP page
-            chrome.tabs.create({url: 'https://firewallcafe.com/library/'});
+            query = query.replace(/\s+/g, '-').toLowerCase()
+            var url = 'https://firewallcafe.com/library/'+query;
+            chrome.tabs.create({url: url});
         }
     });
 });
