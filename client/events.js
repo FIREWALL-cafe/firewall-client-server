@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener(function(message) {
 
         if (message == 'enable-input') {
             // open WP page
-            chrome.tabs.create({url: config.libraryURL});
+            chrome.tabs.create({url: 'https://firewallcafe.com/library/'});
         }
     });
 });
