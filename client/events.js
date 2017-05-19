@@ -3,7 +3,7 @@ console.log('loaded message listener');
 chrome.runtime.onMessage.addListener(function(message) {
     console.log(message);
     if (Array.isArray(message)){
-        var query = message[1];
+        var permalink = message[1];
         message = message[0];
     }
     chrome.tabs.query({
@@ -21,9 +21,7 @@ chrome.runtime.onMessage.addListener(function(message) {
 
         if (message == 'enable-input') {
             // open WP page
-            query = query.replace(/\s+/g, '-').toLowerCase()
-            var url = 'https://firewallcafe.com/library/'+query;
-            chrome.tabs.create({url: url});
+            chrome.tabs.create({url: permalink});
         }
     });
 });
