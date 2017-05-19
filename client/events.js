@@ -23,7 +23,6 @@ chrome.runtime.onMessage.addListener(function(message) {
 });
 
 if (config.enableProxy) {
-    console.log('Enabling proxy');
     chrome.proxy.settings.set({
         value: {
             mode: "fixed_servers",
@@ -41,5 +40,15 @@ if (config.enableProxy) {
                 bypassList: ["*.baidu.com"]
             }
         }, scope: 'regular'
-    }, function() {});
+    }, function() {
+        console.log('proxy enabled');
+    });
+} else {
+    chrome.proxy.settings.set({
+        value: {
+            mode: "system"
+        }, scope: 'regular'
+    }, function() {
+        console.log('proxy disabled');
+    });
 }
