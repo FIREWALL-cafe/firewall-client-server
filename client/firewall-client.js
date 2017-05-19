@@ -62,12 +62,6 @@ storage.get([
 function setupUI() {
 	console.log('Setting up UI...');
 
-	var $firewallShow = $('#firewall-show'),
-		 $firewallForm = $('#firewall-form'),
-		 $firewallClientId = $('#firewall-client-id'),
-		 $firewallSuggest = $('#firewall-suggest')[0],
-		 $body = $(document.body);
-
 	var suggestChecked = autocompleteEnabled ? ' checked="checked"' : '';
 
 	$('#fsr, #lh, #ft').append(
@@ -80,6 +74,12 @@ function setupUI() {
 			'</form>' +
 		'</div>'
 	);
+	
+	var $firewallShow = $('#firewall-show'),
+		 $firewallForm = $('#firewall-form'),
+		 $firewallClientId = $('#firewall-client-id'),
+		 $firewallSuggest = $('#firewall-suggest')[0],
+		 $body = $(document.body);
 
 	$firewallShow.click(function(e) {
 		e.preventDefault();
