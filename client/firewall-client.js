@@ -545,8 +545,9 @@ function submitImages(callback) {
 		method: 'POST',
 		data: wp_data,
 	}).done(function(rsp){
-		console.log('Done sending draft post to WP.');
-		chrome.runtime.sendMessage(['enable-input', pendingQuery.query]);
+		console.log('Done sending post to WP.');
+		console.log(rsp);
+		chrome.runtime.sendMessage(['enable-input', rsp.permalink]);
 		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);

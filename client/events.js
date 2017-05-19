@@ -50,11 +50,9 @@ chrome.runtime.onMessage.addListener(function(message) {
         console.log('proxy enabled');
     });
 } else {
-    chrome.proxy.settings.set({
-        value: {
-            mode: "system"
-        }, scope: 'regular'
+    chrome.proxy.settings.clear({
+        scope: 'regular'
     }, function() {
-        console.log('proxy disabled');
+        console.log('proxy cleared');
     });
 }*/
