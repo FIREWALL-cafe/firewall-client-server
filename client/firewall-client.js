@@ -159,7 +159,7 @@ function setupStorageListener() {
 function setupMessageListener() {
 	console.log('Setting up messages listener...');
 	chrome.runtime.onMessage.addListener(function(e) {
-		console.log('MSG', e);
+		console.log('MSG: ' + e.type, e);
 		if (e.type == 'toggle_input') {
 			/*
 			if (e.enabled) {

@@ -36,6 +36,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					message: e.message
 				};
 				var notification_id = url;
+				console.log('creating notification', options);
 				chrome.notifications.create(notification_id, options);
 			}
 		} else if (e.type == 'toggle_input') {
