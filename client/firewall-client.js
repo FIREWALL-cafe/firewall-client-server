@@ -122,6 +122,10 @@ function setupUI() {
 		});
 		$body.addClass('firewall-autocomplete');
 	}
+
+	var msg = 'Please wait while we archive your search results...';
+	$('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
+	$('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
 }
 
 function setupInterval() {
@@ -156,22 +160,22 @@ function setupMessageListener() {
 	console.log('Setting up messages listener...');
 	chrome.runtime.onMessage.addListener(function(e) {
 		console.log('MSG', e);
-		if (e.type == 'notification') {
-			console.log('NOTIFY: ' + e.message);
-		} else if (e.type == 'toggle_input') {
-			console.log('TOGGLE INPUT: ' + e.enabled);
+		if (e.type == 'toggle_input') {
+			/*
+			if (e.enabled) {
+				window.onbeforeunload = null;
+			} else {
+				window.onbeforeunload = function() {
+					var dialog = 'Please wait a moment while we save your search.';
+					e.returnValue = dialog;
+					return dialog;
+				};
+			}
+			*/
 			toggleInputField(e.enabled);
+		} else if (e.type == 'images_loading') {
+			$(document.body).addClass('firewall-loading');
 		}
-		/*
-		if (message == "enable-input") {
-			, function(){
-				console.log('Reenabled inputs after search completion.');
-			});
-		} else if (message == 'disable-input') {
-			toggleInputField(false, function(){
-				console.log('Disabled inputs during search.');
-			});
-		}*/
 	});
 }
 
@@ -223,6 +227,7 @@ function checkPendingQuery() {
 		// If the origin of the search was in the other search engine,
 		// start a search for the term in the current search engine.
 		console.log('Found a pending query from', pendingQuery.source, ':', pendingQuery.query);
+		console.log('SETTING ignorePending to TRUE');
 		ignorePending = true;
 		searchPendingQuery();
 	}
@@ -275,6 +280,7 @@ function checkURLQuery() {
 			// If the primary search term is pending and is the translation of an original search,
 			// start ignoring subsequent pending queries and begin getting images.
 			console.log('Translation: ' + pendingQuery.translated);
+			console.log('SETTING ignorePending to TRUE');
 			ignorePending = true;
 			startGettingImages();
 		} else {
@@ -349,6 +355,7 @@ function searchPendingQuery() {
 	if ($(inputQuery).length == 0 ||
 	    $(inputQuery).first().closest('form').length == 0) {
 		console.log('Could not find form input, giving up.');
+		console.log('SETTING ignorePending to FALSE');
 		ignorePending = false;
 		return;
 	}
@@ -363,6 +370,7 @@ function findInputField() {
 
 	if ($inputField.length == 0 || $inputField.first().closest('form').length == 0) {
 		console.log('Could not find form input. Giving up.');
+		console.log('SETTING ignorePending to FALSE');
 		ignorePending = false;
 		return;
 	}
@@ -454,9 +462,9 @@ function getImages() {
 		// If we don't have all the images yet, save the first crop of them to storage
 		storage.set({
 			pendingQuery: pendingQuery
-		}, function() {
-			ignorePending = false;
 		});
+		console.log('SETTING ignorePending to FALSE');
+		ignorePending = false;
 	}
 }
 
@@ -482,9 +490,9 @@ function checkPendingImages() {
 			pendingQuery = {};
 			storage.set({
 				pendingQuery: {}
-			}, function() {
-				ignorePending = false;
 			});
+			console.log('SETTING ignorePending to FALSE');
+			ignorePending = false;
 		});
 		return true;
 	}
@@ -541,8 +549,13 @@ function submitImages(callback) {
 	console.log('google image urls');
 	console.log(gs_data.google_images.substr(0, 100));
 
-	console.log('Sending draft post to WP.');
+	console.log('Sending post to WP.');
 	var url = config.libraryURL;
+
+	chrome.runtime.sendMessage({
+		type: 'images_loading'
+	});
+
 	$.ajax({
 		url: url,
 		method: 'POST',
@@ -550,14 +563,13 @@ function submitImages(callback) {
 	}).done(function(rsp){
 		console.log('Done sending post to WP.');
 		console.log(rsp);
-		chrome.runtime.sendMessage({
-			type: 'images_saved',
-			permalink: rsp.permalink,
-			message: rsp.message
-		});
+		rsp.type = 'images_saved';
+		chrome.runtime.sendMessage(rsp);
+		$(document.body).removeClass('firewall-loading');
 		callback();
 	}).fail(function(xhr, textStatus) {
 		console.log('Failed sending post to WP:', textStatus, '/', xhr.responseText);
+		$(document.body).removeClass('firewall-loading');
 	});
 
 	// Send data back to server for entry into the Google spreadsheet.

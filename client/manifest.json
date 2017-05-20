@@ -13,6 +13,7 @@
         "storage",
         "tabs",
         "proxy",
+        "notifications",
         "https://www.googleapis.com/*",
         "https://localhost:4430/*",
         "https://fwc.phiffer.org/*"

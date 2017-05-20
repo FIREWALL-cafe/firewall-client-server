@@ -25,7 +25,7 @@
     <div class="post-tags">
       <?php fwc_post_tags(); ?>
     </div>
-    <div class="post-content">
+    <div class="post-content" id="images">
       <?php the_content(); ?>
     </div>
 

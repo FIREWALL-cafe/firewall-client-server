@@ -10,29 +10,58 @@ chrome.runtime.onMessage.addListener(function(e) {
 			"https://image.baidu.com/*",
 		]
 	}, function(tabs) {
-		if (e.type == 'images_saved') {
+		if (e.type == 'images_loading') {
 			for (var i = 0; i < tabs.length; i++) {
-				if (tabs[i].url.substr(0, 23) == 'https://www.google.com/') {
-					console.log('dispatching notification event to tab ' + i, e);
-					chrome.tabs.sendMessage(tabs[i].id, {
-						type: 'notification',
-						message: e.message,
-						permalink: e.permalink
-					});
-					break;
-				}
+				chrome.tabs.sendMessage(tabs[i].id, {
+					type: 'images_loading'
+				});
 			}
+		} else if (e.type == 'images_saved') {
+			for (var i = 0; i < tabs.length; i++) {
+				chrome.tabs.sendMessage(tabs[i].id, {
+					type: 'toggle_input',
+					enabled: true
+				});
+			}
+			var url = e.permalink + '#images';
 			chrome.tabs.create({
-				url: e.permalink,
+				url: url,
 				active: false
 			});
+			var options = {
+				type: 'basic',
+				iconUrl: 'icons/firewall-128.png',
+				title: e.title,
+				message: e.message
+			};
+			var notification_id = url;
+			chrome.notifications.create(notification_id, options);
 		} else if (e.type == 'toggle_input') {
 			for (var i = 0; i < tabs.length; i++) {
-				console.log('dispatching toggle_input event to tab ' + i, e);
 				chrome.tabs.sendMessage(tabs[i].id, e);
 			}
 		}
 	});
+});
+
+chrome.notifications.onClicked.addListener(function(notification_id) {
+	var url = notification_id;
+	chrome.tabs.query({
+		url: [
+			"https://firewallcafe.com/*",
+			"https://staging.firewallcafe.com/*",
+			"https://localhost:4747/*"
+		]
+	}, function(tabs) {
+		for (var i = 0; i < tabs.length; i++) {
+			if (tabs[i].url == url) {
+				chrome.tabs.update(tabs[i].id, {
+					active: true
+				});
+			}
+		}
+	});
+	chrome.notifications.clear(notification_id);
 });
 
 if (config.enableProxy) {

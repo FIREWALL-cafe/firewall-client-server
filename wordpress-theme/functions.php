@@ -122,7 +122,8 @@ function fwc_submit_images() {
 	echo json_encode(array(
 		'ok' => 1,
 		'permalink' => $permalink,
-		'message' => 'We’ve archived your search for “' . $_POST['query'] . '”. What do you think?'
+		'title' => 'We’ve archived “' . $_POST['query'] . '”',
+		'message' => 'What do you think of the results?'
 	));
 	exit;
 }
