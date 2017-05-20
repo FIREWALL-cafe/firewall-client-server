@@ -23,19 +23,21 @@ chrome.runtime.onMessage.addListener(function(e) {
 					enabled: true
 				});
 			}
-			var url = e.permalink + '#images';
-			chrome.tabs.create({
-				url: url,
-				active: false
-			});
-			var options = {
-				type: 'basic',
-				iconUrl: 'icons/firewall-128.png',
-				title: e.title,
-				message: e.message
-			};
-			var notification_id = url;
-			chrome.notifications.create(notification_id, options);
+			if (e.permalink) {
+				var url = e.permalink + '#images';
+				chrome.tabs.create({
+					url: url,
+					active: false
+				});
+				var options = {
+					type: 'basic',
+					iconUrl: 'icons/firewall-128.png',
+					title: e.title,
+					message: e.message
+				};
+				var notification_id = url;
+				chrome.notifications.create(notification_id, options);
+			}
 		} else if (e.type == 'toggle_input') {
 			for (var i = 0; i < tabs.length; i++) {
 				chrome.tabs.sendMessage(tabs[i].id, e);

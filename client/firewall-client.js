@@ -172,6 +172,9 @@ function setupMessageListener() {
 				};
 			}
 			*/
+			if (e.enabled) {
+				$(document.body).removeClass('firewall-loading');
+			}
 			toggleInputField(e.enabled);
 		} else if (e.type == 'images_loading') {
 			$(document.body).addClass('firewall-loading');
@@ -565,11 +568,12 @@ function submitImages(callback) {
 		console.log(rsp);
 		rsp.type = 'images_saved';
 		chrome.runtime.sendMessage(rsp);
-		$(document.body).removeClass('firewall-loading');
 		callback();
 	}).fail(function(xhr, textStatus) {
+		chrome.runtime.sendMessage({
+			type: 'images_saved'
+		});
 		console.log('Failed sending post to WP:', textStatus, '/', xhr.responseText);
-		$(document.body).removeClass('firewall-loading');
 	});
 
 	// Send data back to server for entry into the Google spreadsheet.
