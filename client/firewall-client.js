@@ -200,9 +200,9 @@ function setupIntroScreen() {
 		storage.set({
 			clientId: name
 		});
-		$('#firewall-client-id').val(name);
 		chrome.runtime.sendMessage({
-			type: 'sleep_done'
+			type: 'sleep_done',
+			name: name
 		});
 	});
 }
@@ -261,6 +261,7 @@ function setupMessageListener() {
 			$(document.body).addClass('firewall-intro');
 		} else if (e.type == 'sleep_done') {
 			$(document.body).removeClass('firewall-intro');
+			$('#firewall-client-id').val(e.name);
 		}
 	});
 }
