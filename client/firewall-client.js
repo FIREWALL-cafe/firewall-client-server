@@ -11,7 +11,7 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
-var sleepTimeoutMinutes = 3;
+var sleepTimeoutMinutes = 1.5;
 var sleepTimeout;
 
 function sleepReset() {
@@ -163,13 +163,18 @@ function setupUI() {
 }
 
 function setupIntroScreen() {
-	var logo = chrome.extension.getURL('/icons/firewall-white.png');
+	if (window.location.hostname == 'www.google.com') {
+		var logo = chrome.extension.getURL('/icons/firewall-white.png');
+	} else {
+		var logo = chrome.extension.getURL('/icons/firewall-red.png');
+	}
 	var html = '<img src="' + logo + '">';
 	html += '<div class="text">';
 	if (window.location.hostname == 'www.google.com') {
 		html += '<strong>Welcome to FIREWALL Cafe! Please take a moment to explore.</strong>';
 		html += '<br><input id="firewall-intro-name" placeholder="What is your name?">';
 		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a>';
+		html += '<p>Read the placemat for detailed instructions. Here is the quick version:</p>';
 		html += '<ol>';
 		html += '<li>Type a phrase into Google Image Search.</li>';
 		html += '<li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>';
@@ -183,6 +188,9 @@ function setupIntroScreen() {
 	}
 	html += '</div>';
 	$(document.body).append('<div id="firewall-intro">' + html + '</div>');
+	if (window.location.hostname != 'www.google.com') {
+		$('#firewall-intro').addClass('inverted');
+	}
 	$('#firewall-begin').click(function(e) {
 		e.preventDefault();
 		var name = $('#firewall-intro-name').val();

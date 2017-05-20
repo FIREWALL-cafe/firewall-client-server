@@ -90,8 +90,13 @@ body.firewall-loading #firewall-loading {
 	left: 0;
 	bottom: 0;
 	right: 0;
-	z-index: 2000;
+	z-index: 10000;
 	padding: 10%;
+}
+
+#firewall-intro.inverted {
+	background: #fff;
+	color: #E60016;
 }
 
 #firewall-intro p {
@@ -105,7 +110,7 @@ body.firewall-loading #firewall-loading {
 }
 
 #firewall-intro .text {
-	width: 60%;
+	width: 50%;
 	margin-left: 10%;
 }
 
