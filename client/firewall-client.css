@@ -80,6 +80,82 @@ body.firewall-loading #firewall-loading {
 	display: block;
 }
 
+#firewall-intro {
+	display: none;
+	font: 24px "helvetica neue", sans-serif;
+	color: #fff;
+	background: #E60016;
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	z-index: 2000;
+	padding: 10%;
+}
+
+#firewall-intro p {
+	margin-bottom: 25px;
+}
+
+#firewall-intro img {
+	width: 20%;
+	height: auto;
+	vertical-align: top;
+}
+
+#firewall-intro .text {
+	width: 60%;
+	margin-left: 10%;
+}
+
+#firewall-intro .text,
+#firewall-intro img {
+	display: inline-block;
+}
+
+#firewall-intro ol {
+	margin-top: 20px;
+}
+
+#firewall-intro li {
+	margin-top: 10px;
+	margin-left: 25px;
+}
+
+#firewall-intro a {
+	display: inline-block;
+	background: #fff;
+	color: #E60016;
+	padding: 10px 20px;
+	border-radius: 5px;
+	margin-top: 10px;
+	font-weight: bold;
+}
+
+#firewall-intro a:hover {
+	text-decoration: none;
+	background: rgba(255, 255, 255, 0.8);
+}
+
+#firewall-intro-name {
+	font: 24px "helvetica neue", sans-serif;
+	color: #E60016;
+	background: rgba(255, 255, 255, 0.8);
+	margin-top: 15px;
+	width: 300px;
+	padding: 10px 20px;
+	border: none;
+}
+
+#firewall-intro-name:focus {
+	outline: 2px solid #fff;
+}
+
+body.firewall-intro #firewall-intro {
+	display: block;
+}
+
 .ui-autocomplete {
 	width: 516px;
 	z-index: 103;

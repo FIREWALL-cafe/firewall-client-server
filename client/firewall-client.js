@@ -11,6 +11,39 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
+var sleepTimeoutMinutes = 0.1;
+var sleepTimeout;
+
+function sleepReset() {
+	if (sleepTimeout) {
+		clearTimeout(sleepTimeout);
+	}
+	sleepTimeout = setTimeout(function() {
+		chrome.runtime.sendMessage({
+			type: 'sleep_start',
+			enabled: false
+		});
+	}, sleepTimeoutMinutes * 60 * 1000);
+}
+sleepReset();
+
+if (window.location.host == 'www.google.no') {
+	// Google Norway => Plain Vanilla Google
+	window.location = window.location.href.replace(/google.no/, 'google.com');
+} else if (window.location.host == 'www.google.com' &&
+    window.location.pathname == '/') {
+	// Google homepage => Google image search homepage
+	window.location = 'https://www.google.com/imghp';
+}
+
+$(document.body).mousemove(function() {
+	sleepReset();
+});
+
+$(document.body).keypress(function() {
+	sleepReset();
+});
+
 storage.get([
 	'clientId',
 	'pendingQuery',
@@ -53,6 +86,7 @@ storage.get([
 	}
 
 	setupUI();
+	setupIntroScreen();
 	setupStorageListener();
 	setupMessageListener();
 	checkPendingQuery();
@@ -128,6 +162,40 @@ function setupUI() {
 	$('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
 }
 
+function setupIntroScreen() {
+	var logo = chrome.extension.getURL('/icons/firewall-white.png');
+	var html = '<img src="' + logo + '">';
+	html += '<div class="text">';
+	if (window.location.hostname == 'www.google.com') {
+		html += '<strong>Welcome to FIREWALL Cafe! Please take a moment to explore.</strong>';
+		html += '<br><input id="firewall-intro-name" placeholder="What is your name?">';
+		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a>';
+		html += '<ol>';
+		html += '<li>Type a phrase into Google Image Search.</li>';
+		html += '<li>Your query will be auto-translated into Chinese and used to search for images from Baidu Image Search.</li>';
+		html += '<li>Please wait patiently after you search so we can save a copy of the images for our archive.</li>';
+		html += '<li>Once we’ve archived your images, tell us what you think: were the results censored? Mistranslated? NSFW?</li>';
+		html += '<li>Have fun, and view your archived search session images at firewallcafe.com!</li>';
+		html += '</ol>';
+	} else {
+		html += '<p>FIREWALL is a socially engaged research and interactive art project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China.  The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>';
+		html += '<p>FIREWALL是一个社会互动性的美术研究项目，旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>';
+	}
+	html += '</div>';
+	$(document.body).append('<div id="firewall-intro">' + html + '</div>');
+	$('#firewall-begin').click(function(e) {
+		e.preventDefault();
+		var name = $('#firewall-intro-name').val();
+		if (name == '') {
+			name = 'Anonymous';
+		}
+		storage.set({
+			clientId: name
+		});
+		$(document.body).removeClass('firewall-intro');
+	});
+}
+
 function setupInterval() {
 	console.log('Setting up URL checking interval...');
 	setInterval(function() {
@@ -178,6 +246,8 @@ function setupMessageListener() {
 			toggleInputField(e.enabled);
 		} else if (e.type == 'images_loading') {
 			$(document.body).addClass('firewall-loading');
+		} else if (e.type == 'sleep_start') {
+			$(document.body).addClass('firewall-intro');
 		}
 	});
 }

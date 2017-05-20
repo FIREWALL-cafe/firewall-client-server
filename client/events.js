@@ -39,7 +39,9 @@ chrome.runtime.onMessage.addListener(function(e) {
 				console.log('creating notification', options);
 				chrome.notifications.create(notification_id, options);
 			}
-		} else if (e.type == 'toggle_input') {
+		} else if (e.type == 'toggle_input' ||
+			       e.type == 'sleep_start') {
+			// Rebroadcast the event to each tab
 			for (var i = 0; i < tabs.length; i++) {
 				chrome.tabs.sendMessage(tabs[i].id, e);
 			}
