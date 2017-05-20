@@ -154,19 +154,25 @@ function setupStorageListener() {
 
 function setupMessageListener() {
 	console.log('Setting up messages listener...');
-
-	chrome.runtime.onMessage.addListener(
-	  function(message, sender, sendResponse) {
-	    if (message == "enable-input") {
-	    	toggleInputField(true, function(){
-	    		console.log('Reenabled inputs after search completion.');
-	    	});
-	    } else if (message == 'disable-input') {
-	    	toggleInputField(false, function(){
-	    		console.log('Disabled inputs during search.');
-	    	});
-	    }
-  });
+	chrome.runtime.onMessage.addListener(function(e) {
+		console.log('MSG', e);
+		if (e.type == 'notification') {
+			console.log('NOTIFY: ' + e.message);
+		} else if (e.type == 'toggle_input') {
+			console.log('TOGGLE INPUT: ' + e.enabled);
+			toggleInputField(e.enabled);
+		}
+		/*
+		if (message == "enable-input") {
+			, function(){
+				console.log('Reenabled inputs after search completion.');
+			});
+		} else if (message == 'disable-input') {
+			toggleInputField(false, function(){
+				console.log('Disabled inputs during search.');
+			});
+		}*/
+	});
 }
 
 function checkPendingQuery() {
@@ -250,7 +256,10 @@ function checkURLQuery() {
 		}
 
 		console.log('Detected a', getSource(),'search: ' + query);
-		chrome.runtime.sendMessage('disable-input');
+		chrome.runtime.sendMessage({
+			type: 'toggle_input',
+			enabled: false
+		});
 
 		var timestamp = (new Date().getTime());
 
@@ -483,19 +492,13 @@ function checkPendingImages() {
 	return false;
 }
 
-
-
-
-function toggleInputField(enable, callback) {
-	var baiduInput = document.querySelector('input[name=word]');
-	if (baiduInput) {
-		baiduInput.disabled = ! enable;
+function toggleInputField(enable) {
+	console.log('toggling input field: ' + enable);
+	var input = document.querySelector('input[name=word], input[name=q]');
+	if (input) {
+		input.disabled = ! enable;
+		console.log(input);
 	}
-	var googleInput = document.querySelector('input[name=q]');
-	if (googleInput) {
-		googleInput.disabled = ! enable;
-	}
-	callback();
 }
 
 function submitImages(callback) {
@@ -547,10 +550,14 @@ function submitImages(callback) {
 	}).done(function(rsp){
 		console.log('Done sending post to WP.');
 		console.log(rsp);
-		chrome.runtime.sendMessage(['enable-input', rsp.permalink]);
+		chrome.runtime.sendMessage({
+			type: 'images_saved',
+			permalink: rsp.permalink,
+			message: rsp.message
+		});
 		callback();
 	}).fail(function(xhr, textStatus) {
-		console.log('Failed sending draft post to WP:', textStatus, '/', xhr.responseText);
+		console.log('Failed sending post to WP:', textStatus, '/', xhr.responseText);
 	});
 
 	// Send data back to server for entry into the Google spreadsheet.

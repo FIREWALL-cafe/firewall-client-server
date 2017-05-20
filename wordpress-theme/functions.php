@@ -121,8 +121,8 @@ function fwc_submit_images() {
 	header('Content-Type: application/json');
 	echo json_encode(array(
 		'ok' => 1,
-		'post_id' => $post_id,
-		'permalink' => $permalink
+		'permalink' => $permalink,
+		'message' => 'We’ve archived your search for “' . $_POST['query'] . '”. What do you think?'
 	));
 	exit;
 }
