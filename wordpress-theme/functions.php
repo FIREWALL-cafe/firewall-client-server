@@ -122,8 +122,8 @@ function fwc_submit_images() {
 	echo json_encode(array(
 		'ok' => 1,
 		'permalink' => $permalink,
-		'title' => 'We’ve archived “' . $_POST['query'] . '”',
-		'message' => 'What do you think of the results?'
+		'title' => 'We’ve saved “' . $_POST['query'] . '” to the FIREWALL search library',
+		'message' => 'CLICK HERE to tell us what you think of the results.'
 	));
 	exit;
 }

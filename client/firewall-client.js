@@ -172,9 +172,9 @@ function setupIntroScreen() {
 		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a>';
 		html += '<ol>';
 		html += '<li>Type a phrase into Google Image Search.</li>';
-		html += '<li>Your query will be auto-translated into Chinese and used to search for images from Baidu Image Search.</li>';
-		html += '<li>Please wait patiently after you search so we can save a copy of the images for our archive.</li>';
-		html += '<li>Once we’ve archived your images, tell us what you think: were the results censored? Mistranslated? NSFW?</li>';
+		html += '<li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>';
+		html += '<li>Please wait patiently while the images save to our search library.</li>';
+		html += '<li>Once we’ve archived your images, tell us what you think: click on censored/mistranslated/NSFW/etc.</li>';
 		html += '<li>Have fun, and view your archived search session images at firewallcafe.com!</li>';
 		html += '</ol>';
 	} else {
