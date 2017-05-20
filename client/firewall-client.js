@@ -11,7 +11,7 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
-var sleepTimeoutMinutes = 0.1;
+var sleepTimeoutMinutes = 3;
 var sleepTimeout;
 
 function sleepReset() {
