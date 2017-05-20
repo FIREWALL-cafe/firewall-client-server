@@ -123,7 +123,7 @@ function setupUI() {
 		$body.addClass('firewall-autocomplete');
 	}
 
-	var msg = 'Please wait while we archive your search results...';
+	var msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
 	$('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
 	$('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
 }
