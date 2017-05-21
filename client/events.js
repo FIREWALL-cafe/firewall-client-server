@@ -41,7 +41,8 @@ chrome.runtime.onMessage.addListener(function(e) {
 			}
 		} else if (e.type == 'toggle_input' ||
 		           e.type == 'sleep_start' ||
-		           e.type == 'sleep_done') {
+		           e.type == 'sleep_done' ||
+		           e.type == 'user_activity') {
 			// Rebroadcast the event to each tab
 			for (var i = 0; i < tabs.length; i++) {
 				chrome.tabs.sendMessage(tabs[i].id, e);

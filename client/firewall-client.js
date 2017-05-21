@@ -11,7 +11,7 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
-var sleepTimeoutMinutes = 1.5;
+var sleepTimeoutMinutes = 3;
 var sleepTimeout;
 
 function sleepReset() {
@@ -24,12 +24,15 @@ function sleepReset() {
 			enabled: false
 		});
 	}, sleepTimeoutMinutes * 60 * 1000);
+	chrome.runtime.sendMessage({
+		type: 'user_activity'
+	});
 }
 sleepReset();
 
 if (window.location.host == 'www.google.no') {
-	// Google Norway => Plain Vanilla Google
-	window.location = window.location.href.replace(/google.no/, 'google.com');
+	// Google Norway => Plain Vanilla GIS
+	window.location = 'https://www.google.com/imghp';
 } else if (window.location.host == 'www.google.com' &&
     window.location.pathname == '/') {
 	// Google homepage => Google image search homepage
@@ -172,8 +175,8 @@ function setupIntroScreen() {
 	html += '<div class="text">';
 	if (window.location.hostname == 'www.google.com') {
 		html += '<strong>Welcome to FIREWALL Cafe! Please take a moment to explore.</strong>';
-		html += '<br><input id="firewall-intro-name" placeholder="What is your name?">';
-		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a>';
+		html += '<form action="." id="firewall-intro-form"><input id="firewall-intro-name" placeholder="What is your name?">';
+		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a></form>';
 		html += '<p>Read the placemat for detailed instructions. Here is the quick version:</p>';
 		html += '<ol>';
 		html += '<li>Type a phrase into Google Image Search.</li>';
@@ -191,7 +194,7 @@ function setupIntroScreen() {
 	if (window.location.hostname != 'www.google.com') {
 		$('#firewall-intro').addClass('inverted');
 	}
-	$('#firewall-begin').click(function(e) {
+	function hide_intro(e) {
 		e.preventDefault();
 		var name = $('#firewall-intro-name').val();
 		if (name == '') {
@@ -204,7 +207,9 @@ function setupIntroScreen() {
 			type: 'sleep_done',
 			name: name
 		});
-	});
+	}
+	$('#firewall-intro-form').submit(hide_intro);
+	$('#firewall-begin').click(hide_intro);
 }
 
 function setupInterval() {
@@ -262,6 +267,8 @@ function setupMessageListener() {
 		} else if (e.type == 'sleep_done') {
 			$(document.body).removeClass('firewall-intro');
 			$('#firewall-client-id').val(e.name);
+		} else if (e.type == 'user_activity') {
+			$(document.body).removeClass('firewall-intro');
 		}
 	});
 }

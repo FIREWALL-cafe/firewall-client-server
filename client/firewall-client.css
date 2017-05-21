@@ -129,6 +129,7 @@ body.firewall-loading #firewall-loading {
 }
 
 #firewall-intro a {
+	text-decoration: none;
 	display: inline-block;
 	background: #fff;
 	color: #E60016;
