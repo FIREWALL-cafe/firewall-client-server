@@ -5,3 +5,5 @@ $(document.body).mousemove(function() {
 $(document.body).keypress(function() {
 	chrome.runtime.sendMessage('user_activity');
 });
+
+chrome.runtime.sendMessage('user_activity');
