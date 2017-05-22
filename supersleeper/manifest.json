@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Supersleeper",
 	"description": "Waits until nobody's looking and then resets the browser.",
-	"version": "0.1",
+	"version": "0.1.1",
 	"icons": {
 		"16": "icons/firewall-16.png",
 		"48": "icons/firewall-48.png",
@@ -14,7 +14,7 @@
 	],
 	"background": {
 		"scripts": ["config.js", "background.js"],
-		"persistent": false
+		"persistent": true
 	},
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*"],
