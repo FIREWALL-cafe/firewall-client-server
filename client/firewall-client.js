@@ -11,25 +11,6 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
-var sleepTimeoutMinutes = 3;
-var sleepTimeout;
-
-function sleepReset() {
-	if (sleepTimeout) {
-		clearTimeout(sleepTimeout);
-	}
-	sleepTimeout = setTimeout(function() {
-		chrome.runtime.sendMessage({
-			type: 'sleep_start',
-			enabled: false
-		});
-	}, sleepTimeoutMinutes * 60 * 1000);
-	chrome.runtime.sendMessage({
-		type: 'user_activity'
-	});
-}
-sleepReset();
-
 if (window.location.host == 'www.google.no') {
 	// Google Norway => Plain Vanilla GIS
 	window.location = 'https://www.google.com/imghp';
@@ -37,15 +18,9 @@ if (window.location.host == 'www.google.no') {
     window.location.pathname == '/') {
 	// Google homepage => Google image search homepage
 	window.location = 'https://www.google.com/imghp';
+} else if (window.location.hash == '#intro') {
+	$(document.body).addClass('firewall-intro');
 }
-
-$(document.body).mousemove(function() {
-	sleepReset();
-});
-
-$(document.body).keypress(function() {
-	sleepReset();
-});
 
 storage.get([
 	'clientId',
@@ -174,8 +149,8 @@ function setupIntroScreen() {
 	var html = '<img src="' + logo + '">';
 	html += '<div class="text">';
 	if (window.location.hostname == 'www.google.com') {
-		html += '<strong>Welcome to FIREWALL Cafe! Please take a moment to explore.</strong>';
-		html += '<form action="." id="firewall-intro-form"><input id="firewall-intro-name" placeholder="What is your name?">';
+		html += '<strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later. Be creative, you don’t need to use your true identity.</strong>';
+		html += '<form action="." id="firewall-intro-form"><input id="firewall-intro-name" placeholder="Pick a name">';
 		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a></form>';
 		html += '<p>Read the placemat for detailed instructions. Here is the quick version:</p>';
 		html += '<ol>';
@@ -204,7 +179,7 @@ function setupIntroScreen() {
 			clientId: name
 		});
 		chrome.runtime.sendMessage({
-			type: 'sleep_done',
+			type: 'close_intro',
 			name: name
 		});
 	}
@@ -262,9 +237,7 @@ function setupMessageListener() {
 			toggleInputField(e.enabled);
 		} else if (e.type == 'images_loading') {
 			$(document.body).addClass('firewall-loading');
-		} else if (e.type == 'sleep_start') {
-			$(document.body).addClass('firewall-intro');
-		} else if (e.type == 'sleep_done') {
+		} else if (e.type == 'close_intro') {
 			$(document.body).removeClass('firewall-intro');
 			$('#firewall-client-id').val(e.name);
 		} else if (e.type == 'user_activity') {

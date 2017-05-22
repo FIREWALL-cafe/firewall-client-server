@@ -40,9 +40,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 				chrome.notifications.create(notification_id, options);
 			}
 		} else if (e.type == 'toggle_input' ||
-		           e.type == 'sleep_start' ||
-		           e.type == 'sleep_done' ||
-		           e.type == 'user_activity') {
+		           e.type == 'close_intro') {
 			// Rebroadcast the event to each tab
 			for (var i = 0; i < tabs.length; i++) {
 				chrome.tabs.sendMessage(tabs[i].id, e);
@@ -86,7 +84,7 @@ if (config.enableProxy) {
 					host: "127.0.0.1",
 					port: 8888
 				},
-				bypassList: ["*.baidu.com", "pi.firewallcafe.com"]
+				bypassList: ["*.baidu.com"]
 			}
 		}, scope: 'regular'
 	}, function() {
