@@ -3,7 +3,8 @@
 # Install this as a cronjob
 # Works with Chrome v59+
 # https://developers.google.com/web/updates/2017/04/headless-chrome
-# Also uses ffmpeg to convert into 
+# https://www.google.com/chrome/browser/beta.html
+# Also uses ffmpeg to convert into JPGs
 
 WHOAMI=`python -c 'import os, sys; print os.path.realpath(sys.argv[1])' $0`
 DIR=`dirname $WHOAMI`
