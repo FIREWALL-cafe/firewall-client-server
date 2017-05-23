@@ -1,4 +1,5 @@
 .DS_Store
+*~
 /.vagrant
 /apache/firewall-cafe.conf
 /client/config.js
@@ -11,3 +12,6 @@
 /vpn
 /certified
 /db
+/intervalometer/images/*.jpg
+/intervalometer/config.sh
+/intervalometer/screenshot.png

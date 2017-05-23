@@ -5,6 +5,8 @@
 # https://developers.google.com/web/updates/2017/04/headless-chrome
 # https://www.google.com/chrome/browser/beta.html
 # Also uses ffmpeg to convert into JPGs
+# crontab
+# * * * * * /Users/firewallcafe/Documents/firewall-cafe/intervalometer/intervalometer.sh > /dev/null 2>&1
 
 WHOAMI=`python -c 'import os, sys; print os.path.realpath(sys.argv[1])' $0`
 DIR=`dirname $WHOAMI`
