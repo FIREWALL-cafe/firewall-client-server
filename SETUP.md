@@ -1,6 +1,6 @@
 # Setup Instructions for Project Booth
 
-### Flashing the Raspberry Pi
+### Flash the Raspberry Pi
 1. Download the [latest Raspbian “lite” image](https://www.raspberrypi.org/downloads/raspbian/).
 2. Plug in a MicroSD card.
 3. Figure out which disk device it is. In this case, `/dev/disk2`:
@@ -25,6 +25,16 @@ sudo dd bs=1m if=/Users/dphiffer/Downloads/2017-09-07-raspbian-stretch-lite.img 
 ```
 sudo diskutil eject /dev/disk2
 ```
+7. Log in to the RPI and move through config sequence.
+
+### Setup wireless router
+1. Connect the wireless router to power, and connect to its network.
+2. On a TP-Link router, access http://tplinkwifi.net to log in as admin (pw: `admin`).
+3. Replace default password.
+4. Go to Quick Setup > Client. Give the device a static IP.
+5. Connect Ethernet cable to bottom of router, and plug into Ethernet switch.
+6. Plug RPI into Ethernet switch.
+7. Test connection to the Internet.
 
 ### Hardware
 - In Chrome Extensions, ensure Firewall Cafe is installed and enabled. The proxy our extension enforces passes Google traffic through a VPN connection.
@@ -49,4 +59,5 @@ One computer needs *not* to be routing its traffic through the VPN.
 2. RaspberryPI
 3. Wireless router (Using TP-Link 300Mbps Wireless N Mini Router)
 4. Monitor
+5. Ethernet switch
 
