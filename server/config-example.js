@@ -13,4 +13,5 @@ module.exports = {
 	// For SSL
 	sslKey: '...',
 	sslCert: '...',
+	sslChain: '...',
 };
