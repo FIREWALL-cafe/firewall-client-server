@@ -28,7 +28,7 @@ if (config.port == 80 ||
 	var options = {
 		key: fs.readFileSync(config.sslKey),
 		cert: fs.readFileSync(config.sslCert),
-		chain: fs.readFileSync(config.sslChain)
+		chain: [fs.readFileSync(config.sslChain)]
 	};
 	var app = https.createServer(options, httpRequest);
 }
