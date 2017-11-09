@@ -76,9 +76,9 @@ function setupUI() {
 
 	var suggestChecked = autocompleteEnabled ? ' checked="checked"' : '';
 
-	$('#fsr, #lh, #ft').append(
+	$('#fsr, #lh, #ft, .wrapper_imgfrom_box').append(
 		'<div id="firewall">' +
-			'<a href="#firewall" id="firewall-show">Firewall</a>' +
+			'<a href="#firewall" id="firewall-show" class="skin_from_link">Firewall</a>' +
 			'<form action="." id="firewall-form">' +
 				'<label>Client ID: <input name="client-id" id="firewall-client-id" value="' + clientId + '"></label>' +
 				'<label><input type="checkbox" id="firewall-suggest"' + suggestChecked + '> Suggest sensitive queries</label>' +
