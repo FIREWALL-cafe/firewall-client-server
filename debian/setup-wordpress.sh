@@ -8,7 +8,7 @@ ROOT=`dirname $UBUNTU`
 echo "Installing dependencies"
 sudo apt-get -qq update
 sudo apt-get -qq -y install apache2 apache2-utils
-sudo apt-get -qq -y install php5 php5-cli php5-curl php5-mcrypt php5-memcache php5-mysql
+sudo apt-get -qq -y install php7 php7-cli php7-curl php7-mcrypt php7-memcache php7-mysql libapache2-mod-php7.0
 
 echo "Configuring Apache"
 for mod in proxy_wstunnel.load rewrite.load proxy.load proxy.conf proxy_http.load ssl.conf ssl.load socache_shmcb.load headers.load
@@ -49,19 +49,19 @@ do
 
     #for mod in mcrypt.ini
     #do
-    #    if [ -L /etc/php5/${ctx}/conf.d/${mod} ]
+    #    if [ -L /etc/php7/${ctx}/conf.d/${mod} ]
     #    then
-    #        sudo rm /etc/php5/${ctx}/conf.d/${mod}
+    #        sudo rm /etc/php7/${ctx}/conf.d/${mod}
     #    fi
 
-    #    if [ -f /etc/php5/${ctx}/conf.d/${mod} ]
+    #    if [ -f /etc/php7/${ctx}/conf.d/${mod} ]
     #    then
-    #        sudo mv /etc/php5/${ctx}/conf.d/${mod} /etc/php5/${ctx}/conf.d/${mod}.bak
+    #        sudo mv /etc/php7/${ctx}/conf.d/${mod} /etc/php7/${ctx}/conf.d/${mod}.bak
     #    fi
 
-    #    sudo ln -s /etc/php5/mods-available/${mod} /etc/php5/${ctx}/conf.d/${mod}
+    #    sudo ln -s /etc/php7/mods-available/${mod} /etc/php7/${ctx}/conf.d/${mod}
     #done
-    sudo perl -p -i -e "s/short_open_tag = Off/short_open_tag = On/" /etc/php5/${ctx}/php.ini;
+    sudo perl -p -i -e "s/short_open_tag = Off/short_open_tag = On/" /etc/php7/${ctx}/php.ini;
 done
 
 if [ ! -d ${ROOT}/wordpress ]
