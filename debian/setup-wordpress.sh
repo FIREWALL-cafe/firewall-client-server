@@ -8,7 +8,7 @@ ROOT=`dirname $UBUNTU`
 echo "Installing dependencies"
 sudo apt-get -qq update
 sudo apt-get -qq -y install apache2 apache2-utils
-sudo apt-get -qq -y install php7 php7-cli php7-curl php7-mcrypt php7-memcache php7-mysql libapache2-mod-php7.0
+sudo apt-get -qq -y install php php-cli php-curl php-mcrypt php-memcache php-mysql libapache2-mod-php7.0
 
 echo "Configuring Apache"
 for mod in proxy_wstunnel.load rewrite.load proxy.load proxy.conf proxy_http.load ssl.conf ssl.load socache_shmcb.load headers.load
