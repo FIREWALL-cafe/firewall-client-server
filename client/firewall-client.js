@@ -255,7 +255,7 @@ function checkPendingQuery() {
 	// If we're ignoring incoming query data because we're in the middle of handling a query, move on.
 	if (ignorePending) {
 		console.log('Ignoring pending queries.');
-		return;
+//		return;
 	}
 
 	// Look at the URL query string to get the search term.
@@ -330,7 +330,7 @@ function checkURLQuery() {
 		console.log('Detected a', getSource(),'search: ' + query);
 		chrome.runtime.sendMessage({
 			type: 'toggle_input',
-			enabled: false
+			enabled: true 
 		});
 
 		var timestamp = (new Date().getTime());

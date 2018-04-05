@@ -1,0 +1,17 @@
+{
+  "name": "FIREWALL Internet Cafe!",
+  "description": "FIREWALL is a socially engaged research and interactive art project designed to foster public dialogue about Internet freedom.",
+  "version": "0.2",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "icons": { "16": "firewall-cafe-16.png", "128": "firewall-cafe-128.png" },
+  "permissions": [
+       "<all_urls>",
+       "alwaysOnTopWindows", 
+       "webview"
+   ]
+}

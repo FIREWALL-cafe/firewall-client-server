@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style type="text/css">
+#topright {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: block;
+    height: 128px;
+    width: 128px;
+    background: url(firewall-cafe-128.png) no-repeat;
+    text-indent: -999em;
+    text-decoration: none;
+}
+#lframe {
+    position: absolute;
+    left: 0;
+    top: 170px;
+    width: 48%;
+}
+#rframe {
+    position: absolute;
+    top: 170px;
+    right: 0;
+    width: 48%;
+}
+</style>
+
+
+<style> 
+input[type=text] {
+    width: 130px;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: white;
+    background-position: 10px 10px; 
+    background-repeat: no-repeat;
+    padding: 12px 20px 12px 40px;
+    -webkit-transition: width 0.4s ease-in-out;
+    transition: width 0.4s ease-in-out;
+}
+
+input[type=text]:focus {
+    width: -webkit-calc( 100% - 128px - 100px );
+}
+</style>
+	<link rel="stylesheet" href="font-awesome.min.css">
+	<script src="contentscript.js"></script>
+</head>
+<body>
+<div>
+	<a id="topright" href="#" title="Home"></a>
+	<div class="search-container">
+             <button type="submit" name="submit" id="submit" ><i class="fa fa-search"></i></button>
+             <input type="text" id="search" name="search" placeholder="Search..">
+	</div>
+</div>
+
+
+</body>
+</html>
+
