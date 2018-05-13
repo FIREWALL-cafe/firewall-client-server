@@ -15,6 +15,7 @@ var config = {
 
   bypassList: [
     "*.google.com",
+    "*.gstatic.com",
     "firewallcafe.com",
     "*.firewallcafe.com"
   ]
