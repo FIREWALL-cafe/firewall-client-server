@@ -1,4 +1,5 @@
 #!/bin/bash
 
-while true; do ssh -N sino; sleep 1; done
+echo "Connecting to SSH proxy"
+while true; do ssh -N -v -k sino; sleep 1; done
 
