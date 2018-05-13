@@ -84,7 +84,7 @@ if (config.enableProxy) {
 					host: "127.0.0.1",
 					port: 8888
 				},
-				bypassList: ["*.baidu.com"]
+				bypassList: config.bypassList
 			}
 		}, scope: 'regular'
 	}, function() {

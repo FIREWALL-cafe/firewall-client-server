@@ -11,6 +11,12 @@ var config = {
   sharedSecret: '...',
 
   // This will send all non-Baidu traffic through a SOCKS proxy on port 8888
-  enableProxy: false
+  enableProxy: false,
+
+  bypassList: [
+    "*.google.com",
+    "firewallcafe.com",
+    "*.firewallcafe.com"
+  ]
 
 };
