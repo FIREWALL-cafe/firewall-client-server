@@ -11,6 +11,10 @@ var config = {
   sharedSecret: '...',
 
   // This will send all non-Baidu traffic through a SOCKS proxy on port 8888
-  enableProxy: false
+  enableProxy: false,
+
+  // This will define what traffic is not sent over SOCKS proxy
+  bypassList: ["*.google.com", "*.gstatic.com", "*google*"],
+
 
 };
