@@ -16,7 +16,7 @@ add_filter('acf/helpers/get_dir', function($dir) {
 	# /home/firewallcafe/prod_src/wordpress-plugins => /wp-content/plugins
 	$actual_dir = dirname(__DIR__) . '/wordpress-plugins';
 	$desired_dir = '/wp-content/plugins';
-	$dir = str_replace($actual_dir, $desired_dir);
+	$dir = str_replace($actual_dir, $desired_dir, $dir);
 	error_log("acf/helpers/get_dir: $dir");
 	return $dir;
 });
