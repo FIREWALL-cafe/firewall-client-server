@@ -12,6 +12,11 @@ require_once( __DIR__ . '/includes/fwc-post-partials.php');
 require_once( __DIR__ . '/includes/fwc-post-previous-searches.php');
 require_once( __DIR__ . '/includes/fwc-library-nav.php');
 
+add_action('acf/helpers/get_dir', function($dir) {
+	error_log("acf/helpers/get_dir: $dir");
+	return $dir;
+});
+
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
 	add_filter('wp_get_attachment_image_attributes', function($attr) {
