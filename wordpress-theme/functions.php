@@ -1,7 +1,5 @@
 <?php
 
-define('FWC_SHARED_SECRET', 'b43ce0bdfb64d54130679f9632f37de94cfe2032');
-
 require_once( __DIR__ . '/includes/prefix-filter.php');
 require_once( __DIR__ . '/includes/fwc-taxonomies.php');
 require_once( __DIR__ . '/includes/fwc-meta-utilities.php');
