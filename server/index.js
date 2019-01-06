@@ -422,7 +422,6 @@ function setTranslation(search, translation) {
 
 function saveTranslation(search, translation) {
 	console.log('Saving this translation...');
-	consoleLogDivider();
 
 	var query = getNormalizedQuery(search),
 		tab = doc['translations'];
@@ -436,6 +435,9 @@ function saveTranslation(search, translation) {
 		langConfidence: search.langConfidence,
 		langAlternate: search.langAlternate,
 		langName: search.langName,
+	}, () => {
+		console.log('Saved.');
+		consoleLogDivider();
 	});
 }
 
@@ -543,7 +545,7 @@ function getLanguageName(langCode) {
 
 function handleImages(req, res, headers) {
 	getPostData(req, function(data) {
-		console.log('Images: ' + data.google_query);
+		console.log('Images: ' + data.query);
 		if (validateSharedSecret(data.secret, res, headers)) {
 			var images = {
 				timestamp: data.timestamp,
@@ -738,4 +740,3 @@ function getDialect(language) {
 function getSearchTab(search) {
 	return search.langFrom + ' to ' + search.langTo;
 }
-
