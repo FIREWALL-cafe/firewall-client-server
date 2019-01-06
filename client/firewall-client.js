@@ -11,10 +11,7 @@ var autocompleteEnabled = true;
 
 var $googleInput = $('#lst-ib');
 
-if (window.location.host == 'www.google.no') {
-	// Google Norway => Plain Vanilla GIS
-	window.location = 'https://www.google.com/imghp';
-} else if (window.location.host == 'www.google.com' &&
+if (window.location.host == 'www.google.com' &&
     window.location.pathname == '/') {
 	// Google homepage => Google image search homepage
 	window.location = 'https://www.google.com/imghp';
@@ -329,7 +326,7 @@ function checkURLQuery() {
 		console.log('Detected a', getSource(),'search: ' + query);
 		chrome.runtime.sendMessage({
 			type: 'toggle_input',
-			enabled: true 
+			enabled: true
 		});
 
 		var timestamp = (new Date().getTime());
