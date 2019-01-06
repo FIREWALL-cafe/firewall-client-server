@@ -268,10 +268,10 @@ function fwc_update_post_metadata($post_id, $row) {
 		'search_language' => $row->lang_from,
 		'search_language_confidence' => $row->lang_confidence,
 		'search_language_alternate' => $row->lang_alternate,
-       'search_language_name' => $row->lang_name,
-       'banned' => $row->banned,
-       'sensitive' => $row->sensitive,
-       'location' => $location,
+		'search_language_name' => $row->lang_name,
+		'banned' => $row->banned,
+		'sensitive' => $row->sensitive,
+		'location' => $location,
 	);
 
   fwc_add_post_timestamped_meta($post_id, $metadata, $timestamp);
