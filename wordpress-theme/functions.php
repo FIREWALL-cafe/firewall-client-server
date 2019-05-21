@@ -9,6 +9,7 @@ require_once( __DIR__ . '/includes/fwc-post-votes.php');
 require_once( __DIR__ . '/includes/fwc-post-partials.php');
 require_once( __DIR__ . '/includes/fwc-post-previous-searches.php');
 require_once( __DIR__ . '/includes/fwc-library-nav.php');
+require_once( __DIR__ . '/includes/fwc-export.php');
 
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );

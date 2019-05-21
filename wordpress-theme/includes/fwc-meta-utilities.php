@@ -36,6 +36,9 @@ function fwc_get_latest_meta($key, $post_id=null) {
 function fwc_get_meta_by_timestamp($key, $timestamp) {
   $dataset = get_post_meta(get_the_ID(), $key);
   $meta = array_filter($dataset, function($data) use ($timestamp) {
+    if (! is_array($data)) {
+      return false;
+    }
     return key($data) == $timestamp;
   });
   return fwc_get_latest_value($meta);
