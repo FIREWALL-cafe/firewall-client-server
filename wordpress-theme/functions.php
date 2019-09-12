@@ -636,3 +636,81 @@ class CSV_File {
 		return (object) $labeled;
 	}
 }
+
+function create_event_post() {
+	$args = array(
+		'labels' => array(
+			 'name' => __('Events'),
+			 'singular_name' => __('Event'),
+			 'menu_name' => __('Events'),
+			 'parent_item' => __('Parent Event'),
+			 'parent_item_colon' => __('Parent Event:'),
+			 'all_items' => __('All Events'),
+			 'view_item' => __('View Event'),
+			 'add_new_item' => __('Add New Event'),
+			 'add_new' => __('Add New'),
+			 'edit_item' => __('Edit Event'),
+			 'update_item' => __('Update Event'),
+			 'search_items' => __('Search Events'),
+			 'not_found' => __('Not Found'),
+			 'not_found_in_trash' => __('Not Found in Trash'),
+		),
+		'public' => true,
+		'show_ui' => true,
+		'capability_type' => 'post',
+		'hierarchical' => false,
+		'rewrite' => array(
+			'slug' => 'events',
+			'with_front' => false,
+		),
+		'query_var' => true,
+		'taxonomies' => array('event-category'),
+		// 'menu_icon' => '',
+		'supports' => array(
+			'title',
+			'editor',
+			'excerpt',
+			// 'trackbacks',
+			'custom-fields',
+			// 'comments',
+			'revisions',
+			'thumbnail',
+			'author',
+			'page-attributes',
+		),
+	);
+	register_post_type('event', $args);
+	flush_rewrite_rules(); // TODO Unnecessary?
+}
+add_action('init', 'create_event_post');
+
+function create_event_post_category() {
+	register_taxonomy(
+		'event-category',
+		'event',
+		array(
+			'hierarchical' => true,
+			'labels' => array(
+				'name' => __('Event Categories'),
+				'singular_name' => __('Event Category'),
+				'search_items' =>  __('Search Event Categories'),
+				'all_items' => __('All Event Categories'),
+				'parent_item' => __('Parent Event Category'),
+				'parent_item_colon' => __('Parent Event Category:'),
+				'edit_item' => __('Edit Event Category'),
+				'update_item' => __('Update Event Category'),
+				'add_new_item' => __('Add New Event Category'),
+				'new_item_name' => __('New Event Category Name'),
+				'menu_name' => __('Event Categories'),
+		   ),
+			'show_ui' => true,
+			'show_admin_column' => true,
+			'query_var' => true,
+			'rewrite' => array(
+				'slug' => 'event-category',
+				'with_front' => false,
+			),
+		)
+	);
+}
+add_action('init', 'create_event_post_category');
