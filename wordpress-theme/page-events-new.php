@@ -71,7 +71,7 @@ END;
 ?>
 
 <section id="events">
-	<div class="migrate-container">
+	<div class="migrate-container cleared">
 		<div class="migrate-column-2 cleared">
 			<h2>Ongoing Events</h2>
 			<?php
@@ -79,7 +79,7 @@ END;
 				render_event($event);
 			}
 			if (!count($events['ongoing'])) {
-				echo '<div>No ongoing events</div>';
+				echo '<div class="migrate-event">No ongoing events</div>';
 			}
 			?>
 			<h2>Future Events</h2>
@@ -88,7 +88,7 @@ END;
 				render_event($event);
 			}
 			if (!count($events['future'])) {
-				echo '<div>No future events</div>';
+				echo '<div class="migrate-event">No future events</div>';
 			}
 			?>
 		</div>
@@ -99,7 +99,7 @@ END;
 					render_event($event);
 				}
 				if (!count($events['past'])) {
-					echo '</div>No past events</div>';
+					echo '<div class="migrate-event">No past events</div>';
 				}
 				?>
 		</div>
