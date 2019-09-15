@@ -68,10 +68,14 @@ END;
 	echo $template;
 }
 
+function render_empty() {
+	echo '<div class="migrate-event">None found</div>';
+}
+
 ?>
 
 <section id="events">
-	<div class="migrate-container">
+	<div class="migrate-container cleared">
 		<div class="migrate-column-1 cleared">
 			<h2>Upcoming Events</h2>
 			<?php
@@ -79,12 +83,12 @@ END;
 				render_event($event);
 			}
 			if (!count($events['upcoming'])) {
-				echo '<div>None found</div>';
+				render_empty();
 			}
 			?>
 		</div>
 	</div>
-	<div class="migrate-container">
+	<div class="migrate-container cleared">
 		<div class="migrate-column-2 cleared">
 			<h2>Past Events</h2>
 			<?php
@@ -92,20 +96,20 @@ END;
 				render_event($event);
 			}
 			if (!count($events['past-events'])) {
-				echo '<div>None found</div>';
+				render_empty();
 			}
 			?>
 		</div>
 		<div class="migrate-column-2 cleared">
 			<h2>Past Exhibitions</h2>
-				<?php
-				foreach ($events['past-exhibitions'] as $event) {
-					render_event($event);
-				}
-				if (!count($events['past-exhibitions'])) {
-					echo '<div>None found</div>';
-				}
-				?>
+			<?php
+			foreach ($events['past-exhibitions'] as $event) {
+				render_event($event);
+			}
+			if (!count($events['past-exhibitions'])) {
+				render_empty();
+			}
+			?>
 		</div>
 	</div>
 </section>
