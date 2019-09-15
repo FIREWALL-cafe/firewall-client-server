@@ -33,7 +33,8 @@ function render_event($event) {
 		$image_srcs .= '<img class="migrate-event-photo" src="'.$image->guid.'" />';
 	}
 
-	$formatted_content = apply_filters('the_content', $event->post_content);
+	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content);
+	$trimmed_content = wp_trim_words($formatted_content, 15);
 	$template_link = get_the_permalink($event->ID);
 	$template_images = <<<END
 <div class="migrate-event-media">
@@ -43,9 +44,6 @@ END;
 
 	if (!count($images)) {
 		$template_images = '';
-		$template_link_text = 'View individual event page &rarr;';
-	} else {
-		$template_link_text = 'View individual event and media page &rarr;';
 	}
 
 	$template = <<<END
@@ -54,14 +52,12 @@ END;
 		$event->post_title
 	</h3>
 	<div class="migrate-event-content">
-		$formatted_content
+		$trimmed_content
+		<a class="migrate-event-link" href="$template_link">
+			More
+		</a>
 	</div>
 	$template_images
-	<div class="cleared">
-	<a class="migrate-event-link" href="$template_link">
-		$template_link_text
-	</a>
-	</div>
 </div>
 END;
 

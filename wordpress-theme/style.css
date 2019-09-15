@@ -643,6 +643,10 @@ h2.post-section-title.no-border {
 	border-bottom: 0;
 }
 
+.migrate-event-content {
+	line-height: 1.3;
+}
+
 .migrate-event-media {
 	white-space: nowrap;
 	overflow-x: scroll;
@@ -659,10 +663,4 @@ h2.post-section-title.no-border {
 .migrate-event-photo {
 	height: 180px;
 	margin: 0 1em 0 0;
-}
-
-.migrate-event-link {
-	font-style: italic;
-	float: right;
-	font-size: 0.8em;
 }
