@@ -603,6 +603,12 @@ h2.post-section-title.no-border {
   clear: both;
 }
 
+.migrate-container {
+	width: 980px;
+	padding: 0 15px;
+	margin: 0 auto;
+}
+
 .migrate-column-1 {
 	width: 100%;
 }
