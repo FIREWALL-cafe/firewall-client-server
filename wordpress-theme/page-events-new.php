@@ -71,35 +71,39 @@ END;
 ?>
 
 <section id="events">
-	<div class="migrate-container cleared">
-		<div class="migrate-column-2 cleared">
-			<h2>Ongoing Events</h2>
+	<div class="migrate-container">
+		<div class="migrate-column-1 cleared">
+			<h2>Upcoming Events</h2>
 			<?php
-			foreach ($events['ongoing'] as $event) {
+			foreach ($events['upcoming'] as $event) {
 				render_event($event);
 			}
-			if (!count($events['ongoing'])) {
-				echo '<div class="migrate-event">No ongoing events</div>';
+			if (!count($events['upcoming'])) {
+				echo '<div>None found</div>';
 			}
 			?>
-			<h2>Future Events</h2>
+		</div>
+	</div>
+	<div class="migrate-container">
+		<div class="migrate-column-2 cleared">
+			<h2>Past Events</h2>
 			<?php
-			foreach ($events['future'] as $event) {
+			foreach ($events['past-events'] as $event) {
 				render_event($event);
 			}
-			if (!count($events['future'])) {
-				echo '<div class="migrate-event">No future events</div>';
+			if (!count($events['past-events'])) {
+				echo '<div>None found</div>';
 			}
 			?>
 		</div>
 		<div class="migrate-column-2 cleared">
-			<h2>Past Events</h2>
+			<h2>Past Exhibitions</h2>
 				<?php
-				foreach ($events['past'] as $event) {
+				foreach ($events['past-exhibitions'] as $event) {
 					render_event($event);
 				}
-				if (!count($events['past'])) {
-					echo '<div class="migrate-event">No past events</div>';
+				if (!count($events['past-exhibitions'])) {
+					echo '<div>None found</div>';
 				}
 				?>
 		</div>

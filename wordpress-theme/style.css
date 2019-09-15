@@ -603,19 +603,21 @@ h2.post-section-title.no-border {
   clear: both;
 }
 
-.migrate-container {
-	width: 980px;
-	padding: 0 15px;
-	margin: 0 auto;
+.migrate-column-1 {
+	width: 100%;
 }
 
 .migrate-column-2 {
-	width: 50%;
+	width: calc(50% - 15px);
 	float: left;
-	padding-right: 20px;
+	margin-right: 30px;
 }
 
-.migrate-column-2 h2 {
+.migrate-column-2 + .migrate-column-2 {
+	margin-right: 0;
+}
+
+#events .migrate-container h2 {
 	color: #E60011;
 	font-weight: 300;
 }
