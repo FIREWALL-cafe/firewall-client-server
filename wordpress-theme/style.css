@@ -650,7 +650,7 @@ h2.post-section-title.no-border {
 .migrate-event-media {
 	white-space: nowrap;
 	overflow-x: scroll;
-	margin-bottom: 1em;
+	margin-top: 1em;
 }
 
 .migrate-event-single-media img {
