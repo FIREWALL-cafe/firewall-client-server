@@ -33,7 +33,7 @@ function render_event($event) {
 		$image_srcs .= '<img class="migrate-event-photo" src="'.$image->guid.'" />';
 	}
 
-	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content);
+	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content));
 	$trimmed_content = wp_trim_words($formatted_content, 15);
 	$template_link = get_the_permalink($event->ID);
 	$template_images = <<<END
