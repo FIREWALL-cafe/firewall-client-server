@@ -9,9 +9,9 @@ the_post();
 
 $query = new WP_Query(array('post_type' => 'event'));
 $events = array(
-	'ongoing' => array(),
-	'future' => array(),
-	'past' => array(),
+	'upcoming' => array(),
+	'past-events' => array(),
+	'past-exhibitions' => array(),
 );
 
 while ($query->have_posts()) {
@@ -36,14 +36,25 @@ function render_event($event) {
 	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content));
 	$trimmed_content = wp_trim_words($formatted_content, 15);
 	$template_link = get_the_permalink($event->ID);
-	$template_images = <<<END
+
+	if (empty($images)) {
+		$template_images = '';
+	} else {
+		$template_images = <<<END
 <div class="migrate-event-media">
 	$image_srcs
 </div>
 END;
+	}
 
-	if (!count($images)) {
-		$template_images = '';
+	if (empty($event->post_excerpt)) {
+		$template_excerpt = '';
+	} else {
+		$template_excerpt = <<<END
+<h4 class="migrate-event-excerpt">
+	$event->post_excerpt
+</h4>
+END;
 	}
 
 	$template = <<<END
@@ -51,6 +62,7 @@ END;
 	<h3 class="migrate-event-title">
 		$event->post_title
 	</h3>
+	$template_excerpt
 	<div class="migrate-event-content">
 		$trimmed_content
 		<a class="migrate-event-link" href="$template_link">
