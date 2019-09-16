@@ -34,6 +34,7 @@ function fwc_export($args) {
         'search_count',
         'search_engine',
         'search_language',
+        'translation',
         'censorship_status',
         'bad_result',
         'banned',
@@ -83,6 +84,7 @@ function fwc_export($args) {
                 $location = fwc_get_meta_by_timestamp('location', $timestamp);
                 $search_engine = fwc_get_meta_by_timestamp('search_engine', $timestamp);
                 $search_language = fwc_get_meta_by_timestamp('search_language_name', $timestamp);
+                $translation = fwc_get_meta_by_timestamp('translation', $timestamp);
 
                 $row = array(
                     $post_id,
@@ -94,6 +96,7 @@ function fwc_export($args) {
                     $search_count,
                     $search_engine,
                     $search_language,
+                    $translation,
                     $censorship_status,
                     $bad_result,
                     $banned,
@@ -118,7 +121,17 @@ function fwc_export($args) {
 
             foreach ($attachments as $att) {
                 $path = get_attached_file($att->ID);
-                $filename = basename($path);
+                /*if (! file_exists($path)) {
+                    $path = rawurlencode($path);
+                }*/
+                if (! file_exists($path)) {
+                    echo "Could not find $path\n";
+                    continue;
+                }
+
+                $filename = preg_replace('#.+wp-content/uploads/#', '', $path);
+                $filename = str_replace('/', '-', $filename);
+
                 $export_path = "$img_dir/$filename";
                 if (! file_exists($export_path)) {
                     copy($path, $export_path);
