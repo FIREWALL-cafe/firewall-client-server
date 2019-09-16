@@ -92,7 +92,21 @@ function fwc_submit_images() {
 
 	if (empty($_POST['secret']) ||
 	    $_POST['secret'] != FWC_SHARED_SECRET) {
-		return false;
+		header('Content-Type: application/json');
+		echo json_encode(array(
+			'ok' => 0,
+			'error' => 'Shared secret did not match'
+		));
+		exit;
+	}
+
+	if (empty($_POST['google_images']) || empty($_POST['baidu_images'])) {
+		header('Content-Type: application/json');
+		echo json_encode(array(
+			'ok' => 0,
+			'error' => 'Please POST google_images and baidu_images'
+		));
+		exit;
 	}
 
 	if ($verbose) {
