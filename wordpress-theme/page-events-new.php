@@ -34,7 +34,7 @@ function render_event($event) {
 	}
 
 	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content));
-	$trimmed_content = wp_trim_words($formatted_content, 15);
+	$trimmed_content = wp_trim_words($formatted_content, 20); // Post description trimmed to 20 words and ellipsized
 	$template_link = get_the_permalink($event->ID);
 
 	if (empty($images)) {
