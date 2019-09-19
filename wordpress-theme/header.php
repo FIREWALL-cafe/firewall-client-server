@@ -29,7 +29,7 @@
 			<header>
 				<h1>
 					<a href="/" class="wordmark">
-						<img src="<?php echo get_stylesheet_directory_uri(); ?>/img/firewall.jpg" alt="Firewall">
+						<img src="<?php echo get_stylesheet_directory_uri(); ?>/img/firewall.jpg?<?php echo filemtime(get_stylesheet_directory().'/img/firewall.jpg'); ?>" alt="Firewall">
 					</a>
 				</h1>
 				<?php wp_nav_menu(array('theme_location' => 'header-menu')); ?>
