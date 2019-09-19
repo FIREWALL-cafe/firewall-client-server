@@ -1,10 +1,13 @@
 $(document).ready(function () {
-	$('.gallery').each(function (i, gallery) {
-		var w = 0;
-		$(gallery).find('.gallery-item').each(function(j, item) {
-			w += $(item).width() + 1;
+	// TODO Can eliminate this with improved CSS
+	$(window).on('load', function () {
+		$('.gallery').each(function (i, gallery) {
+			var w = 0;
+			$(gallery).find('.gallery-item').each(function(j, item) {
+				w += $(item).width() + 1;
+			});
+			$(gallery).width(w);
 		});
-		$(gallery).width(w);
 	});
 
 	$('section.search').each(function (i, search) {
@@ -106,6 +109,7 @@ $(document).ready(function () {
 				$('.migrate-search-archive-result[data-index='+element+']').addClass('filter-in');
 			});
 			$('#filtered-count').html(indexesToFilterInIntersection.length);
+			console.log(indexesToFilterInIntersection);
 		} else {
 			$('.migrate-search-archive-result').addClass('filter-in');
 			$('#filtered-count').html($('.migrate-search-archive-result').length);
