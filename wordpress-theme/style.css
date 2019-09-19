@@ -621,6 +621,18 @@ h2.post-section-title.no-border {
 	margin-right: 0;
 }
 
+.migrate-front-page-steps {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	counter-reset: li; /* resetting the counter count */
+}
+
+.migrate-front-page-steps li {
+	clear: both;
+	margin: 0 0 3rem 0;
+}
+
 .migrate-front-page-steps li:after {
   content: '';
   clear: both;
