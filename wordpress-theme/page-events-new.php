@@ -7,7 +7,12 @@ Template Name: Events New
 get_header();
 the_post();
 
-$query = new WP_Query(array('post_type' => 'event'));
+$query = new WP_Query(
+	array(
+		'post_type' => 'event',
+		'posts_per_page' => -1,
+	)
+);
 $events = array(
 	'upcoming' => array(),
 	'past-events' => array(),
