@@ -106,7 +106,6 @@ $(document).ready(function () {
 				$('.migrate-search-archive-result[data-index='+element+']').addClass('filter-in');
 			});
 			$('#filtered-count').html(indexesToFilterInIntersection.length);
-			console.log(indexesToFilterInIntersection);
 		} else {
 			$('.migrate-search-archive-result').addClass('filter-in');
 			$('#filtered-count').html($('.migrate-search-archive-result').length);
