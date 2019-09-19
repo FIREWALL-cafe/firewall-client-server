@@ -28,13 +28,18 @@ function fwc_post_vote_button($slug, $key, $count) {
   } else {
     $link = '#';
   }
+  if ($count == 1) {
+      $measure_word = 'vote';
+  } else {
+      $measure_word = 'votes';
+  }
 
   // TODO: Add vote button SVGs here.
   echo "<div class=\"vote-button-container\">";
-  echo "<p class=\"vote-count\">".$count."</p>";
   echo "<span class=\"fwc-nav-tag fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">";
   echo fwc_get_svg($slug);
   echo "</span>";
+  echo "<p class=\"vote-count\">$count $measure_word</p>";
   echo "</div>";
 }
 
@@ -68,8 +73,9 @@ function fwc_post_vote_update($post_id, $meta_key) {
   die((string)$new);
 }
 
-function fwc_post_tags() {
+function fwc_get_post_tags() {
   $post_id = get_the_ID();
+  $result = '';
 
   // TODO: Update tag background colors here.
   $taxonomies = array(
@@ -85,10 +91,12 @@ function fwc_post_tags() {
     $terms = get_the_terms($post_id, $tax);
     if ($terms) {
       foreach ($terms as $term) {
-        echo "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag $color\">$term->name</a>";
+        $result .= "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag $color\">$term->name</a>";
       }
     }
   }
+
+  return $result;
 }
 
 function fwc_post_update_tags($post_id, $meta_key, $count) {
