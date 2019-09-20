@@ -53,9 +53,9 @@ header h1 {
 }
 
 header h1 img {
-	width: 150px;
+	width: 130px;
 	height: auto;
-	transform: rotate(-5deg);
+/*	transform: rotate(-5deg);*/
 }
 
 header h1 a:hover {
@@ -556,7 +556,7 @@ h2.post-section-title.no-border {
 @media (min-width: 980px) {
 	header {
 		position: relative;
-		height: 60px;
+		height: 135px;
 	}
 
 	header h1 {
@@ -572,8 +572,8 @@ h2.post-section-title.no-border {
 
 	header .menu {
 		position: absolute;
-		left: 175px;
-		bottom: -6px;
+		left: 160px;
+		bottom: -2px;
 	}
 
 	header .details {
