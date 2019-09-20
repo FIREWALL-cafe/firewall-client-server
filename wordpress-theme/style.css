@@ -899,7 +899,7 @@ input[type=checkbox] {
 }
 
 .migrate-search-archive-result.active td {
-	height: 24rem; /* TODO Discrepancy between Chrome and Firefox, this value is tuned to Chrome */
+	height: 25rem; /* TODO Discrepancy between Chrome and Firefox, this value is tuned to Chrome */
 }
 
 .migrate-search-archive-result .middle .images-all {
