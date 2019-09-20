@@ -131,7 +131,7 @@ $(document).ready(function () {
 				Tags:<br />'+data.tags+'\
 			</div>\
 			<div class="more">\
-				<a href="'+data.permalink+'" target="_blank">VOTE or see more details</a>\
+				<a href="'+data.permalink+'" target="_blank">VOTE or see search history</a>\
 			</div>\
 		</div>\
 	</td>\
