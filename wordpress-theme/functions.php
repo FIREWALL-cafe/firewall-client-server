@@ -272,7 +272,7 @@ function fwc_update_post_metadata($post_id, $row) {
 	$timestamp = round($row->timestamp / 1000);
 	add_post_meta($post_id, 'timestamp', $timestamp, false);
 
-	$location = 'Hong Kong';
+	$location = 'Ann Arbor';
 
 	$metadata = array(
 		'client' => $row->client,

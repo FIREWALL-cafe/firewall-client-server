@@ -24,7 +24,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 				});
 			}
 			if (e.permalink) {
-				var url = e.permalink + '#images';
+				var url = e.permalink + '#votes';
 				chrome.tabs.create({
 					url: url,
 					active: false

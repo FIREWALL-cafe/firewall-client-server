@@ -16,7 +16,7 @@ if ($new_template_style) {
 ?>
 <section id="library" class="search">
 	<div class="container">
-		<div class="post-voting-controls">
+		<div class="post-voting-controls" id="#votes">
 			<h2><span class="migrate-emphasize-red">VOTE</span> by clicking buttons below that match what you think about these search results. <span class="migrate-emphasize-red">SCROLL</span> to see more details and history about these search results.</h2></h2>
 			<div class="post-vote-buttons-container">
 				<?php fwc_post_vote_buttons($post_id); ?>
