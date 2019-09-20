@@ -39,7 +39,7 @@ i, em {
 
 .container {
 	position: relative;
-	padding: 15px;
+	padding: 15px 15px 25px 15px;
 }
 
 header::after {
@@ -95,18 +95,19 @@ img {
 h2 {
 	font-size: 36px;
 	font-weight: lighter;
-	margin-bottom: 24px;
+	margin-bottom: 0.2em;
+	line-height: 1.4;
 }
+
 h2.post-title {
-	font-size: 30px;
-	font-weight: 300;
+	font-size: 1.5em;
 	width: auto;
-	display: inline-block;
-	line-height: 1.25;
 }
+
 h2.post-title span {
-	display: inline-block;
+	font-weight: bold;
 }
+
 h2.post-title a {
 	border-color: #e60011;
 }
@@ -293,7 +294,6 @@ footer {
 #home .content img {
 	width: 100%;
 	height: auto;
-	margin-bottom: 1px;
 }
 
 #library .content {
@@ -302,12 +302,27 @@ footer {
 	max-width: none;
 	padding-left: 0;
 }
+
+#library .container {
+	padding: 0 15px;
+}
+
 #library .post-content h3 {
 	position: relative;
 	left: 0;
 }
+
 #library .gallery {
 	padding-top: 0;
+}
+
+.migrate-highlight {
+	padding: 1rem 1.5rem;
+	margin: 0 0 2rem 0;
+	line-height: 1.4;
+	font-size: 1.2rem;
+	font-weight: normal;
+	background-color: #f0f0f0;
 }
 
 .tag-navigation-container {
@@ -437,18 +452,13 @@ footer {
 	color: #e60011;
 }
 
-.post-tags {
-	margin-bottom: 30px;
-}
-
 .post-tag {
 	display: inline-block;
 	background-color: #e60011;
 	color: #fff;
-	margin-right: 5px;
-	margin-bottom: 5px;
+	margin: 0 0.5rem 0 0;
 	line-height: 2;
-	padding: 1px 7.5px;
+	padding: 0 0.5rem;
 	border-radius: 3px;
 }
 .post-tag.red {
@@ -489,10 +499,11 @@ footer {
 }
 
 h2.post-section-title {
-	padding-top: 30px;
-	border-top: 1px solid #dedede;
-	margin-bottom: 30px;
+	padding-top: 1rem;
+	margin-bottom: 1rem;
+	font-size: 1.5em;
 }
+
 h2.post-section-title.no-border {
 	border-top: none;
 }
@@ -724,7 +735,7 @@ h2.post-section-title.no-border {
 }
 
 .migrate-event {
-	background-color: #eee;
+	background-color: #f0f0f0;
 	margin: 0 0 2em 0;
 	padding: 0.6em 0.8em;
 }
@@ -807,6 +818,10 @@ h2.post-section-title.no-border {
 	cursor: not-allowed;
 	user-select: none;
 	color: #aaa;
+}
+
+.migrate-search-archive-controls-filter-group {
+	margin-bottom: 1rem;
 }
 
 .migrate-search-archive-results {
@@ -931,5 +946,6 @@ input[type=checkbox] {
 }
 
 .migrate-search-archive-result .middle .more {
+    margin-top: 0.25rem;
 	width: 100%;
 }

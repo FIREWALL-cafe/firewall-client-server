@@ -37,7 +37,7 @@ if ($new_template_style) {
 		} ?>
 		<div class="post-tags">
 			<h2 class="post-section-title">Search Tags</h2>
-			<?php echo fwc_get_post_tags(); ?>
+			<?php echo fwc_get_post_tags('single'); ?>
 		</div>
 		<?php if ($new_template_style) { ?>
 		<?php fwc_get_reverse_search($translation); ?>

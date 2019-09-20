@@ -8,28 +8,34 @@ global $post;
 <section id="library">
     <div class="container">
         <h2>Search Archive</h2>
-        <p>
-            <?php
-            echo 'Displaying <span id="filtered-count">';
-            echo $wp_query->post_count;
-            echo '</span> of ';
-            echo wp_count_posts()->publish;
-            echo ' archived searches, see ';
-            echo next_posts_link('older');
-            if (get_previous_posts_link()) {
-                echo ' or ';
-                echo get_previous_posts_link('newer');
-            }
-            echo ' searches';
-            ?>
-        </p>
+        <h3 class="migrate-highlight">
+            Participant searches from various pop-up exhibitions starting in February 2016 onwards are archived here. <span class="migrate-emphasize-red">CLICK</span> on individual rows to see image results, <span class="migrate-emphasize-red">VOTE</span> on whether you think they are censored, and <span class="migrate-emphasize-red">SEE</span> previous search history.
+        </h3>
     </div>
     <div class="migrate-search-archive-flex cleared">
         <div class="migrate-search-archive-controls cleared">
-            <h3>Filters</h3>
+            <p class="migrate-search-archive-pagination">
+                <?php
+                echo 'Displaying <span id="filtered-count">';
+                echo $wp_query->post_count;
+                echo '</span> of ';
+                echo wp_count_posts()->publish;
+                echo ' searches';
+                ?>
+            <p>
+                <?php
+                echo 'See ';
+                echo next_posts_link('older');
+                if (get_previous_posts_link()) {
+                    echo ' or ';
+                    echo get_previous_posts_link('newer');
+                }
+                echo ' searches';
+                ?>
+            </p>
             <ul>
-                <li>
-                    Source Language
+                <li class="migrate-search-archive-controls-filter-group">
+                    <h3>Filter by language</h3>
                     <ul>
                         <li
                             class="control filter"
@@ -49,7 +55,8 @@ global $post;
                         </li>
                     </ul>
                 </li>
-                <li>Tags
+                <li class="migrate-search-archive-controls-filter-group">
+                    <h3>Filter by tag</h3>
                     <ul>
                         <li
                             class="control filter"
@@ -165,7 +172,7 @@ while (have_posts()) {
         'translation' => $translation,
         'language' => $language,
         'location' => $location,
-        'tags' => fwc_get_post_tags(),
+        'tags' => fwc_get_post_tags('archive'),
         'timestamp' => $post->post_modified,
         'date' => fwc_format_date_new(fwc_get_latest_meta('timestamp')),
         'permalink' => get_the_permalink(),

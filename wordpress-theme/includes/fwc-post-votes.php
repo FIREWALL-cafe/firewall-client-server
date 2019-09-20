@@ -73,7 +73,7 @@ function fwc_post_vote_update($post_id, $meta_key) {
   die((string)$new);
 }
 
-function fwc_get_post_tags() {
+function fwc_get_post_tags($view) {
   $post_id = get_the_ID();
   $result = '';
 
@@ -91,7 +91,11 @@ function fwc_get_post_tags() {
     $terms = get_the_terms($post_id, $tax);
     if ($terms) {
       foreach ($terms as $term) {
-        $result .= "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag $color\">$term->name</a>";
+        if ($view == 'archive') {
+          $result .= "<span class=\"post-tag $color\">$term->name</span>";
+        } else {
+          $result .= "<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag $color\">$term->name</a>";
+        }
       }
     }
   }
