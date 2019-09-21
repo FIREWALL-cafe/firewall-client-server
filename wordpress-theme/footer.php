@@ -1,15 +1,10 @@
 			<?php if (!is_single() or get_post_type() != 'post') { ?>
 			<footer>
 				<div class="container">
-					<p>
-						<a href="http://instagram.com/firewallcafe" target="_blank">Instagram</a><br>
-						<a href="https://www.facebook.com/firewallcafepopup" target="_blank">Facebook</a>
-					</p>
-					<p>
-						<a href="http://www.joyceyujeanlee.com/" target="_blank">Joyce Yu-Jean Lee</a><br>
-						<a href="https://phiffer.org/" target="_blank">Dan Phiffer</a><br>
-						<a href="https://www.silascutler.com/" target="_blank">Silas Cutler</a><br>
-						<a href="http://www.rachelnackman.com/" target="_blank">Rachel Nackman</a>
+					<ul>
+						<li><a href="http://instagram.com/firewallcafe" target="_blank">Instagram</a></li>
+						<li><a href="https://www.facebook.com/firewallcafe" target="_blank">Facebook</a></li>
+						<li>&copy; 2019 Firewall and affiliated contributors</li>
 					</p>
 				</div>
 			</footer>
@@ -20,4 +15,3 @@
 	<?php wp_footer(); ?>
 	</body>
 </html>
-
