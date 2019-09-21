@@ -20,7 +20,7 @@ global $post;
                 echo $wp_query->post_count;
                 echo '</span> of ';
                 echo wp_count_posts()->publish;
-                echo ' searches';
+                echo ' total searches';
                 ?>
             <p>
                 <?php
@@ -77,6 +77,14 @@ global $post;
                         <li
                             class="control filter"
                             data-key="tags"
+                            data-value="may be censored"
+                            >
+                            <input type="checkbox" />
+                            Possibly censored
+                        </li>
+                        <li
+                            class="control filter"
+                            data-key="tags"
                             data-value="Bad Translation"
                             >
                             <input type="checkbox" />
@@ -109,7 +117,7 @@ global $post;
                         <li
                             class="control filter"
                             data-key="tags"
-                            data-value="Bad Result"
+                            data-value="bad-result"
                             >
                             <input type="checkbox" />
                             Bad Result
