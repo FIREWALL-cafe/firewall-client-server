@@ -324,10 +324,10 @@ footer {
 }
 
 .migrate-highlight {
-	padding: 1rem 1.5rem;
+	padding: 0.6rem 1rem;
 	margin: 0 0 2rem 0;
 	line-height: 1.4;
-	font-size: 1.2rem;
+	font-size: 1rem;
 	font-weight: normal;
 	background-color: #f0f0f0;
 }
