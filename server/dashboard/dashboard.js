@@ -46,9 +46,9 @@ function showImageSet(imageSet, appendHTML) {
 				'</div>' +
 			'</div>';
 		if (appendHTML) {
-			$('#images').append(html);
+			$('#images-gallery').append(html);
 		} else {
-			$('#images').prepend(html);
+			$('#images-gallery').prepend(html);
 		}
 	}
 	return $('#' + id);

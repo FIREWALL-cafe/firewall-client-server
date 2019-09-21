@@ -29,7 +29,7 @@ if ($new_template_style) {
 			the_title('<h2 class="post-title">', '</h2>');
 		}
 		?>
-		<div class="post-content" id="images">
+		<div class="post-content" id="images-gallery">
 			<?php the_content(); ?>
 		</div>
 		<?php if ($new_template_style) {
