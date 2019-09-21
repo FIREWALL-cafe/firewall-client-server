@@ -25,9 +25,10 @@ chrome.runtime.onMessage.addListener(function(e) {
 			}
 			if (e.permalink) {
 				var url = e.permalink + '#votes';
-				chrome.tabs.create({
+				chrome.windows.create({
 					url: url,
-					active: false
+					type: 'normal',
+					state: 'maximized'
 				});
 				var options = {
 					type: 'basic',
