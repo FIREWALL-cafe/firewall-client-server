@@ -837,7 +837,7 @@ h2.post-section-title.no-border {
 	border-color: #ddd;
 	border-width: 0;
 	float: left;
-	max-width: 900px;
+	max-width: 75rem;
 }
 
 .migrate-search-archive-results-table th {
@@ -855,6 +855,10 @@ h2.post-section-title.no-border {
 .migrate-search-archive-results-table td,
 .migrate-search-archive-results-table th {
 	padding: 0 0.5em;
+	max-width: 25rem;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 input[type=checkbox] {
@@ -882,6 +886,9 @@ input[type=checkbox] {
 	position: relative;
 	width: 1px;
 	padding: 0;
+	text-overflow: inherit;
+	overflow: visible;
+	white-space: normal;
 }
 
 .migrate-search-archive-result .middle {
