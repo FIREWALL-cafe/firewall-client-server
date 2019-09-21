@@ -37,6 +37,13 @@ i, em {
 	font-style: italic;
 }
 
+hr {
+	height: 1px;
+	background: #ddd;
+	border: 0;
+	margin: 0 0 15px 0;
+}
+
 .container {
 	position: relative;
 	padding: 15px 15px 25px 15px;
@@ -838,6 +845,10 @@ h2.post-section-title.no-border {
 	border-width: 0;
 	float: left;
 	max-width: 75rem;
+}
+
+.migrate-search-archive-results-table thead tr {
+	border-top: #ddd solid 1px;
 }
 
 .migrate-search-archive-results-table th {

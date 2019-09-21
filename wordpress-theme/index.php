@@ -14,25 +14,25 @@ global $post;
     </div>
     <div class="migrate-search-archive-flex cleared">
         <div class="migrate-search-archive-controls cleared">
-            <p class="migrate-search-archive-pagination">
+            <div class="migrate-search-archive-pagination">
                 <?php
-                echo 'Displaying <span id="filtered-count">';
-                echo $wp_query->post_count;
-                echo '</span> of ';
-                echo wp_count_posts()->publish;
-                echo ' total searches';
+                $page_number = $wp_query->query_vars['paged'] + 1;
+                $page_post_count = $wp_query->post_count;
+                $total_page_count = $wp_query->max_num_pages;
+                $total_post_count = wp_count_posts()->publish;
+                $previous_link = get_previous_posts_link('&larr; previous');
+                $previous_group = ($previous_link) ? $previous_link.' or' : '';
+                $next_link = get_next_posts_link('next &rarr;');
+
+                echo <<<END
+<hr />
+<p>Page $page_number ($page_post_count results) of $total_page_count total pages ($total_post_count results)</p>
+<p>$previous_group $next_link</p>
+<hr />
+<p>Showing <span id="filtered-count">$page_post_count</span> filtered results from this page</p>
+END;
                 ?>
-            <p>
-                <?php
-                echo 'See ';
-                echo next_posts_link('older');
-                if (get_previous_posts_link()) {
-                    echo ' or ';
-                    echo get_previous_posts_link('newer');
-                }
-                echo ' searches';
-                ?>
-            </p>
+            </div>
             <ul>
                 <li class="migrate-search-archive-controls-filter-group">
                     <h3>Filter by language</h3>
@@ -122,9 +122,10 @@ global $post;
                             <input type="checkbox" />
                             Bad Result
                         </li>
-                    </li>
+                    </ul>
                 </li>
             </ul>
+            <hr />
         </div>
         <div class="migrate-search-archive-results cleared">
             <table class="migrate-search-archive-results-table" id="migrate-search-archive-results-table">
