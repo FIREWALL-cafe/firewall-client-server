@@ -60,9 +60,9 @@ header h1 {
 }
 
 header h1 img {
-	width: 130px;
+	width: 150px;
 	height: auto;
-/*	transform: rotate(-5deg);*/
+	transform: rotate(-5deg);
 }
 
 header h1 a:hover {
@@ -77,7 +77,7 @@ header .menu-header-menu-container {
 
 header .menu-header-menu-container li {
 	display: inline-block;
-	margin-right: 25px;
+	margin-right: 40px;
 	margin-bottom: 0;
 	line-height: 1.6;
 }
@@ -563,7 +563,7 @@ h2.post-section-title.no-border {
 @media (min-width: 980px) {
 	header {
 		position: relative;
-		height: 135px;
+		height: 65px;
 	}
 
 	header h1 {
@@ -579,7 +579,7 @@ h2.post-section-title.no-border {
 
 	header .menu {
 		position: absolute;
-		left: 160px;
+		left: 190px;
 		bottom: -2px;
 	}
 
