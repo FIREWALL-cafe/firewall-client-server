@@ -106,16 +106,16 @@ h2 {
 	line-height: 1.4;
 }
 
-h2.post-title {
-	font-size: 1.5em;
-	width: auto;
+.post-title {
+	font-size: 2rem;
+	margin-bottom: 0.5rem;
 }
 
-h2.post-title span {
+.post-title span {
 	font-weight: bold;
 }
 
-h2.post-title a {
+.post-title a {
 	border-color: #e60011;
 }
 
@@ -129,7 +129,7 @@ h3.tag-set-title {
 }
 
 section {
-	padding: 15px 0;
+	padding: 15px 0 !important;
 	border-top: 1px solid #dedede;
 }
 
@@ -226,6 +226,7 @@ button {
 .post-content {
 	width: 100%;
 	overflow: auto;
+	margin-bottom: 1rem;
 }
 
 .post-content h3 {
@@ -383,7 +384,7 @@ footer {
 .post-voting-controls {
 	background-color: #f0f0f0;
 	padding: 1rem 1.5rem;
-	margin: 0 0 1rem 0;
+	margin: 0 0 2rem 0;
 }
 
 .post-vote-buttons-container {
@@ -481,12 +482,8 @@ footer {
 	/*background-color: #00a651;*/
 }
 
-.post-section .post-tag {
-	margin-right: 1px;
-}
-
 .post-section {
-	margin-bottom: 30px;
+	margin-bottom: 2rem;
 }
 .post-section.red {
 	color: #e60011;
@@ -505,27 +502,25 @@ footer {
 	margin-bottom: 60px;
 }
 
-h2.post-section-title {
-	padding-top: 1rem;
-	margin-bottom: 1rem;
-	font-size: 1.5em;
+.post-section-title {
+	margin-bottom: 0.5rem;
+	font-size: 2em;
 }
 
-h2.post-section-title.no-border {
+.post-section-title.no-border {
 	border-top: none;
 }
 
-.post-details {
-	max-height: 800px;
-	overflow-y: scroll;
+.post-section-title span {
+	font-weight: bold;
 }
 
 .post-history {
-	margin-bottom: 30px;
+	margin-bottom: 1rem;
 }
 
 .post-history .post-content {
-	margin-top: 30px;
+	margin-top: 1rem;
 }
 
 .library-nav {
@@ -625,10 +620,6 @@ h2.post-section-title.no-border {
 }
 
 @media screen and (max-width: 800px) {
-	.post-details {
-		overflow-y: visible;
-		max-height: none;
-	}
 	.tag-navigation-container {
 		max-height: calc(100vw/9 - 3px);
 	}

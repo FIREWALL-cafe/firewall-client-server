@@ -7,7 +7,7 @@ function fwc_post_previous_searches() {
   $timestamps = array_reverse($timestamps);
 
   foreach ($timestamps as $timestamp) {
-    echo "<div class=\"post-history\">";
+    echo "<div class=\"post-history migrate-highlight\">";
     echo "<h3>Search by ".fwc_get_meta_by_timestamp('client', $timestamp)." on ".fwc_format_date($timestamp);
 
     $location = fwc_get_meta_by_timestamp('location', $timestamp);
@@ -16,14 +16,13 @@ function fwc_post_previous_searches() {
     }
     echo "</h3>";
 
-    echo "<em>Search Engine:</em> ". ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp))."</br>";
-    echo "<em>Search Language:</em> ". ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp))."</br>";
+    $search_engine = ucwords(fwc_get_meta_by_timestamp('search_engine', $timestamp));
+    $search_language = ucwords(fwc_get_meta_by_timestamp('search_language_name', $timestamp));
+    $banned = fwc_get_meta_by_timestamp('banned', $timestamp) ? 'yes' : 'no';
 
-    $banned = fwc_get_meta_by_timestamp('banned', $timestamp);
-    if ($banned) {
-      echo "At the time of this search, this term was banned.";
-    }
-
+    echo "<div class=\"post-history-detail\"><strong>Search engine:</strong> $search_engine</div>";
+    echo "<div class=\"post-history-detail\"><strong>Search language:</strong> $search_language</div>";
+    echo "<div class=\"post-history-detail\"><strong>Banned search term:</strong> $banned</div>";
 
     $previous_search_content = fwc_build_previous_search_content($timestamp);
 
@@ -39,6 +38,7 @@ function fwc_post_previous_searches() {
       }
       echo "</div>";
     }
+    echo "</div>";
   }
 }
 

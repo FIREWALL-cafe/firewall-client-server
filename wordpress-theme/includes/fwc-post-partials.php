@@ -16,31 +16,31 @@ function fwc_post_search_details() {
 
   if ($banned) {
     $banned = get_term_by('slug', 'banned', 'post_tag' );
-    echo "Baidu has marked this search term as&nbsp;&nbsp;<a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a>.</br>";
+    echo "Baidu has marked this search term as <a href=\"".get_term_link($banned->term_id)."\" class=\"post-tag\">$banned->name</a><br />";
   }
 
   if ($sensitive) {
     $sensitive = get_term_by('slug', 'sensitive', 'post_tag');
-    echo "We have determined that this is a&nbsp;&nbsp;<a href=\"".get_term_link($sensitive->term_id)."\" class=\"post-tag\">$sensitive->name</a> term.</br>";
+    echo "We have determined that this search term is <a href=\"".get_term_link($sensitive->term_id)."\" class=\"post-tag\">$sensitive->name</a><br />";
   }
 
   if ($censorship_status) {
     if ($censorship_status->name == 'censored' ||
         $censorship_status->name == 'uncensored' ) {
-      echo "Most people think this search term is&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+      echo "Most people think this search term is <a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a><br />";
     } else if ($censorship_status->name == 'may be censored') {
-      echo "People think this search term&nbsp;&nbsp;<a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a>.</br>";
+      echo "People think this search term <a href=\"".get_term_link($censorship_status->term_id)."\" class=\"post-tag\">$censorship_status->name</a><br />";
     }
   }
 
   if ($terms) {
     foreach($terms as $term) {
       if ($term->name == 'nsfw') {
-        echo "People think this search yields&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> results.<br>";
+        echo "People think this search yields results that are <a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a><br />";
       } else if ($term->name == 'firewall bug') {
-        echo "We think there might have been a&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a> with this search.<br>";
+        echo "We think this search term may have caused a <a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a><br />";
       } else if ($term->name == 'lost in cultural translation') {
-        echo "People think this search term gets&nbsp;&nbsp;<a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a>.<br>";
+        echo "People think this search term gets <a href=\"".get_term_link($term->term_id)."\" class=\"post-tag\">$term->name</a><br />";
       }
     }
   }
@@ -65,23 +65,22 @@ function fwc_post_search_history() {
   // Display chart of search history here.
   if ($count > 1) {
     echo "<p>This term has been searched $count times, most recently by $client on $timestamp";
-    if ($location) { echo " in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>"; }
-    echo ".</br>";
+    if ($location) { echo " in <a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>"; }
+    echo "<br />";
 
     echo "It was first searched by $initial_client on $initial_search_date";
     if ($initial_search_location) {
       echo " in $initial_search_location";
     }
-    echo ".</p>";
+    echo "</p>";
   } else {
     echo "<p>This term was searched by $initial_client on $initial_search_date";
 
     if ($location) {
-      echo " in&nbsp;&nbsp;<a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>";
+      echo " in <a href=\"".get_term_link($location->term_id)."\" class=\"post-tag\">$location->name</a>";
     }
-    echo ".</p>";
+    echo "</p>";
   }
-  // echo "This is the [ranking]th most popular search using Firewall.</p>";
 }
 
 function fwc_post_search_language() {
@@ -91,26 +90,22 @@ function fwc_post_search_language() {
   $translation_status = get_the_terms($post_id, 'translation_status')[0];
 
   if ($search_language) {
-    echo "The search language is&nbsp;&nbsp;<a href=\"".get_term_link($search_language->term_id)."\" class=\"post-tag\">$search_language->name</a>.&nbsp;&nbsp;";
+    echo "The search language is <a href=\"".get_term_link($search_language->term_id)."\" class=\"post-tag\">$search_language->name</a>";
   }
 
   if ($translation_status) {
-    echo "Most people think this is a&nbsp;&nbsp;<a href=\"".get_term_link($translation_status->term_id)."\" class=\"post-tag\">$translation_status->name</a>.";
+    echo "Most people think this is a <a href=\"".get_term_link($translation_status->term_id)."\" class=\"post-tag\">$translation_status->name</a>";
   }
 }
 
 function fwc_post_search_engine() {
   $search_engine = get_the_terms(get_the_ID(), 'search_engine')[0];
   if ($search_engine) {
-    echo "This search was most recently performed using&nbsp;&nbsp;<a href=\"".get_term_link($search_engine->term_id)."\" class=\"post-tag\">$search_engine->name</a>.";
+    echo "This search was most recently performed using <a href=\"".get_term_link($search_engine->term_id)."\" class=\"post-tag\">$search_engine->name</a>";
   } else {
     $search_engine = fwc_get_latest_meta('search_engine');
     echo "This search was most recently performed using ".ucwords($search_engine).".";
   }
-}
-
-function fwc_post_translation_history() {
-  // $translation_history =
 }
 
 function fwc_get_reverse_search($slug) {
@@ -127,6 +122,6 @@ function fwc_get_reverse_search($slug) {
 
     $translation = fwc_get_latest_meta('translation', $reverse_search->ID);
 
-    echo "<p>See reverse search: <a href=\"$link\">$slug / $translation </a></p>";
+    echo "<p>See the results when search terms are reversed: <a href=\"$link\">$slug / $translation</a></p>";
   }
 }
