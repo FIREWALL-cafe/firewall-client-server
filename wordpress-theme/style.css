@@ -288,20 +288,16 @@ footer {
 }
 
 #pagination .container:after {
-	content: "";
+	content: '';
 	clear: both;
 	display: table;
+	border: 0;
 }
 
 .nav-next,
 .nav-previous {
 	float: left;
 	margin-right: 30px;
-}
-
-#home .content img {
-	width: 100%;
-	height: auto;
 }
 
 #library .content {
@@ -422,6 +418,14 @@ footer {
 
 .fwc-vote-button.fwc-nav-tag:hover {
 	border: #e60011 3px solid;
+}
+
+.fwc-vote-button.disabled {
+	cursor: not-allowed;
+}
+
+.fwc-vote-button.fwc-nav-tag.disabled:hover {
+	border: #fff 3px solid;
 }
 
 .fwc-vote-button.disabled svg {
@@ -627,7 +631,7 @@ footer {
 
 @media screen and (max-width: 567px) {
 	.fwc-nav-tag {
-	    width: calc(96%/4);
+		width: calc(96%/4);
 	}
 	.tag-navigation-container {
 		max-height: none;
@@ -741,7 +745,6 @@ footer {
 .migrate-event:last-child {
 	border-bottom: 0;
 }
-
 
 .migrate-event-title {
 	margin-bottom: 0.6rem;
