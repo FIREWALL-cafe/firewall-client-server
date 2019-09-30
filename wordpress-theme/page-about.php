@@ -56,7 +56,7 @@ the_post();
 			<div class="sidebar">
 				<p>Special thanks for the support of these gracious partners.</p>
 			</div>
-			<div class="content">
+			<div class="content content--wide">
 				<?php 
 				
 				while ( have_rows( 'partner' ) ) {
