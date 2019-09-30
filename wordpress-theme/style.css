@@ -272,7 +272,11 @@ button {
 
 footer {
 	background: #f2f2f2;
-	padding-top: 15px;
+	padding: 1rem 0;
+}
+
+footer li {
+	margin-bottom: 0.5rem;
 }
 
 .post-meta {
@@ -729,6 +733,14 @@ footer {
 	left: 0;
 	width: 100%;
 	height: 100%;
+}
+
+.migrate-icon-social-media {
+	width: 1.5rem !important;
+	height: auto;
+	opacity: 0.4;
+	vertical-align: middle;
+	margin-right: 0.5rem;
 }
 
 #events .migrate-container h2 {
