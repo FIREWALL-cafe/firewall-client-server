@@ -9,6 +9,7 @@ the_post();
 
 $query = new WP_Query(
 	array(
+		'order' => 'ASC',
 		'orderby' => 'menu_order',
 		'post_type' => 'event',
 		'posts_per_page' => -1,
