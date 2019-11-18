@@ -9,7 +9,7 @@ var ignorePending = false;
 var getImagesTimeout = null;
 var autocompleteEnabled = true;
 
-var $googleInput = $('#lst-ib');
+var $googleInput = $('[name=q]');
 
 if (window.location.host == 'www.google.com' &&
     window.location.pathname == '/') {
