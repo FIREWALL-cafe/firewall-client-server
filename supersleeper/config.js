@@ -1,7 +1,7 @@
 var config = {
 
 	// How long to wait until going to sleep
-	timeoutMinutes: 3,
+	timeoutMinutes: 5,
 
 	/*
 	
