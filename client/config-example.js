@@ -1,4 +1,6 @@
 var config = {
+  // Kiosk installation location, use format all lowercase separated with underscores
+  location: 'new_york_city',
 
   // This is where the client will send translation requests and broadcast its
   // images.
@@ -19,5 +21,4 @@ var config = {
     "firewallcafe.com",
     "*.firewallcafe.com"
   ]
-
 };

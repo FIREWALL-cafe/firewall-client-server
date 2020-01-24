@@ -576,6 +576,7 @@ function submitImages(callback) {
 	// WordPress will get all of the data-URI image data
 	var wp_data = {
 		timestamp: pendingQuery.timestamp,
+		location: config.location,
 		client: clientId,
 		secret: config.sharedSecret,
 		search_engine: pendingQuery.searchEngine,
