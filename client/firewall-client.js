@@ -467,33 +467,51 @@ function getImages() {
 
 	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
-	function _deriveHref(image) {
-		var parent = image.parentNode;
-		if (parent.nodeName != 'A') {
-			return null;
-		}
-		// The URL is buried in a query arg of the parent link's href.
-		var href = $(parent).attr('href');
-		if (href.match(/url=([^&]+)/)) {
-			// Baidu uses 'objurl', Google uses 'imgurl'
-			var url = href.match(/url=([^&]+)/)[1];
-			return decodeURIComponent(url);
-		}
-		return null;
-	}
-
-	function _dedupeLimitedSet(imageSet, image) {
-		var href = _deriveHref(image);
+	function _dedupeLimitedSet(imageSet, image, flatDatastore) {
 		var dupe = false;
-		$.each(imageSet, function(i, img) {
-			if (img.href == href) {
+		var url = null;
+
+		if (getSource() === 'baidu') {
+			// In Baidu result pages, the original image URL associated with a given
+			// image node is encoded in the `objurl` query parameter in the parent
+			// link's `href` attribute.
+			var parentNode = image.parentNode;
+			if (parentNode.nodeName === 'A') {
+				var href = $(parentNode).attr('href');
+				if (href.match(/url=([^&]+)/)) {
+					// Baidu uses the specific parameter `objurl`
+					var encodedUrl = href.match(/url=([^&]+)/)[1];
+					url = decodeURIComponent(encodedUrl);
+				}
+			}
+		} else if (getSource() === 'google' && typeof flatDatastore != 'undefined') {
+			// The Baidu method originally worked for Google result pages too, which
+			// differed only in using the specific parameter `imgurl`. But in Feb. 2020
+			// the DOM implementation changed significantly. Now, each image node has an
+			// ancestor with a unique `data-id`, then used for lookup in a datastore
+			// that's loaded independently later on.
+			var dataId = image.parentNode.parentNode.parentNode.getAttribute('data-id');
+			// Find first appearance of `data-id`
+			var dataIdFirstIndex = flatDatastore.indexOf(dataId);
+			// If available, the original image URL should occur 4 slots later
+			if (dataIdFirstIndex >= 0) {
+				// Verify that it's actually a URL
+				var urlCandidate = flatDatastore[dataIdFirstIndex + 4];
+				var result = (urlCandidate.indexOf('http') === 0) ? urlCandidate : null;
+				url = result;
+			}
+		}
+
+		$.each(imageSet, function (index, element) {
+			if (element.url == url) {
 				dupe = true;
 			}
 		});
-		if (href && ! dupe &&
-		    imageSet.length < numImages) {
+
+		if (url && !dupe && imageSet.length < numImages) {
 			imageSet.push({
-				href: href,
+				// TODO WP expects key `href` but `url` would be nicer for symmetry
+				href: url,
 				src: image.src
 			});
 		}
@@ -504,13 +522,21 @@ function getImages() {
 	} else {
 		var images = [];
 	}
-	$('.imglist img').each(function(i, img) {
-		// Baidu images
-		_dedupeLimitedSet(images, img);
-	});
-	$('#rg .rg_l img').each(function(i, img) {
-		// Google images
-		_dedupeLimitedSet(images, img);
+
+	// Get Google datastore if relevant
+	if (getSource() === 'google') {
+		getGoogleDatastore().catch((error) => {
+		}).then((data) => {
+			// Get Google image URIs
+			$('img.rg_i').each(function (index, element) {
+				_dedupeLimitedSet(images, element, data['flatDatastore']);
+			});
+		});
+	}
+
+	// Get Baidu image URIs
+	$('.imglist img').each(function (index, element) {
+		_dedupeLimitedSet(images, element);
 	});
 
 	console.log('Found ' + images.length + ' images from', getSource());
@@ -594,11 +620,11 @@ function submitImages(callback) {
 	};
 
 	var googleImageUrls = [];
-	$.each(pendingQuery.googleImages, function(i, image) {
+	$.each(pendingQuery.googleImages, function (index, image) {
 		googleImageUrls.push(image.href);
 	});
 	var baiduImageUrls = [];
-	$.each(pendingQuery.baiduImages, function(i, image) {
+	$.each(pendingQuery.baiduImages, function (index, image) {
 		baiduImageUrls.push(image.href);
 	});
 
@@ -680,4 +706,52 @@ function getSource() {
 
 function randomClientId() {
 	return 'Client ' + (100 + Math.floor(Math.random() * 900));
+}
+
+function getGoogleDatastore() {
+	var hash = window.crypto.getRandomValues(new Uint32Array(2)).toString();
+
+	function sendVariableWithPostMessage(hash) {
+		if (typeof AF_initDataChunkQueue != 'undefined' &&
+			Array.isArray(AF_initDataChunkQueue)) {
+			var datastoreIndex = AF_initDataChunkQueue.findIndex(function (element) {
+				return (element['key'] === 'ds:2');
+			});
+			var datastore = AF_initDataChunkQueue[datastoreIndex].data();
+			// Flatten datastore for convenience
+			var flatDatastore = datastore.flat(Infinity);
+
+			var message = {
+				hash: hash,
+				flatDatastore: flatDatastore
+			};
+		} else {
+			var message = {
+				hash: hash,
+				flatDatastore: null
+			};
+		}
+
+		window.postMessage(message, '*');
+	}
+
+	(function injectPostMessageScript() {
+		var scriptContent = '('+sendVariableWithPostMessage.toString()+')(\''+hash+'\');';
+		const scriptTag = document.createElement('script');
+		const scriptBody = document.createTextNode(scriptContent);
+
+		scriptTag.id = 'getGoogleDatastore';
+		scriptTag.appendChild(scriptBody);
+		document.body.append(scriptTag);
+	})();
+
+	return new Promise((resolve, reject) => {
+		window.addEventListener('message', function (message) {
+			if (message['data']['hash'] != hash) {
+				reject('Message hash mismatch');
+			} else {
+				resolve(message['data']);
+			}
+		});
+	});
 }
