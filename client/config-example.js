@@ -1,13 +1,14 @@
 var config = {
-  // Kiosk installation location, use format all lowercase separated with underscores
-  location: 'new_york_city',
+  // Kiosk installation location
+  // Format: full city name minor abbrs. allowed, all lowercase, separated with underscores
+  // Examples: 'new_york_city', 'st_polten', 'ft_lauderdale'
+  location: 'unknown',
 
-  // This is where the client will send translation requests and broadcast its
-  // images.
-  serverURL: 'https://localhost:4430/',
+  // Translation server URL, can be any other local or remote server endpoint
+  serverURL: 'https://babelfish.firewallcafe.com/',
   
-  // WordPress URL
-  libraryURL: 'https://localhost:4747/wp-admin/admin-ajax.php?action=fwc_submit_images',
+  // WordPress server URL, can be any other local or remote server endpoint
+  libraryURL: 'https://firewallcafe.com/wp-admin/admin-ajax.php?action=fwc_submit_images',
 
   // Set this to the 'private_key_id' value from service-key.json
   sharedSecret: '...',
