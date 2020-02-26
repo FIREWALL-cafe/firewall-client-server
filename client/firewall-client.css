@@ -130,15 +130,18 @@ body.firewall-loading #firewall-loading {
 	margin-left: 25px;
 }
 
-#firewall-intro a {
+#firewall-intro input[type='submit'] {
 	text-decoration: none;
+	font-weight: bold;
+	font-size: inherit;
+	line-height: 24px;
 	display: inline-block;
 	background: #fff;
 	color: #E60016;
 	padding: 10px 20px;
 	border-radius: 5px;
 	margin-top: 10px;
-	font-weight: bold;
+	border: 0;
 }
 
 #firewall-intro a:hover {

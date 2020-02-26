@@ -71,15 +71,15 @@ storage.get([
 function setupUI() {
 	console.log('Setting up UI...');
 
-	var suggestChecked = autocompleteEnabled ? ' checked="checked"' : '';
+	var suggestChecked = autocompleteEnabled ? ' checked' : '';
 
 	$('#fsr, #lh, #ft, .wrapper_imgfrom_box').append(
 		'<div id="firewall">' +
 			'<a href="#firewall" id="firewall-show" class="skin_from_link">Firewall</a>' +
-			'<form action="." id="firewall-form">' +
+			'<form action="#" id="firewall-form" autocomplete="off">' +
 				'<label>Client ID: <input name="client-id" id="firewall-client-id" value="' + clientId + '"></label>' +
-				'<label><input type="checkbox" id="firewall-suggest"' + suggestChecked + '> Suggest sensitive queries</label>' +
-				'<input type="submit" value="Save">' +
+				'<label><input type="checkbox" id="firewall-suggest"' + suggestChecked + ' /> Suggest sensitive queries</label>' +
+				'<input type="submit" value="Save" />' +
 			'</form>' +
 		'</div>'
 	);
@@ -152,8 +152,8 @@ function setupIntroScreen() {
 	html += '<div class="text">';
 	if (window.location.hostname == 'www.google.com') {
 		html += '<strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later.</strong>';
-		html += '<form action="." id="firewall-intro-form"><input id="firewall-intro-name" placeholder="Pick a name">';
-		html += '<br><a href="#" id="firewall-begin">Let’s begin!</a></form>';
+		html += '<form action="#" id="firewall-intro-form" autocomplete="off"><input id="firewall-intro-name" placeholder="Pick a name" />';
+		html += '<br><input type="submit" id="firewall-begin" value="Let’s begin!" /></form>';
 		html += '<ol>';
 		html += '<li>Type a phrase into Google Image Search.</li>';
 		html += '<li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>';
@@ -184,8 +184,7 @@ function setupIntroScreen() {
 			name: name
 		});
 	}
-	$('#firewall-intro-form').submit(hide_intro);
-	$('#firewall-begin').click(hide_intro);
+	$('#firewall-intro-form').on('submit', hide_intro);
 }
 
 function setupInterval() {
