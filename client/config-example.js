@@ -4,6 +4,11 @@ var config = {
   // Examples: 'new_york_city', 'st_polten', 'ft_lauderdale'
   location: 'unknown',
 
+  // Logo label to use on extension intro screens
+  // When adding a new icon, also update `manifest.json.web_accessible_resources`
+  // TODO Add a default logo not labeled with "Hong Kong"
+  logoLabel: 'default',
+
   // Translation server URL, can be any other local or remote server endpoint
   serverURL: 'https://babelfish.firewallcafe.com/',
   

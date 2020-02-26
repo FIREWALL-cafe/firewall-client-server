@@ -139,10 +139,15 @@ function setupUI() {
 
 function setupIntroScreen() {
 	if (window.location.hostname == 'www.google.com') {
-		var logo = chrome.extension.getURL('/icons/firewall-white.png');
+		var suffix = 'white';
 	} else {
-		var logo = chrome.extension.getURL('/icons/firewall-red.png');
+		var suffix = 'red';
 	}
+	var path = '/icons/firewall-hong-kong-'+suffix+'.png';
+	if (config.logoLabel != 'default') {
+		var path = '/icons/firewall-'+config.logoLabel+'-'+suffix+'.png';
+	}
+	var logo = chrome.extension.getURL(path);
 	var html = '<img src="' + logo + '">';
 	html += '<div class="text">';
 	if (window.location.hostname == 'www.google.com') {

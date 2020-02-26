@@ -42,7 +42,9 @@
 		]
 	}],
 	"web_accessible_resources": [
-		"icons/firewall-white.png",
-		"icons/firewall-red.png"
+		"icons/firewall-hong-kong-red.png",
+		"icons/firewall-hong-kong-white.png",
+		"icons/firewall-poughkeepsie-red.png",
+		"icons/firewall-poughkeepsie-white.png"
 	]
 }
