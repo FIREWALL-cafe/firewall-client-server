@@ -15,3 +15,5 @@ the_post();
 <?php
 
 get_footer();
+
+?>

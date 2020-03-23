@@ -23,6 +23,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					enabled: true
 				});
 			}
+
 			if (e.permalink) {
 				// Open limited width popup window with 50px padding on top/left
 				chrome.windows.create({

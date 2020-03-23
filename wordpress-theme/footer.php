@@ -14,7 +14,7 @@
 							<img class="migrate-icon-social-media" src="<?php echo get_stylesheet_directory_uri(); ?>/img/icons-social-media-youtube.svg" alt="YouTube icon">
 							<a href="https://www.youtube.com/channel/UCMTAKSSmI9iKD7a3GB1JIrA" target="_blank">YouTube</a>
 						</li>
-						<li>&copy; 2019 FIREWALL &amp; affiliates</li>
+						<li>&copy; 2016-2020 FIREWALL &amp; affiliates</li>
 					</p>
 				</div>
 			</footer>
