@@ -2,6 +2,7 @@
 
 function fwc_add_custom_taxonomies() {
   register_taxonomy('censorship_status', 'post', array(
+    'show_in_rest' => true,
     'hierarchical' => false,
     'labels' => array(
       'name' => _x( 'Censorship Statuses', 'taxonomy general name' ),
@@ -22,6 +23,7 @@ function fwc_add_custom_taxonomies() {
   ));
 
   register_taxonomy('translation_status', 'post', array(
+    'show_in_rest' => true,
     'hierarchical' => false,
     'labels' => array(
       'name' => _x( 'Translation Statuses', 'taxonomy general name' ),
@@ -42,8 +44,8 @@ function fwc_add_custom_taxonomies() {
   ));
 
   register_taxonomy('search_language', 'post', array(
+    'show_in_rest' => true,
     'hierarchical' => true,
-    // This array of options controls the labels displayed in the WordPress Admin UI
     'labels' => array(
       'name' => _x( 'Search Languages', 'taxonomy general name' ),
       'singular_name' => _x( 'Search Language', 'taxonomy singular name' ),
@@ -55,7 +57,6 @@ function fwc_add_custom_taxonomies() {
       'new_item_name' => __( 'New Search Language' ),
       'menu_name' => __( 'Search Languages' ),
     ),
-    // Control the slugs used for this taxonomy
     'rewrite' => array(
       'slug' => 'search-language',
       'with_front' => false,
@@ -63,9 +64,8 @@ function fwc_add_custom_taxonomies() {
     ),
   ));
   register_taxonomy('search_engine', 'post', array(
-    // Hierarchical taxonomy (like categories)
+    'show_in_rest' => true,
     'hierarchical' => false,
-    // This array of options controls the labels displayed in the WordPress Admin UI
     'labels' => array(
       'name' => _x( 'Search Engines', 'taxonomy general name' ),
       'singular_name' => _x( 'Search Engine', 'taxonomy singular name' ),
@@ -77,7 +77,6 @@ function fwc_add_custom_taxonomies() {
       'new_item_name' => __( 'New Search Engine' ),
       'menu_name' => __( 'Search Engines' ),
     ),
-    // Control the slugs used for this taxonomy
     'rewrite' => array(
       'slug' => 'search-engine',
       'with_front' => false,
@@ -85,9 +84,8 @@ function fwc_add_custom_taxonomies() {
     ),
   ));
   register_taxonomy('locations', 'post', array(
-    // Hierarchical taxonomy (like categories)
+    'show_in_rest' => true,
     'hierarchical' => false,
-    // This array of options controls the labels displayed in the WordPress Admin UI
     'labels' => array(
       'name' => _x( 'Locations', 'taxonomy general name' ),
       'singular_name' => _x( 'Location', 'taxonomy singular name' ),
@@ -99,7 +97,6 @@ function fwc_add_custom_taxonomies() {
       'new_item_name' => __( 'New Location' ),
       'menu_name' => __( 'Locations' ),
     ),
-    // Control the slugs used for this taxonomy
     'rewrite' => array(
       'slug' => 'location',
       'with_front' => false,
