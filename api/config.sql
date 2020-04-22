@@ -71,5 +71,5 @@ CREATE TABLE Have_Votes (
   vote_time    timestamp,
   ip_address   text,
   client_name  text,
-  primary key(vote_id, search_id)
+  primary key(vote_id, search_id, vote_time)
 );
