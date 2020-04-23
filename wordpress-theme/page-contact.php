@@ -13,9 +13,10 @@ if (!empty($_POST['contact_name']) &&
 		'info@firewallcafe.com',
 		'FIREWALL contact form',
 		sprintf(
-			'%s <%s> writes:\r\n\r\n%s',
+			'%s <%s> writes:%s%s',
 			$_POST['contact_name'],
 			$_POST['contact_email'],
+			"\r\n\r\n", // Must be in double quotes to interpret properly
 			$_POST['contact_message']
 		),
 		$headers
