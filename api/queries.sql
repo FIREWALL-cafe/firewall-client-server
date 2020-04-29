@@ -106,9 +106,6 @@ CREATE VIEW v_WTFCount AS
    WHERE vote_id = 7
    GROUP BY search_id;
 
-
-
-
 --------------------------------
    -- Stored Procedures --
 --------------------------------
