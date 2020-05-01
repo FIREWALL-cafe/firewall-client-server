@@ -16,7 +16,7 @@
 INSERT INTO searches VALUES
   (1, 'Bananas', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser455', NULL, '74.56.52.35'),
   (2, 'Bananas', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser455', NULL, '74.56.52.35'),
-	(3, 'Ice Cream', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser234', NULL, '106.255.52.111')
+	(3, 'Ice Cream', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser234', NULL, '106.255.52.111'),
 	(4, 'NYC', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser234', NULL, '106.255.52.111'),
 	(5, 'Censorship', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser878', NULL, '78.242.52.42'),
 	(6, 'Apples', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser878', NULL, '78.242.52.42'),
@@ -68,9 +68,7 @@ INSERT INTO have_votes VALUES
   (4, 2, CURRENT_TIMESTAMP, '74.56.52.35', 'testUser455'),
   (2, 7, CURRENT_TIMESTAMP, '134.242.52.35', 'testUser'),
   (1, 4, CURRENT_TIMESTAMP, '134.242.52.35', 'testUser'),
-  (6, 6, CURRENT_TIMESTAMP, '78.242.52.42', 'testUser878'),
-  (1, 2, CURRENT_TIMESTAMP, '78.242.52.42', 'testUser878');
-
+  (6, 6, CURRENT_TIMESTAMP, '78.242.52.42', 'testUser878');
 
 INSERT INTO language_pairs VALUES
     (1, 'en', 'ch-zn');
