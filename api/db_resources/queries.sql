@@ -12,10 +12,21 @@
           -- Views --
 --------------------------------
 
+-- Returns all searches with their cooresponding image paths. --
+CREATE VIEW v_SearchInfo AS
+   SELECT s.search_id, s.search_text, s.translation, s.confidence, s.client_name,
+          s.search_location, s.search_time, s.ip_address AS 'Search IP', i.image_id, 
+          i.image_source, i.image_path, v.vote_time as
+   FROM searches s INNER JOIN have_images h ON s.search_id = h.search_id
+        INNER JOIN images i ON h.image_id = i.image_id
+   GROUP BY s.search_id, i.image_id
+   ORDER BY s.search_id ASC;
+
+
 -- v_votes: Calls all individual vote records for searches that have votes associated with them. --
 CREATE VIEW v_Votes AS
   SELECT searches.search_id, search_text, translation, votes.vote_name,
-         have_votes.vote_time as "vote timestamp", have_votes.client_name as "Voter"
+         have_votes.vote_time as 'vote timestamp', have_votes.client_name as 'Voter'
   FROM searches, have_votes, votes
   WHERE searches.search_id = have_votes.search_id
   AND have_votes.vote_id = votes.vote_id;
