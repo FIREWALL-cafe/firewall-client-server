@@ -17,14 +17,14 @@ if ($new_template_style) {
 <section id="library" class="search">
 	<div class="container">
 		<div class="post-voting-controls" id="#votes">
-			<h2><span class="migrate-emphasize-red">VOTE</span> by clicking buttons below that match what you think about these search results. <span class="migrate-emphasize-red">SCROLL</span> to see more details and history about these search results.</h2></h2>
+			<h2><span class="migrate-emphasize-red">VOTE</span> by clicking buttons below that match what you think about these search results. <span class="migrate-emphasize-red">SCROLL</span> to see more details and history about these search results.</h2>
 			<div class="post-vote-buttons-container">
 				<?php fwc_post_vote_buttons($post_id); ?>
 			</div>
 		</div>
 		<?php
 		if ($new_template_style) {
-			the_title('<h2 class="post-title">Search Term: <span>', "</span> / Translation: <span>$translation</span></h2>");
+			the_title('<h2 class="post-title">Search Term: <span>', "</span><br />Translation: <span>$translation</span></h2>");
 		} else {
 			the_title('<h2 class="post-title">', '</h2>');
 		}
