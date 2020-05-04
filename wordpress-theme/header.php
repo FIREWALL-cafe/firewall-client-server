@@ -24,7 +24,7 @@
 		<?php wp_head(); ?>
 	</head>
 	<body <?php body_class(); ?>>
-		<?php if (!is_single() or get_post_type() != 'post') { ?>
+		<?php if (!is_single() or (get_post_type() != 'post' and get_post_type() != 'search-result')) { ?>
 		<div class="container">
 			<header>
 				<h1>

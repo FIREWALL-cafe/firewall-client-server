@@ -1,15 +1,14 @@
 <?php
 
 function fwc_post_vote_buttons() {
-
   $vote_buttons = array(
-    'censored_votes' => 'censored',
-    'uncensored_votes' => 'uncensored',
-    'bad_translation_votes' => 'bad-translation',
-    'good_translation_votes' => 'good-translation',
-    'lost_in_translation_votes' => 'lost-in-translation',
-    'nsfw_votes' => 'nsfw',
-    'bad_result_votes' => 'bad-result',
+    'votes_censored' => 'censored',
+    'votes_uncensored' => 'uncensored',
+    'votes_bad_translation' => 'bad-translation',
+    'votes_good_translation' => 'good-translation',
+    'votes_lost_in_translation' => 'lost-in-translation',
+    'votes_nsfw' => 'nsfw',
+    'votes_bad_result' => 'bad-result',
   );
 
   foreach ($vote_buttons as $key => $slug) {
@@ -17,29 +16,28 @@ function fwc_post_vote_buttons() {
   }
 }
 
-function fwc_post_vote_button($slug, $key, $count) {
+function fwc_post_vote_button($slug, $key, $vote_count_for_single_search) {
   $post_id = get_the_ID();
-  if (!$count) { $count = 0; }
+  if (!$vote_count_for_single_search) { $vote_count_for_single_search = 0; }
 
-  $term = get_terms(array('slug' => $slug));
-  if (count($term)) {
-    $term = $term[0];
-    $link = get_term_link($term->term_id);
-  } else {
-    $link = '#';
-  }
-  if ($count == 1) {
-      $measure_word = 'vote';
-  } else {
-      $measure_word = 'votes';
+  // Collect all votes for posts with this search term
+  $args = array(
+    'meta_key' => 'search_term_initial',
+    'meta_value' => fwc_get_latest_meta('search_term_initial'),
+    'post_type' => 'any',
+  );
+  $query = new WP_Query($args);
+  $vote_count_for_search_term = 0;
+  foreach ($query->posts as $post) {
+    $vote_count_for_search_term += intval(fwc_get_latest_meta($key, $post->ID));
   }
 
-  // TODO: Add vote button SVGs here.
   echo "<div class=\"vote-button-container\">";
   echo "<span class=\"fwc-nav-tag fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">";
   echo fwc_get_svg($slug);
   echo "</span>";
-  echo "<p class=\"vote-count\">$count $measure_word</p>";
+  echo "<p class=\"vote-count tooltip\" tooltip=\"Votes for current search result\">$vote_count_for_single_search</p>";
+  echo "<p class=\"vote-count-historic tooltip\" tooltip=\"Votes for this search term all-time\"><span>$vote_count_for_search_term</span></p>";
   echo "</div>";
 }
 
@@ -68,11 +66,13 @@ function fwc_post_vote_update($post_id, $meta_key) {
   $new = $curr + 1;
   update_post_meta($post_id, $meta_key, $new);
 
-  fwc_post_update_tags($post_id, $meta_key, $new);
+  // Add a tag to this post, used to easily retrieve all posts with this vote type
+  wp_set_post_terms($post_id, 'has_'.$meta_key, 'post_tag', true /* append to existing tags */);
 
   die((string)$new);
 }
 
+// TODO Can remove
 function fwc_get_post_tags($view) {
   $post_id = get_the_ID();
   $result = '';
@@ -101,80 +101,4 @@ function fwc_get_post_tags($view) {
   }
 
   return $result;
-}
-
-function fwc_post_update_tags($post_id, $meta_key, $count) {
-
-  $has_votes = false;
-
-  // Look at censored/uncensored votes to set censorship status.
-  $uncensored = get_post_meta($post_id, 'uncensored_votes');
-  $censored = get_post_meta($post_id, 'censored_votes');
-  if (intval($uncensored) == 0 || intval($censored) == 0) { $has_votes = true; }
-
-  if ($uncensored > $censored) {
-    $censorship = 'uncensored';
-  } else if ($censored > $uncensored) {
-    $censorship = 'censored';
-  } else if ($censored == $uncensored && intval($censored) != 0) {
-    $censorship = 'may be censored';
-  } else {
-    $censorship = '';
-  }
-  fwc_set_censorship_status($post_id, $censorship);
-
-  // Look at bad/good translation votes to set translation status.
-  $bad_translation = get_post_meta($post_id, 'bad_translation_votes');
-  $good_translation = get_post_meta($post_id, 'good_translation_votes');
-  if (intval($bad_translation) == 0 || intval($good_translation) == 0) { $has_votes = true; }
-
-  if ($bad_translation > $good_translation) {
-    $translation = 'bad translation';
-  } else if ($good_translation > $bad_translation) {
-    $translation = 'good translation';
-  } else {
-    $translation = '';
-  }
-  fwc_set_translation_status($post_id, $translation);
-
-  $keep_tags = array();
-
-  // Add banned tag if search is banned.
-  $banned = fwc_get_latest_meta('banned', $post_id);
-  if ($banned == 'true') {
-    $keep_tags[] = 'banned';
-    $has_votes = true;
-  }
-
-  // Add sensitive tag if search is sensitive.
-  $sensitive = fwc_get_latest_meta('sensitive', $post_id);
-  if ($sensitive == 'true') {
-    $keep_tags[] = 'sensitive';
-    $has_votes = true;
-  }
-
-  // Check for at least one vote to apply/remove these tags.
-  $tag_by_vote = array(
-    'nsfw',
-    'lost-in-translation',
-    'firewall-bug',
-    'bad-result',
-    // 'slow-search',
-    // 'no-result'
-  );
-
-  foreach ($tag_by_vote as $tag) {
-    $key = str_replace ( '-' , '_' , $tag ) . "_votes";
-    $count = get_post_meta($post_id, $key);
-    $count = intval(fwc_get_latest_value($count));
-    if ($count > 0) {
-      $keep_tags[] = $tag;
-      $has_votes = true;
-    }
-  }
-
-  wp_set_post_terms( $post_id, $keep_tags, 'post_tag');
-  if ($has_votes) {
-    wp_delete_term(1, 'category');
-  }
 }

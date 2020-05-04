@@ -17,8 +17,9 @@ $(document).ready(function() {
 
     $.post(FWC.ajaxurl, data, function(response) {
       var vote_count_integer = parseInt(response, 10);
-      var vote_count_measure_word = (vote_count_integer === 1) ? 'vote' : 'votes';
-      $this.parent().find('.vote-count').text(vote_count_integer + ' ' + vote_count_measure_word);
+      $this.parent().find('.vote-count').text(vote_count_integer);
+      var historic = parseInt($this.parent().find('.vote-count-historic span').text(), 10);
+      $this.parent().find('.vote-count-historic span').text(historic + 1);
     });
   });
 });

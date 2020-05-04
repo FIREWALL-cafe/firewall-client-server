@@ -3,13 +3,12 @@
 require_once( __DIR__ . '/includes/prefix-filter.php');
 require_once( __DIR__ . '/includes/fwc-taxonomies.php');
 require_once( __DIR__ . '/includes/fwc-meta-utilities.php');
-require_once( __DIR__ . '/includes/fwc-meta-boxes.php');
-require_once( __DIR__ . '/includes/fwc-meta-save.php');
 require_once( __DIR__ . '/includes/fwc-post-votes.php');
 require_once( __DIR__ . '/includes/fwc-post-partials.php');
 require_once( __DIR__ . '/includes/fwc-post-previous-searches.php');
 require_once( __DIR__ . '/includes/fwc-library-nav.php');
 require_once( __DIR__ . '/includes/fwc-export.php');
+require_once( __DIR__ . '/includes/fwc-migrate-data.php');
 
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
@@ -50,11 +49,9 @@ add_action('wp_ajax_nopriv_fwc_post_vote', 'fwc_post_vote');
 //TODO: REVISE BELOW
 function fwc_post_meta() {
 	$client = fwc_get_latest_meta('client');
-	?>
-	Search by <?php echo esc_html($client); ?>
-	on <a href="<?php the_permalink(); ?>" class="permalink"><?php echo fwc_format_date(fwc_get_latest_meta('timestamp')); ?></a>
-	<?php // echo fwc_get_search_popularity();
-	edit_post_link('Edit', '&nbsp;&nbsp;|&nbsp;&nbsp;');
+	$client = get_post_meta(get_the_ID(), 'search_client_name')[0];
+    echo 'Search by '.esc_html($client).' on <a href="'.get_the_permalink().'" class="permalink">'.fwc_format_date(fwc_get_latest_meta('timestamp')).'</a>';
+	// echo fwc_get_search_popularity();
 }
 
 function fwc_post_popularity_meta() {
@@ -81,7 +78,7 @@ function fwc_post_popularity_meta() {
 //// Submit new posts.
 /////////////////////////////////////////////////
 
-function fwc_submit_images() {
+function fwc_submit_images_old() {
 
 	$verbose = ! empty($_GET['verbose']);
 	fwc_enable_cors();
@@ -140,6 +137,150 @@ function fwc_submit_images() {
 	));
 	exit;
 }
+
+add_action('wp_ajax_fwc_submit_images_old', 'fwc_submit_images_old');
+add_action('wp_ajax_nopriv_fwc_submit_images_old', 'fwc_submit_images_old');
+
+function fwc_submit_images() {
+	fwc_enable_cors();
+
+	if (!defined('FWC_SHARED_SECRET')) {
+		die('No FWC_SHARED_SECRET defined');
+	}
+
+	if (empty($_POST['secret']) ||
+		$_POST['secret'] != FWC_SHARED_SECRET) {
+		return false;
+	}
+
+	$timestamp = round($_POST['timestamp'] / 1000);
+
+	// Serialize data from image submission request into uniform schema
+	$data = array(
+		// 'data_migration_nearest_neighbor_images' => NULL, // Legacy field present on some migrated posts
+		// 'data_migration_post_id_original' => NULL, // Legacy field present on migrated posts
+		// 'data_migration_unflattened' => NULL, // Legacy field present on some migrated posts
+		// 'search_term_popularity' => NULL, // Legacy field present on some migrated posts
+		'data_migration_schema_original' => 2, // Which schema version was used to save search
+		'search_client_name' => $_POST['client'],
+		'search_engine_initial' => $_POST['search_engine'],
+		'search_location' => $_POST['location'] ?: 'unknown',
+		'search_term_initial' => $_POST['query'],
+		'search_term_language_initial_code' => $_POST['lang_from'],
+		'search_term_language_initial_name' => $_POST['lang_name'],
+		'search_term_language_initial_confidence' => $_POST['lang_confidence'],
+		'search_term_language_initial_alternate' => $_POST['lang_alternate'],
+		'search_term_translation' => $_POST['translated'],
+		'search_term_status_banned' => ($_POST['banned'] === 'true' || $_POST['banned'] === true) ? 1 : 0,
+		'search_term_status_sensitive' => ($_POST['sensitive'] === 'true' || $_POST['sensitive'] === true) ? 1 : 0,
+		'timestamp' => $timestamp, // 10-digit Unix timestamp
+		'copyright_takedown' => NULL,
+		'votes_censored' => 0,
+		'votes_uncensored' => 0,
+		'votes_bad_translation' => 0,
+		'votes_good_translation' => 0,
+		'votes_lost_in_translation' => 0,
+		'votes_bad_result' => 0,
+		'votes_nsfw' => 0,
+	);
+	// TODO Change/eliminate these field names for clarity e.g.
+	// consider dropping data_migration_unflattened and related fields
+	// data_migration_schema_original => data_schema_initial
+	// search_term_language_initial_code => search_term_initial_language_code
+	// search_term_language_initial_name => search_term_initial_language_name
+	// search_term_language_initial_confidence => search_term_initial_language_confidence
+	// search_term_language_initial_alternate => search_term_initial_language_alternate
+
+	// Create WP post as a draft
+	$post_date_gmt = date('Y-m-d H:i:s', $data['timestamp']);
+	$post_slug = implode('-', explode(' ', $data['search_term_initial'])).'-'.$data['timestamp'];
+	$post_data = array(
+		'post_date' => $post_date_gmt,
+		'post_date_gmt' => $post_date_gmt,
+		'post_excerpt' => $data['search_term_translation'],
+		'post_name' => $post_slug, // Uniqueish identifier
+		'post_status' => 'draft',
+		'post_title' => $data['search_term_initial'],
+		'post_type' => 'search-result',
+	);
+	$post_id = wp_insert_post($post_data);
+
+	if (!empty($post_id)) {
+		// Save image attachments and return arrays with original URLs
+		// TODO Refactor image management code to use parameter/key for search engine, not separate fields
+		$images_google = json_decode(stripslashes($_POST['google_images']), 'as hash');
+		$images_baidu = json_decode(stripslashes($_POST['baidu_images']), 'as hash');
+
+		$attachments_google = fwc_save_images($post_id, $images_google, 'google-'.$timestamp);
+		$attachments_baidu = fwc_save_images($post_id, $images_baidu, 'baidu-'.$timestamp);
+
+		$gallery_google = implode(',', $attachments_google);
+		$gallery_baidu = implode(',', $attachments_baidu);
+
+		$data['images_google'] = array_map(function ($key) use ($attachments_google, $images_google) {
+			return array(
+				'original_href' => $images_google[$key]['href'],
+				'attachment_post_id' => $attachments_google[$key],
+			);
+		}, array_keys($images_google));
+		$data['images_baidu'] = array_map(function ($key) use ($attachments_baidu, $images_baidu) {
+			return array(
+				'original_href' => $images_baidu[$key]['href'],
+				'attachment_post_id' => $attachments_baidu[$key],
+			);
+		}, array_keys($images_baidu));
+
+		// Save serialized data to WP post
+		foreach ($data as $meta_key => $meta_value) {
+			update_post_meta($post_id, $meta_key, $meta_value);
+		}
+
+		// Add prefixed tags used to easily retrieve posts matching certain data fields
+		$tags = [];
+		if ($data['search_term_status_banned']) {
+			$tags[] = 'has_search_term_status_banned';
+		}
+		if ($data['search_term_status_sensitive']) {
+			$tags[] = 'has_search_term_status_sensitive';
+		}
+		$tags[] = 'has_search_location_'.$data['search_location'];
+		$tags[] = 'has_search_year_'.date('Y', $data['timestamp']);
+		if ($data['search_term_language_initial_code']) {
+			$tags[] = 'has_search_term_language_initial_code_'.$data['search_term_language_initial_code'];
+		}
+		$tags = implode(',', $tags);
+		wp_set_post_terms($post_id, $tags, 'post_tag', false /* do not append */);
+
+		// Save image attachment IDs to post body (legacy/convenience), publish post, return permalink
+		$data_update = array(
+			'ID' => $post_id,
+			'post_content' => "Google\n[gallery ids=\"".$gallery_google."\"]\nBaidu\n[gallery ids=\"".$gallery_baidu."\"]",
+			'edit_date' => false,
+			'post_status' => 'publish'
+		);
+		wp_update_post($data_update);
+		$permalink = get_permalink($post_id);
+
+		header('Content-Type: application/json');
+		echo json_encode(array(
+			'ok' => 1,
+			'permalink' => $permalink,
+			'title' => 'We’ve saved results for “'.$data['search_term_initial'].'” to the FIREWALL search library',
+			'message' => 'CLICK HERE to tell us what you think of the results'
+		));
+	} else {
+		header('Content-Type: application/json');
+		echo json_encode(array(
+			'ok' => 0,
+			'permalink' => '',
+			'title' => 'Error saving results for “'.$data['search_term_initial'].'” to the FIREWALL search library',
+			'message' => ''
+		));
+	}
+
+	exit;
+}
+
 add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');
 
@@ -475,6 +616,7 @@ function fwc_derive_data_uri($src) {
 
 function fwc_download_image($src) {
 	// $url = urldecode($url);
+	$verbose = ! empty($_GET['verbose']);
 	if ($verbose) {
 		echo "downloading $src: ";
 	}
@@ -728,3 +870,80 @@ function create_event_post_category() {
 	);
 }
 add_action('init', 'create_event_post_category');
+
+function create_search_result_post() {
+	$args = array(
+		// 'capabilities' => array(), // Cf. http://justintadlock.com/archives/2013/09/13/register-post-type-cheat-sheet
+		'capability_type' => 'post',
+		'exclude_from_search' => false,
+		'has_archive' => false,
+		'hierarchical' => false,
+		'labels' => array(
+			 'add_new' => __('Add New'),
+			 'add_new_item' => __('Add New Search Result'),
+			 'all_items' => __('All Search Results'),
+			 'edit_item' => __('Edit Search Result'),
+			 'menu_name' => __('Search Results'),
+			 'name' => __('Search Results'),
+			 'not_found' => __('Not Found'),
+			 'not_found_in_trash' => __('Not Found in Trash'),
+			 'parent_item' => __('Parent Search Result'),
+			 'parent_item_colon' => __('Parent Search Result:'),
+			 'search_items' => __('Search Search Results'),
+			 'singular_name' => __('Search Result'),
+			 'update_item' => __('Update Search Result'),
+			 'view_item' => __('View Search Result'),
+		),
+		'menu_icon' => 'dashicons-backup',
+		'public' => true,
+		'publicly_queryable' => true,
+		'query_var' => true,
+		'rewrite' => array(
+			'slug' => 'archive',
+			'with_front' => false,
+		),
+		'show_in_admin_bar' => false,
+		'show_in_rest' => true,
+		'show_in_rest' => true,
+		'show_in_menu' => true,
+		'show_ui' => true,
+		'supports' => array(
+			// 'author',
+			// 'comments',
+			'custom-fields',
+			'editor',
+			'excerpt',
+			// 'page-attributes',
+			// 'post-formats',
+			// 'revisions',
+			// 'thumbnail',
+			'title',
+			// 'trackbacks',
+		),
+		'taxonomies' => array('post_tag'),
+	);
+	register_post_type('search-result', $args);
+	flush_rewrite_rules();
+}
+add_action('init', 'create_search_result_post');
+
+add_action('rest_api_init', function () {
+	register_rest_field('search-result', 'galleries', array(
+		'get_callback' => function ($post) {
+			return get_post_galleries($post['id'], false);
+		},
+		'schema' => array(
+			'description' => __('Galleries'),
+			'type' => 'array'
+		),
+	));
+	register_rest_field('search-result', 'tags', array(
+		'get_callback' => function ($post) {
+			return get_the_tags($post['id']);
+		},
+		'schema' => array(
+			'description' => __('Tags'),
+			'type' => 'array'
+		),
+	));
+});
