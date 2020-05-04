@@ -20,18 +20,41 @@ CREATE VIEW v_Votes AS
   WHERE searches.search_id = have_votes.search_id
   AND have_votes.vote_id = votes.vote_id;
 
-  -- Returns all searches with their cooresponding image paths. --
+  -- Returns all searches with their corresponding image paths. --
   CREATE VIEW v_Images AS
-     SELECT s.search_id, s.search_text, s.translation, s.confidence, s.client_name,
-            s.search_location, s.search_time, i.image_id, i.image_source, i.image_path
-     FROM searches s INNER JOIN have_images h ON s.search_id = h.search_id
-          INNER JOIN images i ON h.image_id = i.image_id
-     GROUP BY s.search_id, i.image_id
-     ORDER BY s.search_id ASC;
+    SELECT
+      s.search_id,
+      s.search_timestamp,
+      s.search_location,
+      s.search_ip_address,
+      s.search_client_name,
+      s.search_engine_initial,
+      s.search_engine_translation,
+      s.search_term_initial,
+      s.search_term_initial_language_code,
+      s.search_term_initial_language_confidence,
+      s.search_term_initial_language_alternate_code,
+      s.search_term_translation,
+      s.search_term_translation_language_code,
+      s.search_term_status_banned,
+      s.search_term_status_sensitive,
+      s.copyright_takedown,
+      s.data_schema_initial,
+      s.legacy_search_term_popularity,
+      s.legacy_data_migration_unflattened,
+      s.legacy_data_migration_initial_post_id,
+      i.image_id,
+      i.image_rank,
+      i.image_url,
+      i.image_source,
+      i.image_path
+    FROM searches s INNER JOIN images i ON s.search_id = i.search_id
+    GROUP BY s.search_id, i.image_id
+    ORDER BY s.search_id ASC;
 
 -- Returns Only Vote Counts for Searches With Votes Associated with them. --
 CREATE VIEW v_VoteCounts AS
-SELECT s.search_id, s.search_text, s.translation, s.confidence,
+  SELECT s.search_id, s.search_text, s.translation, s.confidence,
      COUNT(have_votes.*) total,
      COUNT(case when vote_id = '1' then 1 end) AS Censored,
      COUNT(case when vote_id = '2' then 1 end) AS Uncensored,

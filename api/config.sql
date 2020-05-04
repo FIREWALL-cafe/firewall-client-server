@@ -18,65 +18,52 @@ DROP TABLE IF EXISTS Have_Images;
 DROP TABLE IF EXISTS Have_Language_Pairs;
 DROP TABLE IF EXISTS Votes;
 DROP TABLE IF EXISTS Images;
-DROP TABLE IF EXISTS Language_Pairs;
 DROP TABLE IF EXISTS Searches;
 
 --------------
 -- Creation --
 --------------
--- Queries --
 CREATE TABLE Searches (
-  search_id       serial not null,
-  search_text     text,
-  search_time     timestamp,
-  translation     text,
-  confidence      float,
-  client_name     text,
-  search_location text,
-  ip_address      text,
-  primary key(search_id)
+  search_id SERIAL PRIMARY KEY,
+  search_timestamp TIMESTAMP,
+  search_location TEXT,
+  search_ip_address TEXT,
+  search_client_name TEXT,
+  search_engine_initial TEXT,
+  search_engine_translation TEXT,
+  search_term_initial TEXT,
+  search_term_initial_language_code TEXT,
+  search_term_initial_language_confidence FLOAT,
+  search_term_initial_language_alternate_code TEXT,
+  search_term_translation TEXT,
+  search_term_translation_language_code TEXT,
+  search_term_status_banned BOOLEAN,
+  search_term_status_sensitive BOOLEAN,
+  copyright_takedown BOOLEAN,
+  data_schema_initial INTEGER,
+  legacy_search_term_popularity INTEGER,
+  legacy_data_migration_unflattened BOOLEAN,
+  legacy_data_migration_initial_post_id INTEGER
 );
 
--- Types --
-CREATE TABLE Language_Pairs (
-  pair_id     serial not null,
-  langOne     text,
-  langTwo     text,
-  primary key(pair_id)
-);
-
--- Images --
 CREATE TABLE Images (
-  image_id         serial,
-  image_source     boolean,
-  image_path       text,
-  image_metadata   text,
-  primary key(image_id)
+  image_id SERIAL PRIMARY KEY,
+  image_source TEXT, -- Source search engine --
+  image_rank INTEGER, -- Position of image in source search engine results --
+  image_url TEXT, -- Original internet URL --
+  image_path TEXT, -- Local path to stored image file --
+  search_id SERIAL NOT NULL REFERENCES Searches(search_id)
 );
 
--- Ratings --
 CREATE TABLE Votes (
-  vote_id    serial,
-  vote_name  text,
-  vote_desc  text,
-  primary key(vote_id)
+  vote_id SERIAL PRIMARY KEY,
+  vote_value TEXT,
+  vote_timestamp TIMESTAMP,
+  vote_ip_address TEXT,
+  vote_client_name TEXT,
+  search_id SERIAL NOT NULL REFERENCES Searches(search_id)
 );
 
--- Have_Type --
-CREATE TABLE Have_Language_Pairs (
-  pair_id      serial not null references Language_Pairs(pair_id),
-  search_id    serial not null references Searches(search_id),
-  primary key(pair_id, search_id)
-);
-
--- Have_Images --
-CREATE TABLE Have_Images (
-  image_id     serial not null references Images(image_id),
-  search_id    serial not null references Searches(search_id),
-  primary key(image_id, search_id)
-);
-
--- Have_Ratings --
 CREATE TABLE Have_Votes (
   vote_id      serial not null references Votes(vote_id),
   search_id    serial not null references Searches(search_id),
