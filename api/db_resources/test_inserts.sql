@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- Firewall Cafe Database TEST Insert Statements v1.1
--- April 2020
+-- May 2020
 -- Collaboration By:
     -- Andrew Bauman (andrewbauman1)
 --------------------------------------------------------------------------------
@@ -14,13 +14,13 @@
 ---------------------------------------
 
 INSERT INTO searches VALUES
-  (1, 'Bananas', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser455', NULL, '74.56.52.35'),
-  (2, 'Bananas', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser455', NULL, '74.56.52.35'),
-	(3, 'Ice Cream', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser234', NULL, '106.255.52.111'),
-	(4, 'NYC', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser234', NULL, '106.255.52.111'),
-	(5, 'Censorship', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser878', NULL, '78.242.52.42'),
-	(6, 'Apples', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser878', NULL, '78.242.52.42'),
-	(7, 'Marist College', CURRENT_TIMESTAMP, '香蕉', '.96', 'testUser', NULL, '134.242.52.35');
+  (1, CURRENT_TIMESTAMP, 'Location 1', '74.56.52.35', 'testUser111', 'Google', 'Baidu', 'Bananas', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (2, CURRENT_TIMESTAMP, 'Location 1', '74.56.53.36', 'testUser222', 'Google', 'Baidu', 'Ice Cream', 'en', '.96', NULL, '香蕉', 'ch-zn', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (3, CURRENT_TIMESTAMP, 'Location 1', '74.56.54.37', 'testUser333', 'Google', 'Baidu', 'Marist', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'true', NULL, NULL, NULL, NULL ),
+  (4, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (5, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (6, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'ch-zn', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (7, CURRENT_TIMESTAMP, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'true', NULL, NULL, NULL, NULL );
 
 INSERT INTO votes VALUES
   (1, 'Censored', 'Content appears to be censored.'),
@@ -32,52 +32,25 @@ INSERT INTO votes VALUES
   (7, 'WTF', 'WTF');
 
 INSERT INTO images VALUES
- 	(1, true, '/filePath/fileOne.jpg', NULL),
- 	(2, false, '/filePath/fileTwo.jpg', NULL),
- 	(3, true, '/filePath/fileThree.jpg', NULL),
- 	(4, false, '/filePath/fileFour.jpg', NULL),
-  (5, true, '/filePath/fileFive.jpg', NULL),
-  (6, false, '/filePath/fileSix.jpg', NULL),
-  (7, true, '/filePath/fileSeven.jpg', NULL),
-  (8, false, '/filePath/fileEight.jpg', NULL),
-  (9, true, '/filePath/fileNine.jpg', NULL),
-  (10, false, '/filePath/fileTen.jpg', NULL),
-  (11, true, '/filePath/fileEleven.jpg', NULL),
-  (13, false, '/filePath/fileThirteen.jpg', NULL),
-  (14, true, '/filePath/fileFourteen.jpg', NULL),
-  (12, false, '/filePath/fileTwelve.jpg', NULL);
+ 	(1, 1, 'Google', '/filePath/fileOne.jpg', NULL),
+ 	(2, 1, 'Baidu', '/filePath/fileTwo.jpg', NULL),
+ 	(3, 2, 'Google', '/filePath/fileThree.jpg', NULL),
+ 	(4, 2, 'Baidu', '/filePath/fileFour.jpg', NULL),
+  (5, 3, 'Google', '/filePath/fileFive.jpg', NULL),
+  (6, 3, 'Baidu', '/filePath/fileSix.jpg', NULL),
+  (7, 4, 'Google', '/filePath/fileSeven.jpg', NULL),
+  (8, 4, 'Baidu', '/filePath/fileEight.jpg', NULL),
+  (9, 5, 'Google', '/filePath/fileNine.jpg', NULL),
+  (10, 5, 'Baidu', '/filePath/fileTen.jpg', NULL),
+  (11, 6, 'Google', '/filePath/fileEleven.jpg', NULL),
+  (13, 6, 'Baidu', '/filePath/fileThirteen.jpg', NULL),
+  (14, 7, 'Google', '/filePath/fileFourteen.jpg', NULL),
+  (12, 7, 'Baidu', '/filePath/fileTwelve.jpg', NULL);
 
-INSERT INTO have_images VALUES
-  (1,1),
-  (2,1),
-  (3,2),
-  (4,2),
-  (5,3),
-  (6,3),
-  (7,4),
-  (8,4),
-  (9,5),
-  (10,5),
-  (11,6),
-  (12,6),
-  (13,7),
-  (14,7);
 
 INSERT INTO have_votes VALUES
-  (1, 2, CURRENT_TIMESTAMP, '74.56.52.35', 'testUser455'),
-  (4, 2, CURRENT_TIMESTAMP, '74.56.52.35', 'testUser455'),
-  (2, 7, CURRENT_TIMESTAMP, '134.242.52.35', 'testUser'),
-  (1, 4, CURRENT_TIMESTAMP, '134.242.52.35', 'testUser'),
-  (6, 6, CURRENT_TIMESTAMP, '78.242.52.42', 'testUser878');
-
-INSERT INTO language_pairs VALUES
-    (1, 'en', 'ch-zn');
-
-INSERT INTO have_language_pairs VALUES
-    (1, 1),
-    (1, 2),
-    (1, 3),
-    (1, 4),
-    (1, 5),
-    (1, 6),
-    (1, 7);
+  (1, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
+  (4, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
+  (2, 7, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
+  (1, 4, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
+  (6, 6, CURRENT_TIMESTAMP, 'testUser878', '78.242.52.42');
