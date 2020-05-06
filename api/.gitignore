@@ -12,3 +12,7 @@ build/Release
 
 # Optional npm cache directory
 .npm
+
+#database-credentials (Secret)
+db_credentials.js
+
