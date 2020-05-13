@@ -65,8 +65,9 @@ const getImagesAndSearchBySearchID = (request, response) => {
 
 //GET: All Votes with Search Info (Only contains searches with votes b/c Inner Join)
 const getAllVotes = (request, response) => {
-  pool.query(`SELECT s.*, hv.*
-              FROM Searches s INNER JOIN Have_Votes hv ON s.search_id = hv.search_id;`, (error, results) => {
+  pool.query(`SELECT v.vote_name, s.*, hv.*
+              FROM Searches s INNER JOIN Have_Votes hv ON s.search_id = hv.search_id
+              INNER JOIN votes v ON hv.vote_id = v.vote_id`, (error, results) => {
   if (error) {
     throw error
   }
@@ -74,12 +75,13 @@ const getAllVotes = (request, response) => {
   })
 }
 
-//GET: Individual vote (BY Search_ID)
+//GET: Individual votes for a given search (BY Search_ID)
 const getVoteBySearchID = (request, response) => {
   const search_id = parseInt(request.params.search_id)
 
-  pool.query(`SELECT hv.*, s.*
+  pool.query(`SELECT v.vote_name, hv.*, s.*
               FROM Searches s INNER JOIN Have_Votes hv ON s.search_id = hv.search_id
+              INNER JOIN votes v ON hv.vote_id = v.vote_id
               WHERE s.search_id = ${search_id}`, (error, results) => {
   if (error) {
     throw error
@@ -88,12 +90,13 @@ const getVoteBySearchID = (request, response) => {
   })
 }
 
-//GET: Individual vote (BY Vote_ID)
+//GET: Individual votes for a given vote category (BY Vote_ID)
 const getVoteByVoteID = (request, response) => {
   const vote_id = parseInt(request.params.vote_id)
 
-  pool.query(`SELECT  hv.*, s.*
+  pool.query(`SELECT  v.vote_name, hv.*, s.*
               FROM Searches s INNER JOIN Have_Votes hv ON s.search_id = hv.search_id
+              INNER JOIN votes v ON hv.vote_id = v.vote_id
               WHERE hv.vote_id = ${vote_id}`,  (error, results) => {
   if (error) {
     throw error
@@ -415,17 +418,81 @@ const getImagesOnlyWTF = (request, response) => {
   })
 }
 
-//Example Post Statement
-const createSearch = (request, response) => {
-  const {search_text} = request.body
+/******************/
+/*POST Statements*/
+/****************/
 
-  pool.query('INSERT INTO Searches (search_text) VALUES ($1)', [search_text], (error, results) => {
+
+//POST: createSearch -- Add Searches
+const createSearch = (request, response) => {
+  const {search_location, search_ip_address, search_client_name,
+          search_engine_initial, search_engine_translation,search_term_initial,
+          search_term_initial_language_code, search_term_initial_lanuage_confidence,
+          search_term_initial_language_alternate_code, search_term_translation,
+          search_term_translation_language_code, search_term_status_banned,
+          search_term_status_sensitive} = request.body
+
+        console.log(search_location, search_ip_address, search_client_name,
+                search_engine_initial, search_engine_translation,search_term_initial,
+                search_term_initial_language_code, search_term_initial_lanuage_confidence,
+                search_term_initial_language_alternate_code, search_term_translation,
+                search_term_translation_language_code, search_term_status_banned,
+                search_term_status_sensitive)
+
+  pool.query(`INSERT INTO Searches (search_id, search_timestamp, search_location, search_ip_address, search_client_name,
+              search_engine_initial, search_engine_translation,search_term_initial,
+              search_term_initial_language_code, search_term_initial_lanuage_confidence,
+              search_term_initial_language_alternate_code, search_term_translation,
+              search_term_translation_language_code, search_term_status_banned,
+              search_term_status_sensitive) VALUES (DEFAULT, CURRENT_TIMESTAMP,
+              ${search_location}, ${search_ip_address}, ${search_client_name},
+              ${search_engine_initial}, ${search_engine_translation}, ${search_term_initial},
+              ${search_term_initial_language_code}, ${search_term_initial_lanuage_confidence},
+              ${search_term_initial_language_alternate_code}, ${search_term_translation},
+              ${search_term_translation_language_code}, ${search_term_status_banned},
+              ${search_term_status_sensitive})`, (error, results) => {
   if (error) {
     throw error
+
   }
-  response.status(201).send('Search added with ID: $result.insertId}')
+  response.status(201).send(`Search added with ID: ${results.search_id}`)
   })
 }
+
+//POST: createVote -- Add Searches
+const createVote = (request, response) => {
+  const {vote_id, search_id, vote_client_name, vote_ip_address} = request.body
+
+        console.log(vote_id, search_id, vote_client_name, vote_ip_address)
+
+  pool.query(`INSERT INTO Have_Votes (vote_id, search_id, vote_timestamp, vote_client_name,
+              vote_ip_address) VALUES (${vote_id}, ${search_id}, CURRENT_TIMESTAMP,
+              ${vote_client_name}, ${vote_ip_address})`, (error, results) => {
+  if (error) {
+    throw error
+
+  }
+  response.status(201).send(`Vote added with ID: ${results.vote_id}`)
+  })
+}
+
+//POST: saveImage -- Add Searches
+const saveImage = (request, response) => {
+  const {search_id, image_source, image_path, image_rank} = request.body
+
+        console.log(search_id, image_source, image_path, image_rank)
+
+  pool.query(`INSERT INTO Images (image_id, search_id, image_source, image_path,
+              image_rank) VALUES (DEFAULT, ${search_id}, ${image_source}, ${image_path},
+              ${image_rank})`, (error, results) => {
+  if (error) {
+    throw error
+
+  }
+  response.status(201).send(`Image added with ID: ${results.image_id}`)
+  })
+}
+
 
 module.exports = {
   getAllSearches,
@@ -455,4 +522,7 @@ module.exports = {
   getImagesOnlyLostInTranslation,
   getImagesOnlyNSFW,
   getImagesOnlyWTF,
+  createSearch,
+  createVote,
+  saveImage,
 }
