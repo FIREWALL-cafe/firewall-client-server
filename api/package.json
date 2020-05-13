@@ -1,12 +1,17 @@
 {
-  "name": "Firewall-Cafe API",
+  "name": "Firewall-Cafe-API",
+  "description": "Firewall-Cafe-API is the interface between the app and the data stored in the database.",
   "version": "0.1.0",
   "private": "true",
   "scripts": {
     "start": "node server.js"
   },
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/dphiffer/firewall-cafe.git"
+    },
   "dependencies": {
-    "express": "*",
-    "body-parser": "*"
+    "body-parser": "*",
+    "express": "*"
   }
 }

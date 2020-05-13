@@ -60,3 +60,8 @@ app.get('/images/good_translation_searches', db.getImagesOnlyGoodTranslation)
 app.get('/images/lost_in_translation_searches', db.getImagesOnlyLostInTranslation)
 app.get('/images/nsfw_searches', db.getImagesOnlyNSFW)
 app.get('/images/wtf_searches', db.getImagesOnlyWTF)
+
+/*POST Routes*/
+app.post('/createSearch', db.createSearch)
+app.post('/createVote', db.createVote)
+app.post('/saveImage', db.saveImage)
