@@ -5,6 +5,10 @@
 /client/config.js
 /server/config.js
 /server/service-key.json
+/server/service-key.json.bak
+/server/cert.pem
+/server/privkey.pem
+/server/fullchain.pem
 /server/node_modules/
 /server/ssl/
 /wordpress
