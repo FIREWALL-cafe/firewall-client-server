@@ -5,7 +5,6 @@ Template Name: Events New
 */
 
 get_header();
-the_post();
 
 $query = new WP_Query(
 	array(
@@ -27,40 +26,38 @@ while ($query->have_posts()) {
 	foreach ($event_categories as $event_category) {
 		$events[$event_category->slug][] = $post;
 	}
-	$images = array();
 	wp_reset_postdata();
 }
 
 function render_event($event) {
-	// TODO Still investigating how to separate template/data concerns
-	$images = get_attached_media('image', $event->ID);
-	$image_srcs = '';
-
-	foreach ($images as $image) {
-		$image_srcs .= '<img class="migrate-event-photo" src="'.$image->guid.'" />';
-	}
-
+	// Post description trimmed to 20 words and ellipsized
 	$formatted_content = wp_trim_words(apply_filters('the_content', $event->post_content));
-	$trimmed_content = wp_trim_words($formatted_content, 20); // Post description trimmed to 20 words and ellipsized
+	$trimmed_content = wp_trim_words($formatted_content, 20);
 	$template_link = get_the_permalink($event->ID);
 
-	if (empty($images)) {
-		$template_images = '';
-	} else {
-		$template_images = <<<END
-<div class="migrate-event-media">
-	$image_srcs
-</div>
+	$field_date_and_time = get_field('date-and-time', $event->ID);
+	$template_date_and_time = '';
+	if (!empty($field_date_and_time)) {
+		$template_date_and_time = <<<END
+<h4 class="migrate-event-excerpt">
+	$field_date_and_time
+</h4>
 END;
 	}
 
-	if (empty($event->post_excerpt)) {
-		$template_excerpt = '';
-	} else {
-		$template_excerpt = <<<END
-<h4 class="migrate-event-excerpt">
-	$event->post_excerpt
-</h4>
+	$field_media_gallery = get_field('media-gallery', $event->ID);
+	$template_media_gallery = '';
+	if (!empty($field_media_gallery)) {
+		$images_markup = '';
+		foreach ($field_media_gallery as $image) {
+			$image_src = $image['sizes']['medium'];
+			$images_markup .= '<img class="migrate-event-photo" src="'.$image_src.'" />';
+		}
+
+		$template_media_gallery = <<<END
+<div class="migrate-event-media">
+	$images_markup
+</div>
 END;
 	}
 
@@ -69,14 +66,14 @@ END;
 	<h3 class="migrate-event-title">
 		$event->post_title
 	</h3>
-	$template_excerpt
+	$template_date_and_time
 	<div class="migrate-event-content">
 		$trimmed_content
 		<a class="migrate-event-link" href="$template_link">
 			More
 		</a>
 	</div>
-	$template_images
+	$template_media_gallery
 </div>
 END;
 

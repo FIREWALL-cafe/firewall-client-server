@@ -823,16 +823,17 @@ function create_event_post() {
 		'taxonomies' => array('event-category'),
 		// 'menu_icon' => '',
 		'supports' => array(
-			'title',
-			'editor',
-			'excerpt',
-			// 'trackbacks',
-			'custom-fields',
-			// 'comments',
-			'revisions',
-			'thumbnail',
 			'author',
-			'page-attributes',
+			// 'comments',
+			'custom-fields',
+			'editor',
+			// 'excerpt',
+			// 'page-attributes',
+			// 'post-formats',
+			'revisions',
+			// 'thumbnail',
+			'title',
+			// 'trackbacks',
 		),
 	);
 	register_post_type('event', $args);
@@ -870,6 +871,16 @@ function create_event_post_category() {
 	);
 }
 add_action('init', 'create_event_post_category');
+
+// Don't show "Add Media" button for event posts, to force use of "Media Gallery" field
+add_filter('wp_editor_settings', function ($settings) {
+	$current_screen = get_current_screen();
+
+	if ($current_screen->post_type == 'event') {
+		$settings['media_buttons'] = false;
+	}
+	return $settings;
+});
 
 function create_search_result_post() {
 	$args = array(
