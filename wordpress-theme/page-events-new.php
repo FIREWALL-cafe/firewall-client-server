@@ -39,7 +39,7 @@ function render_event($event) {
 	$template_date_and_time = '';
 	if (!empty($field_date_and_time)) {
 		$template_date_and_time = <<<END
-<h4 class="migrate-event-excerpt">
+<h4 class="migrate-event-date-and-time">
 	$field_date_and_time
 </h4>
 END;
@@ -81,7 +81,7 @@ END;
 }
 
 function render_empty() {
-	echo '<div class="migrate-event">None found</div>';
+	echo '<div class="migrate-event">None scheduled</div>';
 }
 
 ?>

@@ -13,7 +13,7 @@ $field_date_and_time = get_field('date-and-time');
 		<div class="migrate-event-single cleared">
 			<h1 class="migrate-event-title"><?php echo $post->post_title; ?></h1>
 			<?php if (!empty($field_date_and_time)) { ?>
-			<h2 class="migrate-event-excerpt">
+			<h2 class="migrate-event-date-and-time">
 				<?php echo($field_date_and_time); ?>
 			</h2>
 			<?php } ?>

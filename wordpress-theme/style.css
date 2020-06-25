@@ -951,19 +951,26 @@ footer li {
 	margin-bottom: 0.6rem;
 	font-size: 1.5em;
 	font-weight: bold;
-	line-height: 1.2;
+	line-height: 1.1;
 }
 
-.migrate-event-excerpt {
-	margin-bottom: 0.5rem;
+.migrate-event-date-and-time {
+	margin-bottom: 0.8rem;
 	color: #6a6a6a;
 	font-size: 1em;
 	font-weight: bold;
-	line-height: 1.2;
+	line-height: 1.4;
 }
 
 .migrate-event-content {
-	line-height: 1.3;
+	line-height: 1.4;
+}
+
+.migrate-event-content ul {
+	list-style-type: square;
+	list-style-position: outside;
+	padding-left: 1.5rem;
+	margin-right: 1.5rem;
 }
 
 .migrate-event-media {
@@ -975,6 +982,10 @@ footer li {
 .migrate-event-photo {
 	height: 180px;
 	margin: 0 1em 0 0;
+}
+
+.migrate-event-link {
+	text-transform: uppercase;
 }
 
 .migrate-event-single-photo-container {
