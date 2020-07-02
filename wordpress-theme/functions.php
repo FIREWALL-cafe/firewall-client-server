@@ -33,12 +33,6 @@ add_action( 'init', 'fwc_register_menu' );
 //////////////////////////////////////////////////////////
 add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
 
-////////////////////////////////////////////////////////
-//// Add post metadata boxes. See fwc-meta-boxes.php.
-////////////////////////////////////////////////////////
-add_action( 'load-post.php', 'fwc_post_meta_boxes_setup' );
-add_action( 'load-post-new.php', 'fwc_post_meta_boxes_setup' );
-
 ////////////////////////////////////////////////////////////
 //// Set up post voting & tagging. See fwc-post-votes.php.
 ////////////////////////////////////////////////////////////
@@ -821,7 +815,7 @@ function create_event_post() {
 		),
 		'query_var' => true,
 		'taxonomies' => array('event-category'),
-		// 'menu_icon' => '',
+		'menu_icon' => 'dashicons-calendar-alt',
 		'supports' => array(
 			'author',
 			// 'comments',
@@ -859,7 +853,7 @@ function create_event_post_category() {
 				'add_new_item' => __('Add New Event Category'),
 				'new_item_name' => __('New Event Category Name'),
 				'menu_name' => __('Event Categories'),
-		   ),
+			),
 			'show_ui' => true,
 			'show_admin_column' => true,
 			'query_var' => true,
