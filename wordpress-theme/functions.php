@@ -1,7 +1,6 @@
 <?php
 
 require_once( __DIR__ . '/includes/prefix-filter.php');
-require_once( __DIR__ . '/includes/fwc-taxonomies.php');
 require_once( __DIR__ . '/includes/fwc-meta-utilities.php');
 require_once( __DIR__ . '/includes/fwc-post-votes.php');
 require_once( __DIR__ . '/includes/fwc-post-partials.php');
@@ -9,6 +8,7 @@ require_once( __DIR__ . '/includes/fwc-post-previous-searches.php');
 require_once( __DIR__ . '/includes/fwc-library-nav.php');
 require_once( __DIR__ . '/includes/fwc-export.php');
 require_once( __DIR__ . '/includes/fwc-migrate-data.php');
+require_once( __DIR__ . '/includes/fwc-search-result-screenshot.php');
 
 function fwc_after_setup_theme() {
 	add_theme_support( 'html5', array( 'gallery', 'caption' ) );
@@ -28,11 +28,6 @@ function fwc_register_menu() {
 }
 add_action( 'init', 'fwc_register_menu' );
 
-//////////////////////////////////////////////////////////
-//// Add FWC custom taxonomies. See fwc-taxonomies.php.
-//////////////////////////////////////////////////////////
-add_action( 'init', 'fwc_add_custom_taxonomies', 0 );
-
 ////////////////////////////////////////////////////////////
 //// Set up post voting & tagging. See fwc-post-votes.php.
 ////////////////////////////////////////////////////////////
@@ -40,111 +35,30 @@ add_action('wp_enqueue_scripts', 'fwc_post_vote_scripts');
 add_action('wp_ajax_fwc_post_vote', 'fwc_post_vote');
 add_action('wp_ajax_nopriv_fwc_post_vote', 'fwc_post_vote');
 
-//TODO: REVISE BELOW
 function fwc_post_meta() {
 	$client = fwc_get_latest_meta('client');
 	$client = get_post_meta(get_the_ID(), 'search_client_name')[0];
-    echo 'Search by '.esc_html($client).' on <a href="'.get_the_permalink().'" class="permalink">'.fwc_format_date(fwc_get_latest_meta('timestamp')).'</a>';
-	// echo fwc_get_search_popularity();
-}
-
-function fwc_post_popularity_meta() {
-	$total_count = esc_html(fwc_get_search_count());
-	$google_count = esc_html(fwc_get_search_count_google());
-	$baidu_count = esc_html(fwc_get_search_count_baidu());
-	// $ranking = esc_html(fwc_get_search_ranking());
-	// $initial_search_date = esc_html(fwc_get_initial_search_date());
-	?>
-	This term has been searched <?php echo $total_count; ?> times since <?php echo "initial_search_date"; ?>.
-	<?php
-	if ($google_count > 0 && $baidu_count > 0) {
-		echo "It's been searched ".$google_count."times using Google and".$baidu_count."times using Baidu.";
-	}
-	?>
-
-
-	<?php fwc_build_search_chart(); ?>
-
-	That means it's the <?php
+	echo 'Search by '.esc_html($client).' on <a href="'.get_the_permalink().'" class="permalink">'.fwc_format_date(fwc_get_latest_meta('timestamp')).'</a>';
 }
 
 /////////////////////////////////////////////////
 //// Submit new posts.
 /////////////////////////////////////////////////
 
-function fwc_submit_images_old() {
-
-	$verbose = ! empty($_GET['verbose']);
+function fwc_submit_images() {
 	fwc_enable_cors();
 
 	if (!defined('FWC_SHARED_SECRET')) {
-		die('No FWC_SHARED_SECRET defined');
+		die('No FWC_SHARED_SECRET defined internally');
 	}
 
-	if (empty($_POST['secret']) ||
-	    $_POST['secret'] != FWC_SHARED_SECRET) {
+	if (empty($_POST['secret']) || $_POST['secret'] != FWC_SHARED_SECRET) {
 		header('Content-Type: application/json');
 		echo json_encode(array(
 			'ok' => 0,
 			'error' => 'Shared secret did not match'
 		));
 		exit;
-	}
-
-	if (empty($_POST['google_images']) || empty($_POST['baidu_images'])) {
-		header('Content-Type: application/json');
-		echo json_encode(array(
-			'ok' => 0,
-			'error' => 'Please POST google_images and baidu_images'
-		));
-		exit;
-	}
-
-	if ($verbose) {
-		echo "images: " . substr($_POST['google_images'], 0, 100) . "\n";
-	}
-
-	$row = (object) array(
-		'timestamp' => $_POST['timestamp'],
-		'search_engine' => $_POST['search_engine'],
-		'client' => $_POST['client'],
-		'query' => $_POST['query'],
-		'translation' => $_POST['translated'],
-		'google_images' => stripslashes($_POST['google_images']),
-		'baidu_images' => stripslashes($_POST['baidu_images']),
-		'lang_from' => $_POST['lang_from'],
-		'lang_confidence' => $_POST['lang_confidence'],
-		'lang_alternate' => $_POST['lang_alternate'],
-       'lang_name' => $_POST['lang_name'],
-       'banned' => $_POST['banned'],
-       'sensitive' => $_POST['sensitive'],
-	);
-	// $row = fwc_test_post_data();
-	$post_id = fwc_import_post($row);
-	$permalink = get_permalink($post_id);
-	header('Content-Type: application/json');
-	echo json_encode(array(
-		'ok' => 1,
-		'permalink' => $permalink,
-		'title' => 'We’ve saved “' . $_POST['query'] . '” to the FIREWALL search library',
-		'message' => 'CLICK HERE to tell us what you think of the results.'
-	));
-	exit;
-}
-
-add_action('wp_ajax_fwc_submit_images_old', 'fwc_submit_images_old');
-add_action('wp_ajax_nopriv_fwc_submit_images_old', 'fwc_submit_images_old');
-
-function fwc_submit_images() {
-	fwc_enable_cors();
-
-	if (!defined('FWC_SHARED_SECRET')) {
-		die('No FWC_SHARED_SECRET defined');
-	}
-
-	if (empty($_POST['secret']) ||
-		$_POST['secret'] != FWC_SHARED_SECRET) {
-		return false;
 	}
 
 	$timestamp = round($_POST['timestamp'] / 1000);
@@ -252,6 +166,7 @@ function fwc_submit_images() {
 			'edit_date' => false,
 			'post_status' => 'publish'
 		);
+
 		wp_update_post($data_update);
 		$permalink = get_permalink($post_id);
 
@@ -279,7 +194,6 @@ add_action('wp_ajax_fwc_submit_images', 'fwc_submit_images');
 add_action('wp_ajax_nopriv_fwc_submit_images', 'fwc_submit_images');
 
 function fwc_import_post($row) {
-
 	$verbose = ! empty($_GET['verbose']);
 	$slug = sanitize_title("$row->query");
 
@@ -390,7 +304,7 @@ function fwc_build_image_set($post_id, $row, $images, $label) {
 
 	$attachments = fwc_save_images($post_id, $images, "$label-$timestamp");
 
-   $link = get_the_permalink($post_id);
+	$link = get_the_permalink($post_id);
 
 	$heading = "<h3 class=\"query-label\">". ucwords($label) . ": <strong><a href=\"" . esc_url($link) . "\">$term</a></strong></h3>";
 	$ids = implode(',', $attachments);
@@ -520,7 +434,6 @@ function fwc_save_images($parent_id, $images, $prefix) {
 	$upload_dir = wp_upload_dir();
 	$num = 0;
 	foreach ($images as $image) {
-
 		$href = $image['href'];
 		$src = $image['src'];
 
@@ -581,7 +494,6 @@ function fwc_save_images($parent_id, $images, $prefix) {
 }
 
 function fwc_derive_data_uri($src) {
-
 	// Example $data:
 	// data:image/jpeg;base64,[base64 data]
 	// data:image/jpeg;charset=utf8;base64,[base64 data]
@@ -676,17 +588,17 @@ function fwc_test_post_data() {
 		'lang_from' => 'en',
 		'lang_confidence' => '1',
 		'lang_alternate' => '',
-       'lang_name' => 'English',
+		'lang_name' => 'English',
 	);
 	return $row;
 }
 
 function fwc_enable_cors() {
 	header('x-test: 1');
-	header("Access-Control-Allow-Origin: *");
+	header('Access-Control-Allow-Origin: *');
 }
-add_action('wp_headers', 'fwc_enable_cors');
 
+add_action('wp_headers', 'fwc_enable_cors');
 
 /////////////////////////////////////////////////
 //// Imports images from CSV file. ////
