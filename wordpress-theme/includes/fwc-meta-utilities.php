@@ -59,9 +59,9 @@ function fwc_get_svg($slug) {
 
 function fwc_render_gallery($object) {
 	if (strlen($object['ids'])) {
-		echo '<div class="gallery gallery-columns-3 gallery-size-thumbnail">';
+		$result = '<div class="gallery gallery-columns-3 gallery-size-thumbnail">';
 		foreach ($object['src'] as $src) {
-			echo <<<END
+			$gallery_item = <<<END
 <figure class="gallery-item">
 	<div class="gallery-icon landscape">
 		<a href="#">
@@ -70,11 +70,14 @@ function fwc_render_gallery($object) {
 	</div>
 </figure>
 END;
+			$result .= $gallery_item;
 		}
-		echo '</div>';
+		$result .= '</div>';
 	} else {
-		echo '<div class="gallery empty">No images available</div>';
+		$result = '<div class="gallery gallery-empty">No images available</div>';
 	}
+
+	return $result;
 }
 
 ?>

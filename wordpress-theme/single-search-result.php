@@ -37,9 +37,9 @@ $history = fwc_post_previous_searches_get(
 			$galleries = get_post_galleries($post_id, false);
 			?>
 			<h3>Google:</h3>
-			<?php fwc_render_gallery($galleries[0]); ?>
+			<?php echo fwc_render_gallery($galleries[0]); ?>
 			<h3>Baidu:</h3>
-			<?php fwc_render_gallery($galleries[1]); ?>
+			<?php echo fwc_render_gallery($galleries[1]); ?>
 		</div>
 		<div class="post-details"  style="margin-bottom: 1.5rem;">
 			<table style="width: 100%; text-align: left;">

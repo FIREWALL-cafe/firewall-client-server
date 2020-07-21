@@ -15,8 +15,6 @@ function fwc_post_previous_searches_get($search_term, $timestamp) {
 }
 
 function fwc_post_previous_searches_render($posts, $timestamp) {
-	$gallery_empty = '<div class="gallery empty">No images available</div>';
-
 	if (sizeof($posts) > 1) {
 		echo '<div class="post-histories-container post-section">';
 		echo '<h3>Previous searches:</h3>';
@@ -32,9 +30,9 @@ function fwc_post_previous_searches_render($posts, $timestamp) {
 				$galleries = get_post_galleries($post->ID, false);
 				echo '<div class="post-content" id="images-gallery">';
 				echo '<h3>Google:</h3>';
-				fwc_render_gallery($galleries[0]);
+				echo fwc_render_gallery($galleries[0]);
 				echo '<h3>Baidu:</h3>';
-				fwc_render_gallery($galleries[1]);
+				echo fwc_render_gallery($galleries[1]);
 				echo '</div>';
 				echo '</div>';
 			}

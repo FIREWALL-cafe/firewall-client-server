@@ -253,7 +253,7 @@ input[type=button] {
 	min-width: 100%;
 }
 
-.gallery.empty {
+.gallery-empty {
 	background: #f0f0f0;
 	height: 100% !important;
 	color: #aaa;
@@ -263,10 +263,9 @@ input[type=button] {
 	box-sizing: border-box;
 }
 
-#images-gallery .gallery.empty {
+#images-gallery .gallery-empty {
 	line-height: 220px !important;
 	height: 220px !important;
-/*	background: transparent;*/
 	padding-left: 100px;
 	font-size: 1.5rem;
 }
@@ -377,13 +376,14 @@ footer li {
 
 .migrate-search-library-special {
 	width: 10000px;
-	padding: 25px 0 25px 25px !important;
+	padding: 25px 25px 25px 25px !important;
 	margin: 0 !important;
 	border: 0;
 }
 
 .migrate-search-library-special .gallery {
 	height: 300px;
+	line-height: 300px;
 	margin-bottom: 100px;
 }
 

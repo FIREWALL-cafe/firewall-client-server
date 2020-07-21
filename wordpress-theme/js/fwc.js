@@ -49,7 +49,7 @@ $(document).ready(function () {
 			$(gallery).width(galleryWidth);
 		});
 
-		$('.gallery.empty').each(function (index, element) {
+		$('.gallery-empty').each(function (index, element) {
 			var width = $(element).siblings('.gallery').width();
 			width = (width) ? (width - 100) : '100%';
 			$(element).width(width);
@@ -167,7 +167,7 @@ result += '<figure class="gallery-item">\
 			result += '</div>';
 			return result;
 		} else {
-			return '<div class="gallery empty"><span>No images available</span></div>';
+			return '<div class="gallery gallery-empty"><span>No images available</span></div>';
 		}
 	}
 
