@@ -26,10 +26,20 @@
 	<body <?php body_class(); ?>>
 		<?php if (!is_single() or (get_post_type() != 'post' and get_post_type() != 'search-result')) { ?>
 		<div class="container">
-			<header>
+			<header class="migrate-logo-generic">
 				<h1>
 					<a href="/" class="wordmark">
-						<img src="<?php echo get_stylesheet_directory_uri(); ?>/img/logo-firewall-generic.svg?<?php echo filemtime(get_stylesheet_directory().'/img/logo-firewall-generic.svg'); ?>" alt="Firewall">
+						<?php
+						// Modify variable below (locally in production) to use header logo
+						// specific to current installation, e.g. `/img/logo-firewall-nyc.jpg`
+						// If logo image is tall, also change header class above from
+						// `migrate-logo-generic` to `migrate-logo-round`
+						$logo_file = '/img/logo-firewall-generic.svg';
+						$logo_path = get_stylesheet_directory_uri().$logo_file;
+						$logo_last_modified = filemtime(get_stylesheet_directory().$logo_file) or '';
+						$logo_url = $logo_path.'?'.$logo_last_modified;
+						?>
+						<img src="<?php echo $logo_url; ?>" alt="Firewall">
 					</a>
 				</h1>
 				<?php wp_nav_menu(array('theme_location' => 'header-menu')); ?>

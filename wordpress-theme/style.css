@@ -50,6 +50,14 @@ hr {
 	padding: 15px 15px 25px 15px;
 }
 
+header.migrate-logo-generic {
+	height: 3.25rem;
+}
+
+header.migrate-logo-round {
+	height: 10.25rem;
+}
+
 header::after {
 	clear: both;
 	content: "";
@@ -89,11 +97,6 @@ header .menu a {
 
 header .menu .current-menu-item a {
 	border-color: #E60011;
-}
-
-header .details {
-	clear: both;
-	padding: 15px 0;
 }
 
 img {
@@ -724,14 +727,6 @@ footer li {
 	margin-bottom: 30px;
 }
 
-@media (min-width: 540px) {
-	header .details {
-		clear: none;
-		float: right;
-		width: 225px;
-	}
-}
-
 @media (min-width: 665px) {
 	.artist img {
 		float: left;
@@ -755,7 +750,6 @@ footer li {
 @media (min-width: 980px) {
 	header {
 		position: relative;
-		height: 4rem;
 	}
 
 	header h1 {
@@ -773,14 +767,6 @@ footer li {
 		position: absolute;
 		left: 14rem;
 		bottom: -2px;
-	}
-
-	header .details {
-		position: absolute;
-		right: 0;
-		bottom: 0;
-		width: 225px;
-		padding: 0;
 	}
 
 	section {
