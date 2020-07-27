@@ -52,11 +52,6 @@ function fwc_format_date_new($timestamp) {
   return date('j M. Y', $timestamp - (4*60*60));
 }
 
-function fwc_get_svg($slug) {
-  $svg = get_template_part("includes/icon", "$slug.svg");
-  return $svg;
-}
-
 function fwc_render_gallery($object) {
 	if (strlen($object['ids'])) {
 		$result = '<div class="gallery gallery-columns-3 gallery-size-thumbnail">';

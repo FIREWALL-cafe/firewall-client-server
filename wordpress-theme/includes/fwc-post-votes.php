@@ -34,7 +34,8 @@ function fwc_post_vote_button($slug, $key, $vote_count_for_single_search) {
 
   echo "<div class=\"vote-button-container\">";
   echo "<span class=\"fwc-nav-tag fwc-vote-button\" data-key=\"$key\" data-post=\"$post_id\">";
-  echo fwc_get_svg($slug);
+  $template_directory_uri = get_template_directory_uri();
+  echo "<img src=\"$template_directory_uri/img/vote-buttons-$slug.svg\">";;
   echo "</span>";
   echo "<p class=\"vote-count tooltip\" tooltip=\"Votes for current search result\">$vote_count_for_single_search</p>";
   echo "<p class=\"vote-count-historic tooltip\" tooltip=\"Votes for this search term all-time\"><span>$vote_count_for_search_term</span></p>";
