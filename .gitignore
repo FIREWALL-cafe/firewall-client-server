@@ -1,4 +1,5 @@
 .DS_Store
+.tm_properties
 *~
 /.vagrant
 /apache/firewall-cafe.conf
