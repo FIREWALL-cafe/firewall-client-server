@@ -2,9 +2,10 @@
 
 if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-if( ! class_exists('acf_location_options_page') ) :
+if( ! class_exists('ACF_Location_Block') ) :
 
-class acf_location_options_page extends acf_location {
+class ACF_Location_Block extends acf_location {
+	
 	
 	/*
 	*  __construct
@@ -22,10 +23,9 @@ class acf_location_options_page extends acf_location {
 	function initialize() {
 		
 		// vars
-		$this->name = 'options_page';
-		$this->label = __("Options Page",'acf');
+		$this->name = 'block';
+		$this->label = __("Block",'acf');
 		$this->category = 'forms';
-    	
 	}
 	
 	
@@ -45,9 +45,14 @@ class acf_location_options_page extends acf_location {
 	
 	function rule_match( $result, $rule, $screen ) {
 		
-		$options_page = acf_maybe_get( $screen, 'options_page' );
-		return $this->compare( $options_page, $rule );
+		// vars
+		$block = acf_maybe_get( $screen, 'block' );
 		
+		// bail early if not block
+		if( !$block ) return false;
+				
+        // compare
+        return $this->compare( $block, $rule );
 	}
 	
 	
@@ -67,28 +72,24 @@ class acf_location_options_page extends acf_location {
 	function rule_values( $choices, $rule ) {
 		
 		// vars
-		$pages = acf_get_options_pages();
+		$blocks = acf_get_block_types();
 		
-		
-		// populate
-		if( !empty($pages) ) {
-			foreach( $pages as $page ) {
-				$choices[ $page['menu_slug'] ] = $page['page_title'];
+		// loop
+		if( $blocks ) {
+			$choices['all'] = __('All', 'acf');
+			foreach( $blocks as $block ) {
+				$choices[ $block['name'] ] = $block['title'];
 			}
-		} else {
-			$choices[''] = __('No options pages exist', 'acf');
-		}
-		
+		}	
 		
 		// return
-	    return $choices;
-		
+		return $choices;
 	}
 	
 }
 
 // initialize
-acf_register_location_rule( 'acf_location_options_page' );
+acf_register_location_rule( 'ACF_Location_Block' );
 
 endif; // class_exists check
 
