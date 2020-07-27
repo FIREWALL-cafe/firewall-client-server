@@ -5,7 +5,6 @@ require_once( __DIR__ . '/includes/fwc-meta-utilities.php');
 require_once( __DIR__ . '/includes/fwc-post-votes.php');
 require_once( __DIR__ . '/includes/fwc-post-partials.php');
 require_once( __DIR__ . '/includes/fwc-post-previous-searches.php');
-require_once( __DIR__ . '/includes/fwc-library-nav.php');
 require_once( __DIR__ . '/includes/fwc-export.php');
 require_once( __DIR__ . '/includes/fwc-migrate-data.php');
 require_once( __DIR__ . '/includes/fwc-search-result-screenshot.php');

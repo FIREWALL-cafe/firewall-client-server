@@ -739,10 +739,6 @@ footer li {
 	font-weight: normal;
 }
 
-.library-nav {
-	margin-bottom: 30px;
-}
-
 @media (min-width: 665px) {
 	.artist img {
 		float: left;
