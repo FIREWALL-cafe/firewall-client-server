@@ -1,12 +1,15 @@
 html {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
-*, *:before, *:after {
-  box-sizing: inherit;
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
 }
 
 body {
-	font: 16px/24px "Source Sans Pro", sans-serif;
+	font: 16px/24px 'Source Sans Pro', sans-serif;
 	min-width: 980px;
 }
 
@@ -22,19 +25,13 @@ a:hover {
 	text-decoration: none;
 }
 
-a.publicationName {
-	color: #000;
-}
-
-a.publicationName:hover {
-	color: #e60011;
-}
-
-b, strong {
+b,
+strong {
 	font-weight: bold;
 }
 
-i, em {
+i,
+em {
 	font-style: italic;
 }
 
@@ -60,7 +57,7 @@ header.migrate-logo-round {
 
 header::after {
 	clear: both;
-	content: "";
+	content: '';
 	display: table;
 }
 
@@ -128,6 +125,7 @@ h3 {
 	font-weight: 600;
 	margin-bottom: 7px;
 }
+
 h3.tag-set-title {
 	margin-top: 15px;
 }
@@ -169,9 +167,10 @@ label {
 	color: #E60011;
 }
 
-input, textarea {
+input,
+textarea {
 	display: block;
-	font: 14px "Source Sans Pro", sans-serif;
+	font: 14px 'Source Sans Pro', sans-serif;
 	margin: 5px 0 15px 0;
 	padding: 5px;
 	background: #f2f2f2;
@@ -180,13 +179,16 @@ input, textarea {
 	transition: all 0.25s ease-out;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
 	border-color: #E60011;
 	background: #fff;
 }
 
-button, input[type=submit], input[type=button] {
-	font: bold 14px "Source Sans Pro", sans-serif;
+button,
+input[type=submit],
+input[type=button] {
+	font: bold 14px 'Source Sans Pro', sans-serif;
 	color: #E60011;
 	background: #ccc;
 	border: none;
@@ -228,7 +230,7 @@ input[type=button] {
 }
 
 .columns::after {
-	content: "";
+	content: '';
 	clear: both;
 	display: table;
 }
@@ -278,7 +280,7 @@ input[type=button] {
 }
 
 .gallery:after {
-	content: "";
+	content: '';
 	clear: both;
 	display: table;
 }
@@ -297,7 +299,6 @@ input[type=button] {
 
 .gallery-icon img {
 	height: 100%;
-/*    width: auto;*/
 	background: #eee;
 	display: block;
 }
@@ -483,6 +484,7 @@ footer li {
 	margin: 45px 0 30px 0;
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
 }
+
 .tag-navigation-container.open {
 	max-height: calc(800px/4);
 	transition: max-height 0.5s ease-out, padding 0.5s ease-out;
@@ -495,14 +497,17 @@ footer li {
 	line-height: 1.2;
 	text-align: center;
 }
+
 .tag-navigation-container svg#more-button {
 	fill-opacity: 1;
 	transition: fill-opacity 0.5s ease-out;
 }
+
 .tag-navigation-container.open svg#more-button {
 	fill-opacity: 0;
 	transition: fill-opacity 0.5s ease-out;
 }
+
 .tag-navigation-container.open .tag-navigation-opener:before {
 	content: 'Show fewer categories';
 	color: red;
@@ -616,14 +621,17 @@ footer li {
 	border: none;
 	text-decoration: none;
 }
+
 .fwc-nav-tag:hover {
 	text-decoration: none;
 	border: none;
 }
+
 .fwc-nav-tag:nth-of-type(9n-1),
 .tag-navigation-opener {
 	margin-right: 0;
 }
+
 .fwc-nav-tag:nth-of-type(8) {
 	margin-right: 1%;
 }
@@ -648,15 +656,19 @@ footer li {
 	padding: 0 0.5rem;
 	border-radius: 3px;
 }
+
 .post-tag.red {
 	background-color: #e60011;
 }
+
 .post-tag.blue {
 	/*background-color: #1c184d;*/
 }
+
 .post-tag.grey {
 	/*background-color: #939598;*/
 }
+
 .post-tag.green {
 	/*background-color: #00a651;*/
 }
@@ -664,15 +676,19 @@ footer li {
 .post-section {
 	margin-bottom: 2rem;
 }
+
 .post-section.red {
 	color: #e60011;
 }
+
 .post-section.blue {
 	color: #1c184d;
 }
+
 .post-section.grey {
 	background-color: #939598;
 }
+
 .post-section.green {
 	background-color: #00a651;
 }
@@ -741,7 +757,7 @@ footer li {
 	}
 
 	.artist::after {
-		content: "";
+		content: '';
 		clear: both;
 		display: table;
 	}
@@ -812,9 +828,11 @@ footer li {
 	.fwc-nav-tag {
 		width: calc(96%/4);
 	}
+
 	.tag-navigation-container {
 		max-height: none;
 	}
+
 	.tag-navigation-opener {
 		display: none;
 	}
@@ -824,9 +842,9 @@ footer li {
 
 /* TODO use this as a SASS module */
 .cleared:after {
-  content: '';
-  display: table;
-  clear: both;
+	content: '';
+	display: table;
+	clear: both;
 }
 
 .migrate-container {
@@ -862,9 +880,9 @@ footer li {
 }
 
 .migrate-front-page-steps li:after {
-  content: '';
-  clear: both;
-  display: table;
+	content: '';
+	clear: both;
+	display: table;
 }
 
 .migrate-front-page-steps li img {
@@ -882,7 +900,6 @@ footer li {
 	font-size: 3rem;
 	padding: 0.5rem 0 0 4rem;
 	text-align: right;
-/*	font-family: 'Garamond', 'Times New Roman', serif;*/
 	line-height: 1;
 }
 
@@ -1207,10 +1224,6 @@ input[disabled],
 .disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
-}
-
-#response {
-    font-family: monospace;
 }
 
 .tooltip:before {
