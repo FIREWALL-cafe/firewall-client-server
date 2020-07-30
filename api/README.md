@@ -1,19 +1,18 @@
 
-# Firewall-Cafe-API
+# Firewall-API
 
-Firewall-Cafe-API is the interface between the app and the data stored in the database.
+Firewall-API is the interface between the app and the data stored in the database.
 
 - *server.js* is the script to run in order to interface with the firewall-cafe database and contains the routes for the API itself.
 - *queries.js* links the database to the API and contains the specific functions the routes call in *server.js*.
 
-For access to images, please contact firewallcafenyc@gmail.com.
 
 ## Installing and Running the API
 
 The API need only run in one instance and be connec
 
  1. Pull from the repository.
- 2. Add *db_credentials.js* (secret) file to the directory to link the API to the database.
+ 2. Add *config.js* (secret, see *config-example.js*) file to the directory to link the API to the database.
  3. Run `npm install`
  4. Run `node app.js` - (or run the app using any node process manager).
  5. The app should now be running and accessible on *port 11458*!
@@ -23,21 +22,21 @@ The API need only run in one instance and be connec
 ### Reading Data
 Read-Only data in JSON format can be retrieved using the following paths appended to api.firewallcafe.com/.
 
-##### Search Information Only
+#### Search Information Only
 *Returns all fields from the 'Searches' table.*
 |Route  | Description |
 |--|--|
 |`/searches` | Returns all search-related info for all searches. |
 |`/searches/search_id/:search_id`|Returns search-related info for an individual search object (by `search_id`).|
 
-##### Searches With Image Information
+#### Searches With Image Information
 *Returns all fields from the 'Searches'  and 'Images' tables.*
 |Route  | Description |
 |--|--|
 |`/searches/images`|Returns all search-related info & image data for all searches.|
 |`/searches/images/search_id/:search_id`|Returns all search-related info & image data for an individual search (by `search_id`).|
 
-##### Searches With Vote Information
+#### Searches With Vote Information
 *Returns all fields from the 'Searches' and 'Have_Votes' tables.*
 
 |Route  | Description |
@@ -54,14 +53,14 @@ Read-Only data in JSON format can be retrieved using the following paths appende
 |`/searches/votecounts`|Returns all fields from the 'Searches' table along with total votes per vote category for all votes.|
 |`/searches/:search_id/votecounts`|Returns all fields from the 'Searches' table along with total votes per vote category for an individual vote (By `search_id`).
 
-##### Searches and Images, With Vote Counts
+#### Searches and Images, With Vote Counts
 *Returns all fields from the 'Searches' and 'Images' tables with the total number of votes received per vote category.*
 |Route  | Description |
 |--|--|
 |`/searches/votescounts/images`|Returns data for all searches|
 |`/searches/:search_id/votecounts/images`|Returns data for individual search (by search_id).
 
-##### Image Subsets
+#### Image Subsets
 *Returns only image data for given searches*
 |Route  | Description |
 |--|--|
@@ -76,7 +75,6 @@ Read-Only data in JSON format can be retrieved using the following paths appende
 |`/images/wtf_searches`|Returns all images for searches with a 'wtf' vote.|
 
 ## Resources
-For access to images, please contact firewallcafenyc@gmail.com.
 
 #### Database Layout
 *Here is a visual representation of the current database structure:*
@@ -91,8 +89,3 @@ For access to images, please contact firewallcafenyc@gmail.com.
 |`5`|Lost In Translation|The search term does not seem to translate well.|
 |`6`|NSFW|Search results appear to be 'Not Safe for Work'.|
 |`7`|WTF|The search yielded some weird or unusual results.|
-
-
-## License
-Copyright 2020.
-License Information Goes Here :)

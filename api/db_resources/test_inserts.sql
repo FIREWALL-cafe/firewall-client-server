@@ -1,26 +1,15 @@
---------------------------------------------------------------------------------
--- Firewall Cafe Database TEST Insert Statements v1.1
--- May 2020
--- Collaboration By:
-    -- Andrew Bauman (andrewbauman1)
---------------------------------------------------------------------------------
--- File Description
-    -- Contains the INSERT statements for the test database to be used
-    -- alongside Firewall Cafe (https://github.com/dphiffer/firewall-cafe).
---------------------------------------------------------------------------------
-
 ---------------------------------------
 --INSERT STATEMENTS FOR TEST Database--
 ---------------------------------------
 
 INSERT INTO searches VALUES
-  (1, CURRENT_TIMESTAMP, 'Location 1', '74.56.52.35', 'testUser111', 'Google', 'Baidu', 'Bananas', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (2, CURRENT_TIMESTAMP, 'Location 1', '74.56.53.36', 'testUser222', 'Google', 'Baidu', 'Ice Cream', 'en', '.96', NULL, '香蕉', 'ch-zn', 'true', 'false', NULL, NULL, NULL, NULL ),
-  (3, CURRENT_TIMESTAMP, 'Location 1', '74.56.54.37', 'testUser333', 'Google', 'Baidu', 'Marist', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'true', NULL, NULL, NULL, NULL ),
-  (4, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (5, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (6, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'ch-zn', 'true', 'false', NULL, NULL, NULL, NULL ),
-  (7, CURRENT_TIMESTAMP, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'ch-zn', 'false', 'true', NULL, NULL, NULL, NULL );
+  (1, CURRENT_TIMESTAMP, 'Location 1', '74.56.52.35', 'testUser111', 'Google', 'Baidu', 'Bananas', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (2, CURRENT_TIMESTAMP, 'Location 1', '74.56.53.36', 'testUser222', 'Google', 'Baidu', 'Ice Cream', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (3, CURRENT_TIMESTAMP, 'Location 1', '74.56.54.37', 'testUser333', 'Google', 'Baidu', 'Marist', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL ),
+  (4, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (5, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (6, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (7, CURRENT_TIMESTAMP, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
 
 INSERT INTO votes VALUES
   (1, 'Censored', 'Content appears to be censored.'),
