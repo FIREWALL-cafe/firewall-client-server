@@ -248,7 +248,7 @@ const getSearchWithVoteCountsBySearchId = (request, response) => {
 
 //GET: All Search Results With Vote Counts & Image Info
 const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
-	pool.query(`SELECT s.*, i.image_id, i.image_path, i.image_source, i.image_rank,
+	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
 							COUNT(hv.*) total,
 							COUNT(case when vote_id = '1' then 1 end) AS Censored,
 							COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -259,7 +259,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 							COUNT(case when vote_id = '7' then 1 end) AS WTF
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
-							GROUP BY s.search_id, i.image_id, i.image_path, i.image_source, i.image_rank;`, (error, results) => {
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -270,7 +270,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 //GET: All Search Results With Vote Counts & Image Info
 const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 	const search_id = parseInt(request.params.search_id)
-	pool.query(`SELECT s.*, i.image_id, i.image_path, i.image_source, i.image_rank,
+	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
 							COUNT(hv.*) total,
 							COUNT(case when vote_id = '1' then 1 end) AS Censored,
 							COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -282,7 +282,7 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
 							WHERE s.search_id = ${search_id}
-							GROUP BY s.search_id, i.image_id, i.image_path, i.image_source, i.image_rank;`, (error, results) => {
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -425,32 +425,61 @@ const getImagesOnlyWTF = (request, response) => {
 
 //POST: createSearch -- Add searches
 const createSearch = (request, response) => {
-	const {search_location, search_ip_address, search_client_name,
-					search_engine_initial, search_engine_translation,search_term_initial,
-					search_term_initial_language_code, search_term_initial_lanuage_confidence,
-					search_term_initial_language_alternate_code, search_term_translation,
-					search_term_translation_language_code, search_term_status_banned,
-					search_term_status_sensitive} = request.body
+	const {
+		search_timestamp,
+		search_location,
+		search_ip_address,
+		search_client_name,
+		search_engine_initial,
+		search_engine_translation,
+		search_term_initial,
+		search_term_initial_language_code,
+		search_term_initial_language_confidence,
+		search_term_initial_language_alternate_code,
+		search_term_translation,
+		search_term_translation_language_code,
+		search_term_status_banned,
+		search_term_status_sensitive,
+		search_schema_initial
+	} = request.body
 
-				console.log(search_location, search_ip_address, search_client_name,
-								search_engine_initial, search_engine_translation,search_term_initial,
-								search_term_initial_language_code, search_term_initial_lanuage_confidence,
-								search_term_initial_language_alternate_code, search_term_translation,
-								search_term_translation_language_code, search_term_status_banned,
-								search_term_status_sensitive)
+	console.log(request.body)
 
-	pool.query(`INSERT INTO searches (search_id, search_timestamp, search_location, search_ip_address, search_client_name,
-							search_engine_initial, search_engine_translation,search_term_initial,
-							search_term_initial_language_code, search_term_initial_lanuage_confidence,
-							search_term_initial_language_alternate_code, search_term_translation,
-							search_term_translation_language_code, search_term_status_banned,
-							search_term_status_sensitive) VALUES (DEFAULT, CURRENT_TIMESTAMP,
-							${search_location}, ${search_ip_address}, ${search_client_name},
-							${search_engine_initial}, ${search_engine_translation}, ${search_term_initial},
-							${search_term_initial_language_code}, ${search_term_initial_lanuage_confidence},
-							${search_term_initial_language_alternate_code}, ${search_term_translation},
-							${search_term_translation_language_code}, ${search_term_status_banned},
-							${search_term_status_sensitive})`, (error, results) => {
+	pool.query(
+		`INSERT INTO searches (
+			search_id,
+			search_timestamp,
+			search_location,
+			search_ip_address,
+			search_client_name,
+			search_engine_initial,
+			search_engine_translation,
+			search_term_initial,
+			search_term_initial_language_code,
+			search_term_initial_language_confidence,
+			search_term_initial_language_alternate_code,
+			search_term_translation,
+			search_term_translation_language_code,
+			search_term_status_banned,
+			search_term_status_sensitive
+		) VALUES (
+			DEFAULT,
+			${search_timestamp},
+			${search_location},
+			${search_ip_address},
+			${search_client_name},
+			${search_engine_initial},
+			${search_engine_translation},
+			${search_term_initial},
+			${search_term_initial_language_code},
+			${search_term_initial_language_confidence},
+			${search_term_initial_language_alternate_code},
+			${search_term_translation},
+			${search_term_translation_language_code},
+			${search_term_status_banned},
+			${search_term_status_sensitive},
+			${search_schema_initial}
+		)`, (error, results) => {
 	if (error) {
 		throw error
 
@@ -461,12 +490,12 @@ const createSearch = (request, response) => {
 
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
-	const {vote_id, search_id, vote_client_name, vote_ip_address} = request.body
+	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
 
 				console.log(vote_id, search_id, vote_client_name, vote_ip_address)
 
 	pool.query(`INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name,
-							vote_ip_address) VALUES (${vote_id}, ${search_id}, CURRENT_TIMESTAMP,
+							vote_ip_address) VALUES (${vote_id}, ${search_id}, ${vote_timestamp},
 							${vote_client_name}, ${vote_ip_address})`, (error, results) => {
 	if (error) {
 		throw error
@@ -478,13 +507,13 @@ const createVote = (request, response) => {
 
 //POST: saveImage -- Add searches
 const saveImage = (request, response) => {
-	const {search_id, image_source, image_path, image_rank} = request.body
+	const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
 
-				console.log(search_id, image_source, image_path, image_rank)
+				console.log(search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data)
 
-	pool.query(`INSERT INTO images (image_id, search_id, image_source, image_path,
-							image_rank) VALUES (DEFAULT, ${search_id}, ${image_source}, ${image_path},
-							${image_rank})`, (error, results) => {
+	pool.query(`INSERT INTO images (image_id, search_id, image_search_engine, image_href,
+							image_rank) VALUES (DEFAULT, ${search_id}, ${image_search_engine}, ${image_href},
+							${image_rank}, ${image_mime_type}, ${image_data})`, (error, results) => {
 	if (error) {
 		throw error
 

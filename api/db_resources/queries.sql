@@ -169,7 +169,7 @@
 ---------------
 
 -- All Search Results With Vote Counts & Image Info
-  SELECT s.*, i.image_id, i.image_path, i.image_source, i.image_rank,
+  SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
     COUNT(hv.*) total,
     COUNT(case when vote_id = '1' then 1 end) AS Censored,
     COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -180,7 +180,7 @@
     COUNT(case when vote_id = '7' then 1 end) AS WTF
   FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
   FULL OUTER JOIN images i on s.search_id = i.search_id
-  GROUP BY s.search_id, i.image_id, i.image_path, i.image_source, i.image_rank;
+  GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;
 
 -- ISSUE: CARTESIAN PRODUCTS: Should retrieve votes and images separately.
 

@@ -11,15 +11,6 @@ INSERT INTO searches VALUES
   (6, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
   (7, CURRENT_TIMESTAMP, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
 
-INSERT INTO votes VALUES
-  (1, 'Censored', 'Content appears to be censored.'),
-  (2, 'Uncensored', 'Content in both browsers appear to be the same.'),
-  (3, 'Bad Translation', 'Search term was not translated correctly.'),
-  (4, 'Good Translation', 'Search term appears to have been translated correctly.'),
-  (5, 'Lost in Translation', 'Search term lost in translation'),
-  (6, 'NSFW', 'Not Safe for Work content.'),
-  (7, 'WTF', 'WTF');
-
 INSERT INTO images VALUES
  	(1, 1, 'Google', '/filePath/fileOne.jpg', NULL),
  	(2, 1, 'Baidu', '/filePath/fileTwo.jpg', NULL),
