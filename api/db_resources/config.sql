@@ -31,7 +31,6 @@ CREATE TABLE searches (
 	wordpress_search_term_popularity            integer,
 	wordpress_copyright_takedown                boolean,
 	wordpress_unflattened                       boolean,
-	wordpress_nearest_neighbor_images           boolean,
 	wordpress_regular_post_id                   integer,
 	wordpress_search_result_post_id             integer,
 	wordpress_search_result_post_slug           text,
@@ -47,8 +46,8 @@ CREATE TABLE images (
 	image_rank                              text,
 	image_mime_type                         text,
 	image_data                              bytea,
-	image_wordpress_attachment_post_id      integer,
-	image_wordpress_attachment_post_guid    text,
+	wordpress_attachment_post_id            integer,
+	wordpress_attachment_file_path          text,
 	primary key(image_id)
 );
 
@@ -72,9 +71,11 @@ INSERT INTO votes VALUES
 
 -- Have Votes --
 CREATE TABLE have_votes (
+	vote_serial       serial not null,
 	vote_id           serial not null references votes(vote_id),
 	search_id         serial not null references searches(search_id),
 	vote_timestamp    bigint,
 	vote_client_name  text,
-	vote_ip_address   text
+	vote_ip_address   text,
+	primary key(vote_serial)
 );

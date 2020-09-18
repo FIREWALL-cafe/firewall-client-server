@@ -181,7 +181,7 @@ function fwc_migrate_data() {
 			// 	$data_general['location'] = 'new_york_city';
 			// }
 		}
-		foreach ($post_censorship_status as $censor) {
+		foreach ($post_censorship_status as $tag) {
 			if ($tag === 'censored') {
 				tag_and_increment($data_general, 'votes_censored');
 			}
@@ -245,7 +245,11 @@ function fwc_migrate_data() {
 				$data['search_term_translation'] = get_meta($post_meta['translation'], $timestamp);
 				$data['search_term_language_initial_code'] = get_meta($post_meta['search_language'], $timestamp);
 				$data['search_term_language_initial_name'] = get_meta($post_meta['search_language_name'], $timestamp);
-				$data['search_term_language_initial_confidence'] = get_meta($post_meta['search_language_name'], $timestamp);
+				$data['search_term_language_initial_confidence'] = get_meta($post_meta['search_language_confidence'], $timestamp);
+				// First version set `$data['search_term_language_initial_confidence']` to
+				// `$post_meta['search_language_alternate_code']` for all schema 1 results
+				// incorrectly, fixed months later by patching data, then revised and
+				// noted here
 				$data['search_term_language_initial_alternate'] = get_meta($post_meta['search_language_alternate'], $timestamp);
 				$data['search_term_status_banned'] = (get_meta($post_meta['banned'], $timestamp) === 'true') ? 1 : 0;
 				$data['search_term_status_sensitive'] = (get_meta($post_meta['sensitive'], $timestamp) === 'true') ? 1 : 0;
@@ -364,6 +368,7 @@ function fwc_migrate_data() {
 					$image_timestamp = max($image_timestamps);
 				} else if (count($image_timestamps) === 1) {
 					$data['data_migration_nearest_neighbor_images'] = 0;
+					$image_timestamp = max($image_timestamps);
 				} else {
 					$data['data_migration_nearest_neighbor_images'] = 0;
 					$image_timestamp = 0;

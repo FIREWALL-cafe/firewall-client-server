@@ -562,15 +562,15 @@ function fwc_attach_image($parent_id, $path, $href) {
 }
 
 function fwc_intermediate_image_sizes($sizes) {
-	if (defined('FWC_IMPORTING_IMAGES')) {
-		return array(
-			'thumbnail'
-		);
-	}
-	return $sizes;
+	// Causes only thumbnail and full size to be saved for any image attachment
+	// upload. Originally only ran when FWC_IMPORTING_IMAGES defined, but makes
+	// sense for all situations.
+	return array(
+		'thumbnail'
+	);
 }
-add_filter('intermediate_image_sizes', 'fwc_intermediate_image_sizes');
 
+add_filter('intermediate_image_sizes', 'fwc_intermediate_image_sizes');
 
 /////////////////////////////////////////////////
 //// Utilities
