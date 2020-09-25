@@ -1,5 +1,6 @@
 const config = require('./config.js')
-pool = config.pool
+const pool = config.pool
+
 /*****************************/
 /*searches w/o Images & Votes*/
 /*****************************/

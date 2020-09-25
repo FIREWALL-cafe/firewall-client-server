@@ -105,7 +105,6 @@ function migrate_psql_insert_search($debug, $database, $post) {
 			// Writes to API should use 13-digit precision from schema 3 onward
 		'search_location' => pg_escape_literal($post_meta['search_location']),
 		'search_client_name' => pg_escape_literal($post_meta['search_client_name']),
-		'search_engine_initial' => pg_escape_literal($post_meta['search_engine_initial']),
 		'search_term_initial' => pg_escape_literal($post_meta['search_term_initial']),
 		'search_term_translation' => pg_escape_literal($post_meta['search_term_translation']),
 		'search_term_status_banned' => $post_meta['search_term_status_banned'] ? 'TRUE' : 'FALSE',
@@ -140,11 +139,14 @@ function migrate_psql_insert_search($debug, $database, $post) {
 	// Field 'search_engine_translation'
 	// Was never sent for posts with initial schema 0 and 1
 	if (isset($post_meta['search_engine_initial'])) {
+		if ($post_meta['search_engine_initial']) {
+			$data['search_engine_initial'] = pg_escape_literal($post_meta['search_engine_initial']);
+		}
 		if ($post_meta['search_engine_initial'] === 'google') {
-			$data['search_engine_translation'] = '\'baidu\'';
+			$data['search_engine_translation'] = pg_escape_literal('baidu');
 		}
 		if ($post_meta['search_engine_initial'] === 'baidu') {
-			$data['search_engine_translation'] = '\'google\'';
+			$data['search_engine_translation'] = pg_escape_literal('google');
 		}
 	}
 
