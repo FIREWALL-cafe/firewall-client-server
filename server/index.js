@@ -266,7 +266,7 @@ function setupTranslation(query, detections) {
 function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = doc['translations'],
-		sensitive = doc.sensitive.lookup[query],
+		sensitive = doc.sensitive? doc.sensitive.lookup[query] : false,
 		inSheet = false,
 		source,
 		value;
@@ -323,7 +323,7 @@ function getTranslation(search, callback) {
 
 	googleTranslate(search, function(err, translation) {
 		if (err) {
-			console.log(err);
+			callback(err);
 		} else {
 
 			inSheet = false;
@@ -381,7 +381,7 @@ function googleTranslate(search, callback) {
 				callback(null, translation);
 
 			} else if (response && response.error) {
-
+                console.log("calling back with Error")
 				callback(new Error('[' + response.error.code + '] ' + response.error.message));
 
 			} else {
