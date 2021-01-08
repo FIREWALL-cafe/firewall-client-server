@@ -260,7 +260,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 							COUNT(case when vote_id = '7' then 1 end) AS WTF
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
-							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -283,7 +283,7 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
 							WHERE s.search_id = ${search_id}
-							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -299,7 +299,7 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 const getAllImagesOnly = (request, response) => {
 
 	pool.query(`SELECT i.*
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id`, (error, results) => {
+							FROM searches s FULL JOIN images i ON s.search_id = i.search_id LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -314,7 +314,7 @@ const getImagesOnlyBySearchID = (request, response) => {
 
 	pool.query(`SELECT i.*
 							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-							WHERE s.search_id = ${search_id}`, (error, results) => {
+							WHERE s.search_id = ${search_id} LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -328,7 +328,7 @@ const getImagesOnlyCensored = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 1`, (error, results) => {
+							WHERE hv.vote_id = 1 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -342,7 +342,7 @@ const getImagesOnlyUnsensored = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 2`, (error, results) => {
+							WHERE hv.vote_id = 2 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -356,7 +356,7 @@ const getImagesOnlyBadTranslation = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 3`, (error, results) => {
+							WHERE hv.vote_id = 3 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -370,7 +370,7 @@ const getImagesOnlyGoodTranslation = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 4`, (error, results) => {
+							WHERE hv.vote_id = 4 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -383,7 +383,7 @@ const getImagesOnlyLostInTranslation = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 5`, (error, results) => {
+							WHERE hv.vote_id = 5 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -397,7 +397,7 @@ const getImagesOnlyNSFW = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 6`, (error, results) => {
+							WHERE hv.vote_id = 6 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -411,7 +411,7 @@ const getImagesOnlyWTF = (request, response) => {
 	pool.query(`SELECT i.*
 							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
 							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 8`, (error, results) => {
+							WHERE hv.vote_id = 8 LIMIT 10`, (error, results) => {
 	if (error) {
 		throw error
 	}
