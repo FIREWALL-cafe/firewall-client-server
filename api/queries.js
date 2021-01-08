@@ -38,7 +38,7 @@ const getSearchByID = (request, response) => {
 //GET: All Image Info for All search results
 const getAllImages = (request, response) => {
 	pool.query('SELECT s.*, i.* \
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id', (error, results) => {
+							FROM searches s FULL JOIN images i ON s.search_id = i.search_id LIMIT 100', (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -52,7 +52,7 @@ const getImagesAndSearchBySearchID = (request, response) => {
 
 	pool.query(`SELECT s.*, i.*
 							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-							WHERE s.search_id = ${search_id} LIMIT 10`, (error, results) => {
+							WHERE s.search_id = ${search_id} LIMIT 100`, (error, results) => {
         if (error) {
             throw error
         }
