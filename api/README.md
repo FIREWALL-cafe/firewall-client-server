@@ -14,7 +14,7 @@ The API need only run in one instance and be connec
  1. Pull from the repository.
  2. Add *config.js* (secret, see *config-example.js*) file to the directory to link the API to the database.
  3. Run `npm install`
- 4. Run `node app.js` - (or run the app using any node process manager).
+ 4. Run `node server.js` - (or run the app using any node process manager).
  5. The app should now be running and accessible on *port 11458*!
 
 ## Getting Started
