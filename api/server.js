@@ -46,7 +46,7 @@ app.get('/searches/votecounts', db.getAllSearchesWithVoteCounts)
 app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 
 /* All Available Information, With Vote Counts */
-app.get('/searches/votescounts/images', db.getSearchesWithVoteCountsAndImageInfo)
+app.get('/searches/votecounts/images', db.getSearchesWithVoteCountsAndImageInfo)
 app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAndImageInfoBySearchID)
 
 /* Image Info Only & Image Subsets */
