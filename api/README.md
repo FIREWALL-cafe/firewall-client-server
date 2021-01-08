@@ -57,7 +57,7 @@ Read-Only data in JSON format can be retrieved using the following paths appende
 *Returns all fields from the 'Searches' and 'Images' tables with the total number of votes received per vote category.*
 |Route  | Description |
 |--|--|
-|`/searches/votescounts/images`|Returns data for all searches|
+|`/searches/votecounts/images`|Returns data for all searches|
 |`/searches/:search_id/votecounts/images`|Returns data for individual search (by search_id).
 
 #### Image Subsets
