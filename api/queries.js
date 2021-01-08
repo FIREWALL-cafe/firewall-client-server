@@ -52,11 +52,11 @@ const getImagesAndSearchBySearchID = (request, response) => {
 
 	pool.query(`SELECT s.*, i.*
 							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-							WHERE s.search_id = ${search_id}`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+							WHERE s.search_id = ${search_id} LIMIT 10`, (error, results) => {
+        if (error) {
+            throw error
+        }
+        response.status(200).json(results.rows)
 	})
 }
 
