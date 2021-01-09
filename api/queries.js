@@ -464,6 +464,7 @@ const createSearch = (request, response) => {
     ) VALUES (
         DEFAULT, $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,  $11,  $12,  $13,  $14
     ) RETURNING search_id`;
+
     const values = [
         search_timestamp,
 		search_location,
@@ -482,10 +483,11 @@ const createSearch = (request, response) => {
     ];
 
 	pool.query(query, values, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(201).json(results)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json(results.rows);
+        }
 	})
 }
 
