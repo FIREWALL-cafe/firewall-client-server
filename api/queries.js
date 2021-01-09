@@ -444,46 +444,47 @@ const createSearch = (request, response) => {
 		search_schema_initial
 	} = request.body
 
-	console.log(request.body)
+    console.log(request.body);
+    const query = `INSERT INTO searches (
+        search_id,
+        search_timestamp,
+        search_location,
+        search_ip_address,
+        search_client_name,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_initial_language_confidence,
+        search_term_initial_language_alternate_code,
+        search_term_translation,
+        search_term_translation_language_code,
+        search_term_status_banned,
+        search_term_status_sensitive
+    ) VALUES (
+        DEFAULT, $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,  $11,  $12,  $13,  $14, $15
+    )`;
+    const values = [
+        search_timestamp,
+		search_location,
+		search_ip_address,
+		search_client_name,
+		search_engine_initial,
+		search_engine_translation,
+		search_term_initial,
+		search_term_initial_language_code,
+		search_term_initial_language_confidence,
+		search_term_initial_language_alternate_code,
+		search_term_translation,
+		search_term_translation_language_code,
+		search_term_status_banned,
+		search_term_status_sensitive,
+        search_schema_initial
+    ];
 
-	pool.query(
-		`INSERT INTO searches (
-			search_id,
-			search_timestamp,
-			search_location,
-			search_ip_address,
-			search_client_name,
-			search_engine_initial,
-			search_engine_translation,
-			search_term_initial,
-			search_term_initial_language_code,
-			search_term_initial_language_confidence,
-			search_term_initial_language_alternate_code,
-			search_term_translation,
-			search_term_translation_language_code,
-			search_term_status_banned,
-			search_term_status_sensitive
-		) VALUES (
-			DEFAULT,
-			${search_timestamp},
-			${search_location},
-			${search_ip_address},
-			${search_client_name},
-			${search_engine_initial},
-			${search_engine_translation},
-			${search_term_initial},
-			${search_term_initial_language_code},
-			${search_term_initial_language_confidence},
-			${search_term_initial_language_alternate_code},
-			${search_term_translation},
-			${search_term_translation_language_code},
-			${search_term_status_banned},
-			${search_term_status_sensitive},
-			${search_schema_initial}
-		)`, (error, results) => {
+	pool.query(query, values, (error, results) => {
 	if (error) {
 		throw error
-
 	}
 	response.status(201).send(`Search added with ID: ${results.search_id}`)
 	})
