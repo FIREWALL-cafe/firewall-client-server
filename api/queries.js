@@ -443,8 +443,8 @@ const createSearch = (request, response) => {
 		search_term_status_sensitive,
 		search_schema_initial
 	} = request.body
+    console.log("createSearch:", request.body);
 
-    console.log(request.body);
     const query = `INSERT INTO searches (
         search_id,
         search_timestamp,
@@ -494,37 +494,38 @@ const createSearch = (request, response) => {
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
 	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
+    console.log("createVote:", vote_id, search_id, vote_client_name, vote_ip_address)
 
-				console.log(vote_id, search_id, vote_client_name, vote_ip_address)
+    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
+    const values = [vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
-	pool.query(`INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name,
-							vote_ip_address) VALUES (${vote_id}, ${search_id}, ${vote_timestamp},
-							${vote_client_name}, ${vote_ip_address})`, (error, results) => {
-	if (error) {
-		throw error
-
-	}
-	response.status(201).send(`Vote added with ID: ${results.vote_id}`)
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json(results.rows);
+        }
 	})
 }
 
 //POST: saveImage -- Add searches
 const saveImage = (request, response) => {
 	const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
+    console.log(search_id, image_search_engine, image_href, image_rank);
 
-				console.log(search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data)
+    if (image_data != null) response.status(401).json("saving images to database no longer supported");
 
-	pool.query(`INSERT INTO images (image_id, search_id, image_search_engine, image_href,
-							image_rank) VALUES (DEFAULT, ${search_id}, ${image_search_engine}, ${image_href},
-							${image_rank}, ${image_mime_type}, ${image_data})`, (error, results) => {
-	if (error) {
-		throw error
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const values = [search_id, image_search_engine, image_href, image_rank];
 
-	}
-	response.status(201).send(`Image added with ID: ${results.image_id}`)
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json(results.rows);
+        }
 	})
 }
-
 
 module.exports = {
 	getAllSearches,
