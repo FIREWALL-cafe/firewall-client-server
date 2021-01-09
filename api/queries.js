@@ -462,7 +462,7 @@ const createSearch = (request, response) => {
         search_term_status_banned,
         search_term_status_sensitive
     ) VALUES (
-        DEFAULT, $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,  $11,  $12,  $13,  $14, $15
+        DEFAULT, $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9,  $10,  $11,  $12,  $13,  $14
     )`;
     const values = [
         search_timestamp,
@@ -478,8 +478,7 @@ const createSearch = (request, response) => {
 		search_term_translation,
 		search_term_translation_language_code,
 		search_term_status_banned,
-		search_term_status_sensitive,
-        search_schema_initial
+		search_term_status_sensitive
     ];
 
 	pool.query(query, values, (error, results) => {
