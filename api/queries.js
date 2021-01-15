@@ -38,7 +38,7 @@ const getSearchByID = (request, response) => {
 
 //GET: Image Info w/ search for individual search result (BY search_id)
 const getImagesAndSearchBySearchID = (request, response) => {
-    const search_id = parseInt(request.query.search_id)
+    const search_id = parseInt(request.params.search_id);
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
@@ -59,12 +59,12 @@ const getImagesAndSearchBySearchID = (request, response) => {
 //GET: return all image info EXCEPT raw image data
 const getImagesWithSearch = (request, response) => {
     const page = parseInt(request.query.page) || 1;
-    const pageSize = parseInt(request.query.pageSize) || 100;
-    const offset = (page-1)*pageSize;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
         WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
-    const values = [offset, pageSize];
+    const values = [offset, page_size];
 
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -96,8 +96,13 @@ const getImageBinary = (request, response) => {
 
 //GET: All Votes with Search Info (Only contains searches with votes b/c Inner Join)
 const getAllVotes = (request, response) => {
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
     const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
-        ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id`
+        ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id
+        WHERE v.vote_id > $1 ORDER BY v.vote_id DESC LIMIT $2;`;
+    const values = [offset, page_size]
 	pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -141,99 +146,53 @@ const getVoteByVoteID = (request, response) => {
 	})
 }
 
-//GET: Returns all Censored searches.
-const getCensoredSearches = (request, response) => {
+const getSearchesByCategory = (request, response, category) => {
     const query = `SELECT s.*, COUNT(*) as "censored_votes"
         FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE hv.vote_id = 1 GROUP BY s.search_id;`
-	pool.query(query, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+        WHERE hv.vote_id = $1 GROUP BY s.search_id;`
+    const values = [category];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+}
+
+//GET: Returns all Censored searches.
+const getCensoredSearches = (request, response) => {
+    getSearchesByCategory(request, response, 1);
 }
 
 //GET: Returns all Uncensored searches.
 const getUncensoredSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "uncensored_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 2
-							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+	getSearchesByCategory(request, response, 2);
 }
 
 //GET: Returns all Bad Translation searches.
 const getBadTranslationSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "bad_translation_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 3
-							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+	getSearchesByCategory(request, response, 3);
 }
 
 //GET: Returns all Good Translation searches.
 const getGoodTranslationSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "good_translation_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 4
-							GROUP BY s.search_id;`, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
+	getSearchesByCategory(request, response, 4);
 }
 
 //GET: Returns all Lost In Translation searches.
 const getLostInTranslationSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "lost_in_translation_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 5
-							GROUP BY s.search_id;`, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
+	getSearchesByCategory(request, response, 5);
 }
 
 //GET: Returns all NSFW searches.
 const getNSFWSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "nsfw_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 6
-							GROUP BY s.search_id;`, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
+	getSearchesByCategory(request, response, 6);
 }
 
 //GET: Returns all WTF searches.
 const getWTFSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "wtf_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 7
-							GROUP BY s.search_id;`, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
+	getSearchesByCategory(request, response, 7);
 }
 
 /****************************/
