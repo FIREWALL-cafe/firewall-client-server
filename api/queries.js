@@ -305,6 +305,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
         FULL OUTER JOIN images i on s.search_id = i.search_id
         GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`
+    const values = [];
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
