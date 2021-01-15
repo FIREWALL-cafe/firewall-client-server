@@ -61,11 +61,16 @@ const getImagesAndSearchBySearchID = (request, response) => {
 }
 
 //GET: return all image info EXCEPT raw image data
-const getAllImageMetadata = (request, response) => {
+const getImages = (request, response) => {
+    const page = parseInt(request.query.page) || 1;
+    const pageSize = parseInt(request.query.pageSize) || 25;
+    const offset = page*pageSize - 25;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
-    FROM searches s FULL JOIN images i ON s.search_id = i.search_id`;
+    FROM searches s FULL JOIN images i ON s.search_id = i.search_id
+    WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
+    const values = [offset, pageSize];
 
-    pool.query(query, (error, results) => {
+    pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
@@ -545,7 +550,7 @@ module.exports = {
 	getAllSearches,
 	getSearchByID,
     getAllImages,
-    getAllImageMetadata,
+    getImages,
 	getImagesOnlyBySearchID,
 	getImagesAndSearchBySearchID,
 	getAllVotes,

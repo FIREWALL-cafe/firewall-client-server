@@ -27,7 +27,7 @@ app.get('/searches/search_id/:search_id', db.getSearchByID)
 
 /* Searches & Image Info */
 app.get('/searches/images', db.getAllImages)
-app.get('/searches/images-test', db.getAllImageMetadata)
+app.get('/searches/images-test', db.getImages)
 app.get('/searches/images/search_id/:search_id', db.getImagesAndSearchBySearchID)
 
 /* Searches & Vote Info */
