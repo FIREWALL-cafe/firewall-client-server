@@ -304,8 +304,8 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         COUNT(case when vote_id = '7' then 1 end) AS WTF
         FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
         FULL OUTER JOIN images i on s.search_id = i.search_id
-        GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank
-        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2;`
+        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2
+        GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`
     const values = [offset, page_size];
 	pool.query(query, values, (error, results) => {
         if (error) {
