@@ -48,7 +48,7 @@ const getAllImages = (request, response) => {
 
 //GET: Image Info w/ search for individual search result (BY search_id)
 const getImagesAndSearchBySearchID = (request, response) => {
-	const search_id = parseInt(request.params.search_id)
+	const search_id = parseInt(request.query.search_id)
 
 	pool.query(`SELECT s.*, i.*
 							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
@@ -62,12 +62,8 @@ const getImagesAndSearchBySearchID = (request, response) => {
 
 //GET: return all image info EXCEPT raw image data
 const getAllImageMetadata = (request, response) => {
-	const search_id = parseInt(request.params.search_id)
-
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
-    FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-    WHERE s.search_id = $1`;
-    const values = [search_id];
+    FROM searches s FULL JOIN images i ON s.search_id = i.search_id`;
 
     pool.query(query, values, (error, results) => {
         if (error) {
