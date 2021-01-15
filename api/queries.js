@@ -7,8 +7,12 @@ const pool = config.pool
 
 //GET: All search results without images/Votes
 const getAllSearches = (request, response) => {
-	pool.query(`SELECT *
-							FROM searches s`, (error, results) => {
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    const query = `SELECT * FROM searches s WHERE s.search_id > $1 ORDER BY s.search_id DESC LIMIT $2`;
+    const values = [offset, page_size];
+	pool.query(query, values, (error, results) => {
 	if (error) {
 		throw error
 	}
