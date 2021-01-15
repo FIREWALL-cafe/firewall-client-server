@@ -22,10 +22,11 @@ const getSearchByID = (request, response) => {
 	pool.query(`SELECT *
 							FROM searches s
 							WHERE s.search_id = ${search_id}`, (error, results) => {
-	if (error) {
-		console.log(error)
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -35,39 +36,34 @@ const getSearchByID = (request, response) => {
 /*Images*/
 /********/
 
-//GET: All Image Info for All search results
-const getAllImages = (request, response) => {
-	pool.query('SELECT s.*, i.* \
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id LIMIT 10', (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
-}
-
 //GET: Image Info w/ search for individual search result (BY search_id)
 const getImagesAndSearchBySearchID = (request, response) => {
-	const search_id = parseInt(request.query.search_id)
+    const search_id = parseInt(request.query.search_id)
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
+        FROM searches s FULL JOIN images i ON s.search_id = i.search_id
+        WHERE i.image_id > $1 AND s.search_id = $2 ORDER BY i.image_id ASC LIMIT $3`;
+    const values = [offset, search_id, page_size];
 
-	pool.query(`SELECT s.*, i.*
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-							WHERE s.search_id = ${search_id} LIMIT 10`, (error, results) => {
+    pool.query(query, values, (error, results) => {
         if (error) {
-            throw error
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
         }
-        response.status(200).json(results.rows)
-	})
+    })
 }
 
 //GET: return all image info EXCEPT raw image data
-const getImages = (request, response) => {
+const getImagesWithSearch = (request, response) => {
     const page = parseInt(request.query.page) || 1;
-    const pageSize = parseInt(request.query.pageSize) || 25;
-    const offset = page*pageSize - 25;
+    const pageSize = parseInt(request.query.pageSize) || 100;
+    const offset = (page-1)*pageSize;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
-    FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-    WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
+        FROM searches s FULL JOIN images i ON s.search_id = i.search_id
+        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
     const values = [offset, pageSize];
 
     pool.query(query, values, (error, results) => {
@@ -79,58 +75,78 @@ const getImages = (request, response) => {
     })
 }
 
+const getImageBinary = (request, response) => {
+    const image_id = parseInt(request.query.image_id);
+    const query = `SELECT i.* FROM images WHERE i.image_id = $1`;
+    const values = [image_id];
+
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+
+}
+
 /*******/
 /*Votes*/
 /*******/
 
 //GET: All Votes with Search Info (Only contains searches with votes b/c Inner Join)
 const getAllVotes = (request, response) => {
-	pool.query(`SELECT v.vote_name, s.*, hv.*
-							FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							INNER JOIN votes v ON hv.vote_id = v.vote_id`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
+        ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id`
+	pool.query(query, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
 }
 
 //GET: Individual votes for a given search (BY Search_ID)
 const getVoteBySearchID = (request, response) => {
-	const search_id = parseInt(request.params.search_id)
+    const search_id = parseInt(request.params.search_id);
+    const query = `SELECT v.vote_name, hv.*, s.*
+        FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
+        INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE s.search_id = $1`;
+    const values = [search_id];
 
-	pool.query(`SELECT v.vote_name, hv.*, s.*
-							FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							INNER JOIN votes v ON hv.vote_id = v.vote_id
-							WHERE s.search_id = ${search_id}`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
 //GET: Individual votes for a given vote category (BY Vote_ID)
 const getVoteByVoteID = (request, response) => {
-	const vote_id = parseInt(request.params.vote_id)
+    const vote_id = parseInt(request.params.vote_id);
+    const query = `SELECT  v.vote_name, hv.*, s.*
+        FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
+        INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE hv.vote_id = $1`;
+    const values = [vote_id];
 
-	pool.query(`SELECT  v.vote_name, hv.*, s.*
-							FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							INNER JOIN votes v ON hv.vote_id = v.vote_id
-							WHERE hv.vote_id = ${vote_id}`,  (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+	pool.query(query, values,  (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
 //GET: Returns all Censored searches.
 const getCensoredSearches = (request, response) => {
-	pool.query(`SELECT s.*, COUNT(*) as "censored_votes"
-							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-							WHERE hv.vote_id = 1
-							GROUP BY s.search_id;`, (error, results) => {
+    const query = `SELECT s.*, COUNT(*) as "censored_votes"
+        FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
+        WHERE hv.vote_id = 1 GROUP BY s.search_id;`
+	pool.query(query, (error, results) => {
 	if (error) {
 		throw error
 	}
@@ -170,10 +186,11 @@ const getGoodTranslationSearches = (request, response) => {
 							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
 							WHERE hv.vote_id = 4
 							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -183,10 +200,11 @@ const getLostInTranslationSearches = (request, response) => {
 							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
 							WHERE hv.vote_id = 5
 							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -196,10 +214,11 @@ const getNSFWSearches = (request, response) => {
 							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
 							WHERE hv.vote_id = 6
 							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -209,10 +228,11 @@ const getWTFSearches = (request, response) => {
 							FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
 							WHERE hv.vote_id = 7
 							GROUP BY s.search_id;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -233,10 +253,11 @@ const getAllSearchesWithVoteCounts = (request, response) => {
 								COUNT(case when vote_id = '7' then 1 end) AS WTF
 						 FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 						 GROUP BY s.search_id`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -255,10 +276,11 @@ const getSearchWithVoteCountsBySearchId = (request, response) => {
 						 FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 						 WHERE s.search_id = ${search_id}
 						 GROUP BY s.search_id`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -279,11 +301,12 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 							COUNT(case when vote_id = '7' then 1 end) AS WTF
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
-							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -302,11 +325,12 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
 							FULL OUTER JOIN images i on s.search_id = i.search_id
 							WHERE s.search_id = ${search_id}
-							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
@@ -315,127 +339,91 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 /*********************************/
 
 //GET: Image Info Only all search results
-const getAllImagesOnly = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+const getImages = (request, response) => {
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+        i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
+        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
+    const values = [offset, page_size];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
 }
 
-
 //GET: Image Info Only individual search result (BY search_id)
 const getImagesOnlyBySearchID = (request, response) => {
-	const search_id = parseInt(request.params.search_id)
-
-	pool.query(`SELECT i.*
-							FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-							WHERE s.search_id = ${search_id} LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
+    const search_id = parseInt(request.params.search_id);
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+    i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
+    FROM searches s FULL JOIN images i ON s.search_id = i.search_id
+    WHERE s.search_id = $1`;
+    const values = [search_id];
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
 	})
+}
+
+const getImagesVoteCategory = (request, response, category) => {
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+        i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
+        FROM images i FULL JOIN searches S ON s.search_id = i.search_id
+        INNER JOIN have_votes hv ON s.search_id = hv.search_id
+        WHERE i.image_id > $1 AND hv.vote_id = $2 ORDER BY i.image_id ASC LIMIT $3`;
+    const values = [offset, category, page_size];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyCensored = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 1 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+	getImagesVoteCategory(request, response, 1);
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyUnsensored = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 2 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    getImagesVoteCategory(request, response, 2);
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyBadTranslation = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 3 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+	getImagesVoteCategory(request, response, 3);
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyGoodTranslation = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 4 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    getImagesVoteCategory(request, response, 4);
 }
 //GET: Image Info Only for Censored searches
 const getImagesOnlyLostInTranslation = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 5 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    getImagesVoteCategory(request, response, 5);
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyNSFW = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 6 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    getImagesVoteCategory(request, response, 6);
 }
 
 //GET: Image Info Only for Censored searches
 const getImagesOnlyWTF = (request, response) => {
-
-	pool.query(`SELECT i.*
-							FROM images i FULL JOIN searches S ON s.search_id = i.search_id
-							INNER JOIN have_votes hv ON s.search_id = hv.search_id
-							WHERE hv.vote_id = 8 LIMIT 10`, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+    getImagesVoteCategory(request, response, 7);
 }
 
 /******************/
@@ -549,8 +537,8 @@ const saveImage = (request, response) => {
 module.exports = {
 	getAllSearches,
 	getSearchByID,
-    getAllImages,
-    getImages,
+    getImageBinary,
+    getImagesWithSearch,
 	getImagesOnlyBySearchID,
 	getImagesAndSearchBySearchID,
 	getAllVotes,
@@ -567,7 +555,7 @@ module.exports = {
 	getSearchWithVoteCountsBySearchId,
 	getSearchesWithVoteCountsAndImageInfo,
 	getSearchesWithVoteCountsAndImageInfoBySearchID,
-	getAllImagesOnly,
+	getImages,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
 	getImagesOnlyBadTranslation,
