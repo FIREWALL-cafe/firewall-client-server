@@ -103,7 +103,7 @@ const getAllVotes = (request, response) => {
         ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id
         WHERE v.vote_id > $1 ORDER BY v.vote_id DESC LIMIT $2;`;
     const values = [offset, page_size]
-	pool.query(query, (error, results) => {
+	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
