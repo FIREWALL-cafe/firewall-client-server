@@ -65,7 +65,7 @@ const getAllImageMetadata = (request, response) => {
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
     FROM searches s FULL JOIN images i ON s.search_id = i.search_id`;
 
-    pool.query(query, values, (error, results) => {
+    pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
