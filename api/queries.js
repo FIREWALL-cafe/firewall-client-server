@@ -308,7 +308,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
     // not sure how to paginate this properly, so I'm limiting it to the first 10k results
     //        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2
     const values = [offset, page_size];
-	pool.query(query, values, (error, results) => {
+	pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
