@@ -290,18 +290,22 @@ const getSearchWithVoteCountsBySearchId = (request, response) => {
 
 //GET: All Search Results With Vote Counts & Image Info
 const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
-	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
-							COUNT(hv.*) total,
-							COUNT(case when vote_id = '1' then 1 end) AS Censored,
-							COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
-							COUNT(case when vote_id = '3' then 1 end) AS BadTranslation,
-							COUNT(case when vote_id = '4' then 1 end) AS GoodTranslation,
-							COUNT(case when vote_id = '5' then 1 end) AS LostInTranslation,
-							COUNT(case when vote_id = '6' then 1 end) AS NSFW,
-							COUNT(case when vote_id = '7' then 1 end) AS WTF
-							FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
-							FULL OUTER JOIN images i on s.search_id = i.search_id
-							GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank;`, (error, results) => {
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    const query = `SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
+        COUNT(hv.*) total,
+        COUNT(case when vote_id = '1' then 1 end) AS Censored,
+        COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
+        COUNT(case when vote_id = '3' then 1 end) AS BadTranslation,
+        COUNT(case when vote_id = '4' then 1 end) AS GoodTranslation,
+        COUNT(case when vote_id = '5' then 1 end) AS LostInTranslation,
+        COUNT(case when vote_id = '6' then 1 end) AS NSFW,
+        COUNT(case when vote_id = '7' then 1 end) AS WTF
+        FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
+        FULL OUTER JOIN images i on s.search_id = i.search_id
+        GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10;`
+	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
