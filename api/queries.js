@@ -44,7 +44,7 @@ const getImagesAndSearchBySearchID = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        WHERE i.image_id > $1 AND s.search_id = $2 ORDER BY i.image_id ASC LIMIT $3`;
+        WHERE i.image_id > $1 AND s.search_id = $2 ORDER BY i.image_id DESC LIMIT $3`;
     const values = [offset, search_id, page_size];
 
     pool.query(query, values, (error, results) => {
@@ -63,7 +63,7 @@ const getImagesWithSearch = (request, response) => {
     const offset = (page-1)*pageSize;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
+        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
     const values = [offset, pageSize];
 
     pool.query(query, values, (error, results) => {
@@ -306,7 +306,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         FULL OUTER JOIN images i on s.search_id = i.search_id
         GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10000;`
     // not sure how to paginate this properly, so I'm limiting it to the first 10k results
-    //        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2
+    //        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2
     const values = [offset, page_size];
 	pool.query(query, (error, results) => {
         if (error) {
@@ -352,7 +352,7 @@ const getImages = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
-        WHERE i.image_id > $1 ORDER BY i.image_id ASC LIMIT $2`;
+        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
     const values = [offset, page_size];
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -388,7 +388,7 @@ const getImagesVoteCategory = (request, response, category) => {
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
-        WHERE i.image_id > $1 AND hv.vote_id = $2 ORDER BY i.image_id ASC LIMIT $3`;
+        WHERE i.image_id > $1 AND hv.vote_id = $2 ORDER BY i.image_id DESC LIMIT $3`;
     const values = [offset, category, page_size];
     pool.query(query, values, (error, results) => {
         if (error) {
