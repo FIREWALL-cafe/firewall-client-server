@@ -1,5 +1,6 @@
 const config = require('./config.js')
 const pool = config.pool
+const spaces = require('./spaces-interface.js')
 
 /*****************************/
 /*searches w/o Images & Votes*/
