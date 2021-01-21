@@ -11,10 +11,10 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 const filenameFromUrl = (url) => {
-    const charset = 'abcdefghijklmnopqrstuvwxyz1234567890';
+    const charset = '.`\'"()[]{}\\;&%@,-=+$:/<>~';
     let fname = '';
     [...url.split('://')[1]].forEach(char => {
-        fname += charset.indexOf(char) >= 0? char : '_';
+        fname += charset.indexOf(char) < 0? char : '_';
     })
     return fname;
 }
