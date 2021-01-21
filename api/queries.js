@@ -487,28 +487,36 @@ const createVote = (request, response) => {
 }
 
 //POST: saveImage -- Add searches
-const saveImage = (request, response) => {
-	const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
-    console.log(search_id, image_search_engine, image_href, image_rank);
+const saveImage = async (request, response) => {
+    const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
+    if(!search_id || !image_search_engine || !image_rank) {
+        response.status(400).json("Need a search_id, image_rank, and image_search_engine")        
+        return;
+    }
 
     let new_url = null;
-    if (image_data != null) {
-        // TODO: save with spaces-interface.js
+    if(request.files) {
+        console.log("request:", request.files.image.name);
+        let fileContent;
         try {
-            new_url = spaces.saveImage(image_data);
-        } catch(err) {
-            console.error("failed to save image:", image_href, err);
-            new_url = null;
+            fileContent = Buffer.from(request.files.image.data, 'binary');
+        } catch {
+            response.status(400).json("Need a form-data HTTP request with image with key 'image'")        
+            return;
         }
-        console.log("new url:", new_url);
-        console.log("test code returning without writing to db")
-        response.status(200).json(new_url);
-        return
+        try {
+            console.log("awaiting")
+            new_url = await spaces.saveImage(fileContent);
+            console.log(typeof new_url, new_url)
+        } catch (err){
+            response.status(500).json(err);
+            return;
+        }
     }
 
     const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
-    const values = [search_id, image_search_engine, new_url ? new_url : image_href, image_rank];
-
+    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_rank];
+    console.log("values:", values);
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);

@@ -17,6 +17,7 @@
 		"aws-sdk": "^2.828.0",
 		"body-parser": "*",
 		"express": "*",
+		"express-fileupload": "^1.2.1",
 		"pg": "*"
 	}
 }

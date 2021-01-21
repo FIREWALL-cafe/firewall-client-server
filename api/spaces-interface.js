@@ -10,17 +10,18 @@ AWS.config.update({
 })
 const s3 = new AWS.S3();
 
-// s3.listObjects({Bucket: config.bucket}, function(err, data) {
-//     if (err) console.log(err, err.stack);
-//     else {
-//         data['Contents'].forEach(function(obj) {
-//             console.log(obj['Key']);
-//         })
-//     };
-// });
 
-const saveImage = () => {
-    return "https://example.com"
+// TODO: need to hash check if file already exists
+const saveImage = async (binary_data) => {
+    // Setting up S3 upload parameters
+    const params = {
+        Bucket: config.bucket,
+        Key: 'test.jpg', // File name you want to save as in S3
+        Body: binary_data
+    };
+
+    // Uploading files to the bucket
+    return s3.upload(params, (err,data) => console.log(data.Location)).promise().then(data => data.Location, err => err);
 }
 
 module.exports = {
