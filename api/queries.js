@@ -489,22 +489,21 @@ const createVote = (request, response) => {
 //POST: saveImage -- Add searches
 const saveImage = async (request, response) => {
     const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
-    if(!search_id || !image_search_engine || !image_rank) {
-        response.status(400).json("Need a search_id, image_rank, and image_search_engine")        
+    if(!search_id || !image_search_engine || !image_rank || !image_href) {
+        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine")        
         return;
     }
-
     let new_url = null;
     if(request.files) {
-        let fileContent;
+        let file_content;
         try {
-            fileContent = Buffer.from(request.files.image.data, 'binary');
+            file_content = Buffer.from(request.files.image.data, 'binary');
         } catch {
             response.status(400).json("Need a form-data HTTP request with image with key 'image'")        
             return;
         }
         try {
-            new_url = await spaces.saveImage(fileContent);
+            new_url = await spaces.saveImage(file_content, image_href);
             console.log(typeof new_url, new_url)
         } catch (err){
             response.status(500).json(err);
