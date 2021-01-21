@@ -87,7 +87,7 @@ const getImageBinary = (request, response) => {
 
     pool.query(query, values, (error, results) => {
         if (error) {
-            response.status(500).json(error);
+            response.status(500).json({error, image_id});
         } else {
             response.status(200).json(results.rows);
         }
