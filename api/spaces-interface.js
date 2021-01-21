@@ -24,7 +24,8 @@ const saveImage = async (binary_data, url) => {
     const params = {
         Bucket: config.bucket,
         Key: 'images/' + filenameFromUrl(url) + '.jpg',
-        Body: binary_data
+        Body: binary_data, 
+        ACL: "public-read"
     };
 
     // Uploading files to the bucket
