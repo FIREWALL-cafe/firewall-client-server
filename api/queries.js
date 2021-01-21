@@ -318,6 +318,7 @@ const getImages = (request, response) => {
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
         WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
     const values = [offset, page_size];
+    console.log(values);
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
