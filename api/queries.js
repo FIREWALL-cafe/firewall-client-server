@@ -496,7 +496,6 @@ const saveImage = async (request, response) => {
 
     let new_url = null;
     if(request.files) {
-        console.log("request:", request.files.image.name);
         let fileContent;
         try {
             fileContent = Buffer.from(request.files.image.data, 'binary');
@@ -505,7 +504,6 @@ const saveImage = async (request, response) => {
             return;
         }
         try {
-            console.log("awaiting")
             new_url = await spaces.saveImage(fileContent);
             console.log(typeof new_url, new_url)
         } catch (err){
@@ -521,7 +519,7 @@ const saveImage = async (request, response) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(201).json(results.rows);
+            response.status(201).json({url: new_url, query_result: results.rows});
         }
 	})
 }
