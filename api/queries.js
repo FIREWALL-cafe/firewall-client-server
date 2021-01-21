@@ -316,19 +316,20 @@ const getImages = (request, response) => {
     const offset = (page-1)*page_size;
     pool.query(`SELECT MAX(image_id) FROM images`, (err, res) => {
         console.log(err, res)
+        const max_img_id = res.rows[0].max;
+        const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+            i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
+            WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
+        const values = [max_img_id - offset, page_size];
+        console.log(values);
+        pool.query(query, values, (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                response.status(200).json(results.rows);
+            }
+        })
     })
-    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
-        i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
-        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
-    const values = [offset, page_size];
-    console.log(values);
-    pool.query(query, values, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
 }
 
 //GET: Image Info Only individual search result (BY search_id)
