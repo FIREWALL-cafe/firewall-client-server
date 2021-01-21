@@ -491,10 +491,20 @@ const saveImage = (request, response) => {
 	const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
     console.log(search_id, image_search_engine, image_href, image_rank);
 
-    if (image_data != null) response.status(401).json("saving images to database no longer supported");
+    let new_url = null;
+    if (image_data != null) {
+        // TODO: save with spaces-interface.js
+        try {
+            new_url = spaces.saveImage(image_data);
+        } catch(err) {
+            console.error("failed to save image:", image_href, err);
+            new_url = null;
+        }
+        console.log("new url:", new_url);
+    }
 
     const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
-    const values = [search_id, image_search_engine, image_href, image_rank];
+    const values = [search_id, image_search_engine, new_url ? new_url : image_href, image_rank];
 
 	pool.query(query, values, (error, results) => {
         if (error) {
