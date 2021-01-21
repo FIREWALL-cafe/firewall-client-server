@@ -81,7 +81,7 @@ const getImagesWithSearch = (request, response) => {
 }
 
 const getImageBinary = (request, response) => {
-    const image_id = parseInt(request.query.image_id);
+    const image_id = parseInt(request.params.image_id);
     const query = `SELECT i.* FROM images WHERE i.image_id = $1`;
     const values = [image_id];
 
@@ -501,6 +501,9 @@ const saveImage = (request, response) => {
             new_url = null;
         }
         console.log("new url:", new_url);
+        console.log("test code returning without writing to db")
+        response.status(200).json(new_url);
+        return
     }
 
     const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;

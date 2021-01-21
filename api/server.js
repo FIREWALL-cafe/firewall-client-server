@@ -51,6 +51,7 @@ app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAn
 
 /* Image Info Only & Image Subsets */
 app.get('/images', db.getImages)
+app.get('/images/:image_id', db.getImageBinary)
 app.get('/images/search_id/:search_id', db.getImagesOnlyBySearchID)
 app.get('/images/censored_searches', db.getImagesOnlyCensored)
 app.get('/images/uncensored_searches', db.getImagesOnlyUnsensored)
