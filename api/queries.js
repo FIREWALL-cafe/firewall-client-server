@@ -314,6 +314,9 @@ const getImages = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
+    pool.query(`SELECT MAX(image_id) FROM images`, (err, res) => {
+        console.log(err, res)
+    })
     const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
         WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
