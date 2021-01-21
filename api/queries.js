@@ -499,7 +499,7 @@ const updateImageUrl = (request, response) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(201).json({url: new_url, query_result: results.rows});
+            response.status(201).json({url, query_result: results.rows});
         }
 	})
 }
