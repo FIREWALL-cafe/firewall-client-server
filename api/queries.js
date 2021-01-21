@@ -82,7 +82,7 @@ const getImagesWithSearch = (request, response) => {
 
 const getImageBinary = (request, response) => {
     const image_id = parseInt(request.params.image_id);
-    const query = `SELECT * FROM images WHERE i.image_id = $1`;
+    const query = `SELECT * FROM images WHERE image_id = $1`;
     const values = [image_id];
 
     pool.query(query, values, (error, results) => {
