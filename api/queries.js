@@ -486,11 +486,30 @@ const createVote = (request, response) => {
 	})
 }
 
+const updateImageUrl = (request, response) => {
+    const {url, image_id} = request.body;
+    if(!url) {
+        response.status(401).json("new image URL must be defined and non-empty");
+        return;
+    }
+    const query = `UPDATE images SET image_href=$1 WHERE image_id=$2;`;
+    const values = [url, image_id];
+    console.log("values:", values);
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json({url: new_url, query_result: results.rows});
+        }
+	})
+}
+
 //POST: saveImage -- Add searches
 const saveImage = async (request, response) => {
     const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
     if(!search_id || !image_search_engine || !image_rank || !image_href) {
-        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine")        
+        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. \
+        If uploading a file, the source URL is still needed for its name")        
         return;
     }
     let new_url = null;
@@ -554,5 +573,6 @@ module.exports = {
 	getImagesOnlyWTF,
 	createSearch,
 	createVote,
-	saveImage,
+    saveImage,
+    updateImageUrl
 }
