@@ -13,7 +13,10 @@ const s3 = new AWS.S3();
 const filenameFromUrl = (url) => {
     const charset = '.`\'"()[]{}\\;&%@,-=+$:/<>~';
     let fname = '';
-    [...url.split('://')[1]].forEach(char => {
+    if(url.indexOf('://') >= 0) url = url.split('://')[1];
+    if(url.slice(url.length-4, url.length) === '.jpg') url = url.slice(0, url.length-4);
+
+    [...url].forEach(char => {
         fname += charset.indexOf(char) < 0? char : '_';
     })
     return fname;
