@@ -11,7 +11,7 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 const filenameFromUrl = (url) => {
-    const charset = '.`\'"()[]{}\\;&%@,-=+$:/<>~';
+    const charset = '.`\'"()[]{}\\;&%@,-=+$:/<>~ ?';
     let fname = '';
     if(url.indexOf('://') >= 0) url = url.split('://')[1];
     if(url.slice(url.length-4, url.length) === '.jpg') url = url.slice(0, url.length-4);
