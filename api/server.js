@@ -26,7 +26,7 @@ app.get('/searches', db.getAllSearches)
 app.get('/searches/search_id/:search_id', db.getSearchByID)
 
 /* Searches & Image Info */
-app.get('/searches/images', db.getAllImages)
+app.get('/searches/images', db.getImagesWithSearch)
 app.get('/searches/images/search_id/:search_id', db.getImagesAndSearchBySearchID)
 
 /* Searches & Vote Info */
@@ -46,11 +46,11 @@ app.get('/searches/votecounts', db.getAllSearchesWithVoteCounts)
 app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 
 /* All Available Information, With Vote Counts */
-app.get('/searches/votescounts/images', db.getSearchesWithVoteCountsAndImageInfo)
+app.get('/searches/votecounts/images', db.getSearchesWithVoteCountsAndImageInfo)
 app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAndImageInfoBySearchID)
 
 /* Image Info Only & Image Subsets */
-app.get('/images', db.getAllImagesOnly)
+app.get('/images', db.getImages)
 app.get('/images/search_id/:search_id', db.getImagesOnlyBySearchID)
 app.get('/images/censored_searches', db.getImagesOnlyCensored)
 app.get('/images/uncensored_searches', db.getImagesOnlyUnsensored)

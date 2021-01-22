@@ -164,7 +164,7 @@ function handleQuery(req, res, headers) {
 
 					getTranslation(translationSearch, function(err, translation) {
 						if (err) {
-
+                            console.log(err);
 							res.writeHead(500, headers);
 							res.end(JSON.stringify({
 								ok: 0,
@@ -204,6 +204,7 @@ function handleTranslate(req, res, headers) {
 		if (validateSharedSecret(search.secret, res, headers)) {
 			getTranslation(search, function(err, translation) {
 				if (err) {
+                    console.log(err);
 					res.writeHead(500, headers);
 					res.end(JSON.stringify({
 						ok: 0,
@@ -266,7 +267,7 @@ function setupTranslation(query, detections) {
 function getTranslation(search, callback) {
 	var query = getNormalizedQuery(search);
 	var tab = doc['translations'],
-		sensitive = doc.sensitive.lookup[query],
+		sensitive = doc.sensitive? doc.sensitive.lookup[query] : false,
 		inSheet = false,
 		source,
 		value;
@@ -323,7 +324,7 @@ function getTranslation(search, callback) {
 
 	googleTranslate(search, function(err, translation) {
 		if (err) {
-			console.log(err);
+			callback(err);
 		} else {
 
 			inSheet = false;
@@ -358,7 +359,7 @@ function googleTranslate(search, callback) {
 	          '&q=' + encodeURIComponent(query) +
 	          '&source=' + langFrom +
 	          '&target=' + langTo;
-
+    console.log("querying", url);
 	https.get(url, function(res) {
 		var data = '';
 		res.setEncoding('utf8');
@@ -381,7 +382,7 @@ function googleTranslate(search, callback) {
 				callback(null, translation);
 
 			} else if (response && response.error) {
-
+                console.log("calling back with Error", response.error)
 				callback(new Error('[' + response.error.code + '] ' + response.error.message));
 
 			} else {
