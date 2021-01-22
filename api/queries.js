@@ -510,6 +510,7 @@ const updateImageUrl = (request, response) => {
 }
 
 //POST: saveImage -- Add searches
+// there are two types of saveImage calls: with and without a file
 const saveImage = async (request, response) => {
     const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
     if(!search_id || !image_search_engine || !image_rank || !image_href) {
@@ -537,7 +538,6 @@ const saveImage = async (request, response) => {
 
     const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
     const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_rank];
-    console.log("values:", values);
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -545,6 +545,26 @@ const saveImage = async (request, response) => {
             response.status(201).json({url: new_url, query_result: results.rows});
         }
 	})
+}
+
+const saveImages = (request, response) => {
+    const {search_id, image_search_engine, urls, image_ranks } = request.body
+    if(!search_id || !image_search_engine || !image_ranks || !urls) {
+        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. \
+        If uploading a file, the source URL is still needed for its name")        
+        return;
+    }
+    if(urls.length !== image_ranks.length || urls.length == 0) {
+        response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
+        return;
+    }
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    let promises = [];
+    // for each given URL, call that SQL query with that value
+    for(let i=0; i<urls.length; i++)
+        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i]]))
+    // don't respond before all promises have resolved
+    Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
 }
 
 module.exports = {
@@ -579,5 +599,6 @@ module.exports = {
 	createSearch,
 	createVote,
     saveImage,
+    saveImages,
     updateImageUrl
 }
