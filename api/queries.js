@@ -11,14 +11,21 @@ const getAllSearches = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT * FROM searches s WHERE s.search_id > $1 ORDER BY s.search_id DESC LIMIT $2`;
-    const values = [offset, page_size];
-	pool.query(query, values, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+
+    // page backwards from most recent searches using search_id to order
+    pool.query(`SELECT MAX(search_id) FROM searches`, (err, res) => {
+        const max_search_id = res.rows[0].max;
+        const query = `SELECT s.* FROM searches s
+            WHERE s.search_id > $1 AND s.search_id < $2 ORDER BY s.search_id DESC`;
+        const values = [max_search_id - offset, max_search_id - offset + page_size];
+        pool.query(query, values, (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                response.status(200).json(results.rows);
+            }
+        })
+    })
 }
 
 //GET: Individual search result without images/Votes matching a given location
