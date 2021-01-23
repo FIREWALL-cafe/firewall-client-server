@@ -514,8 +514,7 @@ const updateImageUrl = (request, response) => {
 const saveImage = async (request, response) => {
     const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
     if(!search_id || !image_search_engine || !image_rank || !image_href) {
-        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. \
-        If uploading a file, the source URL is still needed for its name")        
+        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. If uploading a file, the source URL is still needed for its name")        
         return;
     }
     let new_url = null;
@@ -549,9 +548,8 @@ const saveImage = async (request, response) => {
 
 const saveImages = (request, response) => {
     const {search_id, image_search_engine, urls, image_ranks } = request.body
-    if(!search_id || !image_search_engine || !image_ranks || !urls) {
-        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. \
-        If uploading a file, the source URL is still needed for its name")        
+    if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
+        response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
         return;
     }
     if(urls.length !== image_ranks.length || urls.length == 0) {
