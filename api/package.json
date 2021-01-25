@@ -6,16 +6,18 @@
 	"main": "server.js",
 	"private": "true",
 	"scripts": {
-        "start": "node server.js",
-        "dev": "pg_ctl -D temp-data-dir -l logfile start & node server.js"
+		"start": "node server.js",
+		"dev": "pg_ctl -D temp-data-dir -l logfile start & node server.js"
 	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/dphiffer/firewall-cafe.git"
 	},
 	"dependencies": {
+		"aws-sdk": "^2.828.0",
 		"body-parser": "*",
-		"pg": "*",
-		"express": "*"
+		"express": "*",
+		"express-fileupload": "^1.2.1",
+		"pg": "*"
 	}
 }

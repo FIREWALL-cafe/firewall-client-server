@@ -1,5 +1,6 @@
 const config = require('./config.js')
 const pool = config.pool
+const spaces = require('./spaces-interface.js')
 
 /*****************************/
 /*searches w/o Images & Votes*/
@@ -10,14 +11,21 @@ const getAllSearches = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT * FROM searches s WHERE s.search_id > $1 ORDER BY s.search_id DESC LIMIT $2`;
-    const values = [offset, page_size];
-	pool.query(query, values, (error, results) => {
-	if (error) {
-		throw error
-	}
-	response.status(200).json(results.rows)
-	})
+
+    // page backwards from most recent searches using search_id to order
+    pool.query(`SELECT MAX(search_id) FROM searches`, (err, res) => {
+        const max_search_id = res.rows[0].max;
+        const query = `SELECT s.* FROM searches s
+            WHERE s.search_id > $1 AND s.search_id < $2 ORDER BY s.search_id DESC`;
+        const values = [max_search_id - offset, max_search_id - offset + page_size];
+        pool.query(query, values, (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                response.status(200).json(results.rows);
+            }
+        })
+    })
 }
 
 //GET: Individual search result without images/Votes matching a given location
@@ -80,13 +88,13 @@ const getImagesWithSearch = (request, response) => {
 }
 
 const getImageBinary = (request, response) => {
-    const image_id = parseInt(request.query.image_id);
-    const query = `SELECT i.* FROM images WHERE i.image_id = $1`;
+    const image_id = parseInt(request.params.image_id);
+    const query = `SELECT * FROM images WHERE image_id = $1`;
     const values = [image_id];
 
     pool.query(query, values, (error, results) => {
         if (error) {
-            response.status(500).json(error);
+            response.status(500).json({error, image_id});
         } else {
             response.status(200).json(results.rows);
         }
@@ -313,17 +321,22 @@ const getImages = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
-        i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
-        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
-    const values = [offset, page_size];
-    pool.query(query, values, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
-        }
-	})
+    pool.query(`SELECT MAX(image_id) FROM images`, (err, res) => {
+        console.log(err, res)
+        const max_img_id = res.rows[0].max;
+        const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+            i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
+            WHERE i.image_id > $1 AND i.image_id < $2 ORDER BY i.image_id DESC`;
+        const values = [max_img_id - offset, max_img_id - offset + page_size];
+        console.log(values);
+        pool.query(query, values, (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                response.status(200).json(results.rows);
+            }
+        })
+    })
 }
 
 //GET: Image Info Only individual search result (BY search_id)
@@ -485,23 +498,78 @@ const createVote = (request, response) => {
 	})
 }
 
-//POST: saveImage -- Add searches
-const saveImage = (request, response) => {
-	const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
-    console.log(search_id, image_search_engine, image_href, image_rank);
-
-    if (image_data != null) response.status(401).json("saving images to database no longer supported");
-
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
-    const values = [search_id, image_search_engine, image_href, image_rank];
-
+const updateImageUrl = (request, response) => {
+    const {url, image_id} = request.body;
+    if(!url) {
+        response.status(401).json("new image URL must be defined and non-empty");
+        return;
+    }
+    const query = `UPDATE images SET image_href=$1 WHERE image_id=$2;`;
+    const values = [url, image_id];
+    console.log("values:", values);
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(201).json(results.rows);
+            response.status(201).json({url, query_result: results.rows});
         }
 	})
+}
+
+//POST: saveImage -- Add searches
+// there are two types of saveImage calls: with and without a file
+const saveImage = async (request, response) => {
+    const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
+    if(!search_id || !image_search_engine || !image_rank || !image_href) {
+        response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. If uploading a file, the source URL is still needed for its name")        
+        return;
+    }
+    let new_url = null;
+    if(request.files) {
+        let file_content;
+        try {
+            file_content = Buffer.from(request.files.image.data, 'binary');
+        } catch {
+            response.status(400).json("Need a form-data HTTP request with image with key 'image'")        
+            return;
+        }
+        try {
+            new_url = await spaces.saveImage(file_content, image_href);
+            console.log(typeof new_url, new_url)
+        } catch (err){
+            response.status(500).json(err);
+            return;
+        }
+    }
+
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_rank];
+	pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json({url: new_url, query_result: results.rows});
+        }
+	})
+}
+
+const saveImages = (request, response) => {
+    const {search_id, image_search_engine, urls, image_ranks } = request.body
+    if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
+        response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
+        return;
+    }
+    if(urls.length !== image_ranks.length || urls.length == 0) {
+        response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
+        return;
+    }
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    let promises = [];
+    // for each given URL, call that SQL query with that value
+    for(let i=0; i<urls.length; i++)
+        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i]]))
+    // don't respond before all promises have resolved
+    Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
 }
 
 module.exports = {
@@ -535,5 +603,7 @@ module.exports = {
 	getImagesOnlyWTF,
 	createSearch,
 	createVote,
-	saveImage,
+    saveImage,
+    saveImages,
+    updateImageUrl
 }

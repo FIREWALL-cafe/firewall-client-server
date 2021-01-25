@@ -1,15 +1,17 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const db = require('./queries.js')
+const fileUpload = require('express-fileupload')
 const app = express()
 const port = 11458
 
 app.use(bodyParser.json())
 app.use(
-	bodyParser.urlencoded({
-		extended: true,
+    bodyParser.urlencoded({
+        extended: true,
 	})
 )
+app.use(fileUpload())
 
 app.get('/', (request, response) => {
 	response.json({ info: 'Firewall-Cafe API'})
@@ -51,6 +53,7 @@ app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAn
 
 /* Image Info Only & Image Subsets */
 app.get('/images', db.getImages)
+app.get('/images/:image_id', db.getImageBinary)
 app.get('/images/search_id/:search_id', db.getImagesOnlyBySearchID)
 app.get('/images/censored_searches', db.getImagesOnlyCensored)
 app.get('/images/uncensored_searches', db.getImagesOnlyUnsensored)
@@ -64,3 +67,5 @@ app.get('/images/wtf_searches', db.getImagesOnlyWTF)
 app.post('/createSearch', db.createSearch)
 app.post('/createVote', db.createVote)
 app.post('/saveImage', db.saveImage)
+app.post('/saveImages', db.saveImages)
+app.put('/images', db.updateImageUrl)
