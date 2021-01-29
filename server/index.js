@@ -221,7 +221,8 @@ function handleTranslate(req, res, headers) {
 						langFrom: search.langFrom,
 						langTo: search.langTo,
 						translated: translation.value,
-						sensitive: translation.sensitive
+                        sensitive: translation.sensitive,
+                        saved: !!translation.saved
 					});
 				}
 			});
@@ -302,7 +303,9 @@ function getTranslation(search, callback) {
 
 			console.log('The cached translation is:', translations.google);
 		}
-	}
+	} else if (!tab) {
+        console.log("cannot find doc['translations']")
+    }
 
 	if (inSheet) {
 		consoleLogDivider();
@@ -326,9 +329,8 @@ function getTranslation(search, callback) {
 		if (err) {
 			callback(err);
 		} else {
-
 			inSheet = false;
-			setTranslation(search, translation);
+			const saved = setTranslation(search, translation);
 
 			callback(null, {
 				query: search.query,
@@ -339,7 +341,8 @@ function getTranslation(search, callback) {
 				langConfidence: search.langConfidence,
 				langAlternate: search.langAlternate,
 				langName: search.langName,
-				sensitive: false
+                sensitive: false,
+                saved: saved
 			});
 		}
 	});
@@ -402,7 +405,7 @@ function setTranslation(search, translation) {
 	var query = getNormalizedQuery(search),
 		tab = doc['translations'];
 
-	if (!tab.lookup[query]) {
+	if (tab && !tab.lookup[query]) {
 		tab.lookup[query] = {
 			query: query,
 			google: translation,
@@ -415,10 +418,10 @@ function setTranslation(search, translation) {
 			sensitive: search.sensitive
 		};
 	} else {
-		console.log('')
+		console.log('Could not save to lookup table (doc["translations"] not found)')
 	}
 
-	saveTranslation(search, translation);
+	return saveTranslation(search, translation);
 }
 
 function saveTranslation(search, translation) {
@@ -426,20 +429,23 @@ function saveTranslation(search, translation) {
 
 	var query = getNormalizedQuery(search),
 		tab = doc['translations'];
-
-	tab.worksheet.addRow({
-		query: query,
-		google: translation,
-		override: '',
-		langFrom: search.langFrom,
-		langTo: search.langTo,
-		langConfidence: search.langConfidence,
-		langAlternate: search.langAlternate,
-		langName: search.langName,
-	}, () => {
-		console.log('Saved.');
-		consoleLogDivider();
-	});
+    if(tab) {
+        tab.worksheet.addRow({
+            query: query,
+            google: translation,
+            override: '',
+            langFrom: search.langFrom,
+            langTo: search.langTo,
+            langConfidence: search.langConfidence,
+            langAlternate: search.langAlternate,
+            langName: search.langName,
+        }, () => {
+            console.log('Saved.');
+            consoleLogDivider();
+            return true;
+        });
+    }
+    return false;
 }
 
 //////// LANGUAGE DETECTION ////////
@@ -680,6 +686,7 @@ function handleDashboard(req, res) {
 //////// UTILITIES /////////
 
 function validateSharedSecret(secret, res, headers) {
+    console.log("secrets", secret, spreadsheetServiceKey)
 	if (secret != spreadsheetServiceKey.private_key_id) {
 		res.writeHead(401, headers);
 		res.end(JSON.stringify({
