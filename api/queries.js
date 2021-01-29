@@ -155,7 +155,7 @@ const getVoteByVoteID = (request, response) => {
 const getSearchesByCategory = (request, response, category, title) => {
     const query = `SELECT s.*, COUNT(*) as "votes"
         FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE hv.vote_id = $2 GROUP BY s.search_id;`
+        WHERE hv.vote_id = $1 GROUP BY s.search_id;`
     const values = [category];
     pool.query(query, values, (error, results) => {
         if (error) {
