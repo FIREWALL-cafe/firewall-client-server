@@ -350,12 +350,16 @@ const getImagesOnlyBySearchID = (request, response) => {
 }
 
 const getImagesVoteCategory = (request, response, category) => {
+    // problem I'm running into: getting a postgres 22P02 on the sql query below and I'm not sure why
+    response.status(501).send();
+    return;
+
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
-        FROM images i INNER JOIN searches S ON s.search_id = i.search_id
+        FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
         WHERE hv.vote_id = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
     const values = [category, page_size, offset];
