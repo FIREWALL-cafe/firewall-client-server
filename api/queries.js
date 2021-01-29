@@ -350,10 +350,6 @@ const getImagesOnlyBySearchID = (request, response) => {
 }
 
 const getImagesVoteCategory = (request, response, category) => {
-    // problem I'm running into: getting a postgres 22P02 on the sql query below and I'm not sure why
-    response.status(501).send();
-    return;
-
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
