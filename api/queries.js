@@ -357,7 +357,7 @@ const getImagesVoteCategory = (request, response, category) => {
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
-        WHERE hv.vote_id = $1 ORDER BY i.image_id DESC LIMIT $2 OFFSET $3`;
+        WHERE hv.vote_id = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
     const values = [category, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
