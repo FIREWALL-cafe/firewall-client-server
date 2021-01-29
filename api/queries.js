@@ -70,7 +70,7 @@ const getImagesWithSearch = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
+        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
 
     pool.query(query, values, (error, results) => {
@@ -107,7 +107,7 @@ const getAllVotes = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
         ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id
-        ORDER BY v.vote_id DESC LIMIT $1 OFFSET $2;`;
+        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2;`;
     const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -152,11 +152,11 @@ const getVoteByVoteID = (request, response) => {
 	})
 }
 
-const getSearchesByCategory = (request, response, category) => {
-    const query = `SELECT s.*, COUNT(*) as "censored_votes"
+const getSearchesByCategory = (request, response, category, title) => {
+    const query = `SELECT s.*, COUNT(*) as "$1"
         FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE hv.vote_id = $1 GROUP BY s.search_id;`
-    const values = [category];
+        WHERE hv.vote_id = $2 GROUP BY s.search_id;`
+    const values = [title, category];
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -168,37 +168,37 @@ const getSearchesByCategory = (request, response, category) => {
 
 //GET: Returns all Censored searches.
 const getCensoredSearches = (request, response) => {
-    getSearchesByCategory(request, response, 1);
+    getSearchesByCategory(request, response, 1, "censored");
 }
 
 //GET: Returns all Uncensored searches.
 const getUncensoredSearches = (request, response) => {
-	getSearchesByCategory(request, response, 2);
+	getSearchesByCategory(request, response, 2, "uncensored");
 }
 
 //GET: Returns all Bad Translation searches.
 const getBadTranslationSearches = (request, response) => {
-	getSearchesByCategory(request, response, 3);
+	getSearchesByCategory(request, response, 3, "bad_translation");
 }
 
 //GET: Returns all Good Translation searches.
 const getGoodTranslationSearches = (request, response) => {
-	getSearchesByCategory(request, response, 4);
+	getSearchesByCategory(request, response, 4, "good_translation");
 }
 
 //GET: Returns all Lost In Translation searches.
 const getLostInTranslationSearches = (request, response) => {
-	getSearchesByCategory(request, response, 5);
+	getSearchesByCategory(request, response, 5, "lost_in_translation");
 }
 
 //GET: Returns all NSFW searches.
 const getNSFWSearches = (request, response) => {
-	getSearchesByCategory(request, response, 6);
+	getSearchesByCategory(request, response, 6, "nsfw");
 }
 
 //GET: Returns all WTF searches.
 const getWTFSearches = (request, response) => {
-	getSearchesByCategory(request, response, 7);
+	getSearchesByCategory(request, response, 7, "wtf");
 }
 
 /****************************/
@@ -270,7 +270,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
         FULL OUTER JOIN images i on s.search_id = i.search_id
         GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank
-        ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
+        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
         // if pagination is broken, can limit it to the first 10k results
     const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
@@ -426,7 +426,6 @@ const createSearch = (request, response) => {
 		search_term_status_sensitive,
 		search_schema_initial
 	} = request.body
-    console.log("createSearch:", request.body);
 
     const query = `INSERT INTO searches (
         search_id,
