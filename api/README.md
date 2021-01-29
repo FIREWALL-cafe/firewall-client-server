@@ -6,10 +6,15 @@ Firewall-API is the interface between the app and the data stored in the databas
 - *server.js* is the script to run in order to interface with the firewall-cafe database and contains the routes for the API itself.
 - *queries.js* links the database to the API and contains the specific functions the routes call in *server.js*.
 
+## Querying the production API
+
+You can make queries on the production API deployed at http://api.firewallcafe.com, Postman is a good tool to do this without writing code. Just refer to the search routes below.
+
+**To do**: implement queries by term
 
 ## Installing and Running the API
 
-The API need only run in one instance and be connec
+The API need only run in one instance
 
  1. Pull from the repository.
  2. Add *config.js* (secret, see *config-example.js*) file to the directory to link the API to the database.
