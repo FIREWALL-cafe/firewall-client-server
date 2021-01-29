@@ -106,7 +106,7 @@ const getAllVotes = (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
-        ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id
+        ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id
         ORDER BY s.search_id DESC LIMIT $1 OFFSET $2;`;
     const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
@@ -153,10 +153,10 @@ const getVoteByVoteID = (request, response) => {
 }
 
 const getSearchesByCategory = (request, response, category, title) => {
-    const query = `SELECT s.*, COUNT(*) as "$1"
+    const query = `SELECT s.*, COUNT(*) as "votes"
         FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
         WHERE hv.vote_id = $2 GROUP BY s.search_id;`
-    const values = [title, category];
+    const values = [category];
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
