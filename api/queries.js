@@ -12,19 +12,14 @@ const getAllSearches = (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
 
-    // page backwards from most recent searches using search_id to order
-    pool.query(`SELECT MAX(search_id) FROM searches`, (err, res) => {
-        const max_search_id = res.rows[0].max;
-        const query = `SELECT s.* FROM searches s
-            WHERE s.search_id > $1 AND s.search_id < $2 ORDER BY s.search_id DESC`;
-        const values = [max_search_id - offset, max_search_id - offset + page_size];
-        pool.query(query, values, (error, results) => {
-            if (error) {
-                response.status(500).json(error);
-            } else {
-                response.status(200).json(results.rows);
-            }
-        })
+    const query = `SELECT s.* FROM searches s ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+    const values = [page_size, offset];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
     })
 }
 
@@ -56,8 +51,8 @@ const getImagesAndSearchBySearchID = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        WHERE i.image_id > $1 AND s.search_id = $2 ORDER BY i.image_id DESC LIMIT $3`;
-    const values = [offset, search_id, page_size];
+        WHERE s.search_id = $1 ORDER BY i.image_id DESC LIMIT $2 OFFSET $3`;
+    const values = [search_id, page_size, offset];
 
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -75,8 +70,8 @@ const getImagesWithSearch = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2`;
-    const values = [offset, page_size];
+        ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
+    const values = [page_size, offset];
 
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -99,7 +94,6 @@ const getImageBinary = (request, response) => {
             response.status(200).json(results.rows);
         }
     })
-
 }
 
 /*******/
@@ -113,8 +107,8 @@ const getAllVotes = (request, response) => {
     const offset = (page-1)*page_size;
     const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
         ON s.search_id = hv.search  _id INNER JOIN votes v ON hv.vote_id = v.vote_id
-        WHERE v.vote_id > $1 ORDER BY v.vote_id DESC LIMIT $2;`;
-    const values = [offset, page_size]
+        ORDER BY v.vote_id DESC LIMIT $1 OFFSET $2;`;
+    const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -275,11 +269,11 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         COUNT(case when vote_id = '7' then 1 end) AS WTF
         FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
         FULL OUTER JOIN images i on s.search_id = i.search_id
-        GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank LIMIT 10000;`
-    // not sure how to paginate this properly, so I'm limiting it to the first 10k results
-    //        WHERE i.image_id > $1 ORDER BY i.image_id DESC LIMIT $2
-    const values = [offset, page_size];
-	pool.query(query, (error, results) => {
+        GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank
+        ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
+        // if pagination is broken, can limit it to the first 10k results
+    const values = [page_size, offset];
+	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
@@ -326,9 +320,8 @@ const getImages = (request, response) => {
         const max_img_id = res.rows[0].max;
         const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
             i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
-            WHERE i.image_id > $1 AND i.image_id < $2 ORDER BY i.image_id DESC`;
-        const values = [max_img_id - offset, max_img_id - offset + page_size];
-        console.log(values);
+            ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
+        const values = [page_size, offset];
         pool.query(query, values, (error, results) => {
             if (error) {
                 response.status(500).json(error);
@@ -364,8 +357,8 @@ const getImagesVoteCategory = (request, response, category) => {
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
-        WHERE i.image_id > $1 AND hv.vote_id = $2 ORDER BY i.image_id DESC LIMIT $3`;
-    const values = [offset, category, page_size];
+        WHERE hv.vote_id = $1 ORDER BY i.image_id DESC LIMIT $2 OFFSET $3`;
+    const values = [category, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
