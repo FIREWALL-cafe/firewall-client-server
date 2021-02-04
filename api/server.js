@@ -49,6 +49,9 @@ app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 app.get('/searches/votecounts/images', db.getSearchesWithVoteCountsAndImageInfo)
 app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAndImageInfoBySearchID)
 
+/* Query searches by search term */
+app.get('/searches/terms/:terms', db.getSearchesByTerm)
+
 /* Image Info Only & Image Subsets */
 app.get('/images', db.getImages)
 app.get('/images/search_id/:search_id', db.getImagesOnlyBySearchID)

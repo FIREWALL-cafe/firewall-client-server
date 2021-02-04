@@ -2,11 +2,9 @@ var config = require('./config');
 var spreadsheetServiceKey = require('./service-key.json');
 
 /*
-
 Testing one-liners:
 https://localhost:4430/detect-language?query=toast
 https://localhost:4430/detect-language?query=%E5%90%90%E5%8F%B8 (zh-TW "toast")
-
 */
 
 var _ = require('lodash');

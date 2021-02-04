@@ -35,7 +35,6 @@ const getSearchByID = (request, response) => {
 }
 
 
-
 /********/
 /*Images*/
 /********/
@@ -305,6 +304,23 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 }
 
 /*********************************/
+/*    Searches by term           */
+/*********************************/
+
+const getSearchesByTerm = (request, response) => {
+    const term = request.query.term;
+    const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1`;
+    const values = [term];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+}
+
+/*********************************/
 /*Image Info Only & Image Subsets*/
 /*********************************/
 
@@ -524,7 +540,8 @@ module.exports = {
 	getAllSearchesWithVoteCounts,
 	getSearchWithVoteCountsBySearchId,
 	getSearchesWithVoteCountsAndImageInfo,
-	getSearchesWithVoteCountsAndImageInfoBySearchID,
+    getSearchesWithVoteCountsAndImageInfoBySearchID,
+    getSearchesByTerm,
 	getImages,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
