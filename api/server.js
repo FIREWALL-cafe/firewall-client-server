@@ -45,12 +45,13 @@ app.get('/searches/votes/wtf_searches', db.getWTFSearches)
 app.get('/searches/votecounts', db.getAllSearchesWithVoteCounts)
 app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 
+/* Query searches by search term */
+app.get('/searches/terms/:term', db.getSearchesByTerm)
+
 /* All Available Information, With Vote Counts */
 app.get('/searches/votecounts/images', db.getSearchesWithVoteCountsAndImageInfo)
 app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAndImageInfoBySearchID)
 
-/* Query searches by search term */
-app.get('/searches/terms/:term', db.getSearchesByTerm)
 
 /* Image Info Only & Image Subsets */
 app.get('/images', db.getImages)
