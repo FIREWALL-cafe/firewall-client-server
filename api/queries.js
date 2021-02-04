@@ -313,8 +313,9 @@ const getSearchesByTerm = (request, response) => {
     const term = request.query.term;
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 1;
-    const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1 ORDER BY s.search_id DESC OFFSET $2 LIMIT $3`;
-    const values = [term];
+    const offset = (page-1)*page_size;
+    const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
+    const values = [term, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
