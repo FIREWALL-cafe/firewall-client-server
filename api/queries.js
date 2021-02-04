@@ -38,7 +38,6 @@ const getSearchByID = (request, response) => {
 }
 
 
-
 /********/
 /*Images*/
 /********/
@@ -304,6 +303,25 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
             response.status(200).json(results.rows);
         }
 	})
+}
+
+/*********************************/
+/*    Searches by term           */
+/*********************************/
+
+const getSearchesByTerm = (request, response) => {
+    const term = request.query.term;
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 1;
+    const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1 ORDER BY s.search_id DESC OFFSET $2 LIMIT $3`;
+    const values = [term];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
 }
 
 /*********************************/
@@ -584,7 +602,8 @@ module.exports = {
 	getAllSearchesWithVoteCounts,
 	getSearchWithVoteCountsBySearchId,
 	getSearchesWithVoteCountsAndImageInfo,
-	getSearchesWithVoteCountsAndImageInfoBySearchID,
+    getSearchesWithVoteCountsAndImageInfoBySearchID,
+    getSearchesByTerm,
 	getImages,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
