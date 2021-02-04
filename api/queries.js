@@ -311,6 +311,10 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 
 const getSearchesByTerm = (request, response) => {
     const term = request.query.term;
+    if(!term) {
+        response.status(401).json("term not defined")
+        return
+    }
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 1;
     const offset = (page-1)*page_size;
