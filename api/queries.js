@@ -329,6 +329,17 @@ const getSearchesByTerm = (request, response) => {
     })
 }
 
+const getAllInitialTerms = (request, response) => {
+    const query = `SELECT DISTINCT s.search_term_initial FROM searches s`;
+    pool.query(query, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+}
+
 /*********************************/
 /*Image Info Only & Image Subsets*/
 /*********************************/
@@ -609,6 +620,7 @@ module.exports = {
 	getSearchesWithVoteCountsAndImageInfo,
     getSearchesWithVoteCountsAndImageInfoBySearchID,
     getSearchesByTerm,
+    getAllInitialTerms,
 	getImages,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
