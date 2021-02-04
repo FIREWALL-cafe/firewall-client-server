@@ -330,7 +330,7 @@ const getSearchesByTerm = (request, response) => {
 }
 
 const getAllInitialTerms = (request, response) => {
-    const query = `SELECT DISTINCT s.search_term_initial FROM searches s`;
+    const query = `SELECT DISTINCT s.search_term_initial FROM searches s SORT BY s.search_timestamp DESC`;
     pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
