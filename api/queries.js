@@ -316,7 +316,7 @@ const getSearchesByTerm = (request, response) => {
         return
     }
     const page = parseInt(request.query.page) || 1;
-    const page_size = parseInt(request.query.page_size) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
     const values = [term, page_size, offset];
