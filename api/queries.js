@@ -309,6 +309,7 @@ const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 
 const getSearchesByTerm = (request, response) => {
     const term = request.query.term;
+    console.log("term", term);
     const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1`;
     const values = [term];
     pool.query(query, values, (error, results) => {
