@@ -329,6 +329,32 @@ const getSearchesByTerm = (request, response) => {
     })
 }
 
+const getSearchesByTermWithImages = (request, response) => {
+    const term = request.query.term;
+    if(!term) {
+        response.status(401).json("term not defined")
+        return
+    }
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    // ignore pagination for now
+    // const query = `SELECT s.* FROM searches s WHERE s.search_term_initial=$1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
+    const query =  `SELECT s.* FROM searches s WHERE s.search_term=$1 
+        JOIN (SELECT i.search_id, array_agg(i.image_href) FROM images i GROUP BY i.search_id) imgs
+        ON s.search_id=imgs.search_id`
+    // const values = [term, page_size, offset];
+    const values = [term];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+
+}
+
 const getAllInitialTerms = (request, response) => {
     const query = `SELECT DISTINCT s.search_term_initial FROM searches s SORT BY s.search_timestamp DESC`;
     pool.query(query, (error, results) => {
@@ -620,6 +646,7 @@ module.exports = {
 	getSearchesWithVoteCountsAndImageInfo,
     getSearchesWithVoteCountsAndImageInfoBySearchID,
     getSearchesByTerm,
+    getSearchesByTermWithImages,
     getAllInitialTerms,
 	getImages,
 	getImagesOnlyCensored,

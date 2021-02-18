@@ -48,7 +48,7 @@ app.get('/searches/votecounts', db.getAllSearchesWithVoteCounts)
 app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 
 /* Query searches by search term */
-app.get('/searches/terms', db.getSearchesByTerm)
+app.get('/searches/terms', db.getSearchesByTermWithImages)
 app.get('/terms', db.getAllInitialTerms)
 
 /* All Available Information, With Vote Counts */
