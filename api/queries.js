@@ -339,11 +339,11 @@ const getSearchesByTermWithImages = (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     // ignore pagination for now
-    // const query =  `SELECT s.*, i.image_href FROM searches s
-    //     INNER JOIN (SELECT array_agg(image_href), search_id FROM images GROUP BY search_id) i
-    //     ON s.search_id = i.search_id
-    //     WHERE s.search_term_initial = $1;`
-    const query = `SELECT array_agg(image_href), search_id FROM images GROUP BY search_id`
+    const query =  `SELECT s.*, i.image_hrefs FROM searches s
+        INNER JOIN (SELECT array_agg(image_href) as image_hrefs, search_id FROM images GROUP BY search_id) i
+        ON s.search_id = i.search_id
+        WHERE s.search_term_initial = $1;`
+    // const query = `SELECT array_agg(image_href), search_id FROM images GROUP BY search_id`
     // const values = [term, page_size, offset];
     const values = [term];
     pool.query(query, values, (error, results) => {
