@@ -356,8 +356,8 @@ const getSearchesByTermWithImages = (request, response) => {
 }
 
 const getAllInitialTerms = (request, response) => {
-    const query = `SELECT DISTINCT search_term_initial 
-        FROM (SELECT * FROM searches ORDER BY search_timestamp DESC);`;
+    const query = `SELECT DISTINCT ON (search_term_initial), search_timestamp 
+        FROM searches ORDER BY search_timestamp, search_term_initial;`;
     pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
