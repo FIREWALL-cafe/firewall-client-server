@@ -621,7 +621,7 @@ const saveImage = async (request, response) => {
 
 const deleteImage = async (request, response) => {
     const {image_id} = request.body;
-    const query = `DELETE FROM searches WHERE image_id = $1;`
+    const query = `DELETE FROM images WHERE image_id = $1;`
     const values = [image_id]
     pool.query(query, values, (error, results) => {
         if (error) {
