@@ -534,6 +534,20 @@ const createSearch = (request, response) => {
 	})
 }
 
+const deleteSearch = async (request, response) => {
+    const {search_id} = request.body;
+    res.send(501)
+    const query = `DELETE * FROM searches WHERE search_id = $1;`
+    const values = [search_id];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json(results.rows);
+        }
+	})
+}
+
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
 	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
@@ -606,6 +620,20 @@ const saveImage = async (request, response) => {
 	})
 }
 
+const deleteImage = async (request, response) => {
+    const {image_id} = request.body;
+    res.send(501)
+    const query = `DELETE * FROM searches WHERE image_id = $1;`
+    const values = [image_id]
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(201).json(results.rows);
+        }
+	})
+}
+
 const saveImages = (request, response) => {
     const {search_id, image_search_engine, urls, image_ranks } = request.body
     if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
@@ -658,8 +686,10 @@ module.exports = {
 	getImagesOnlyNSFW,
 	getImagesOnlyWTF,
 	createSearch,
+    deleteSearch,
 	createVote,
     saveImage,
+    deleteImage,
     saveImages,
     updateImageUrl
 }

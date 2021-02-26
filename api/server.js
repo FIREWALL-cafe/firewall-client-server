@@ -70,7 +70,9 @@ app.get('/images/type/wtf_searches', db.getImagesOnlyWTF)
 
 /* POST Routes */
 app.post('/createSearch', db.createSearch)
+app.post('/deleteSearch', db.deleteSearch)
 app.post('/createVote', db.createVote)
 app.post('/saveImage', db.saveImage)
+app.post('/deleteImage', db.deleteImage)
 app.post('/saveImages', db.saveImages)
 app.put('/images', db.updateImageUrl)
