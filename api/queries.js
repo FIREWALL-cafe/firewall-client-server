@@ -536,7 +536,6 @@ const createSearch = (request, response) => {
 
 const deleteSearch = async (request, response) => {
     const {search_id} = request.body;
-    res.send(501)
     const query = `DELETE * FROM searches WHERE search_id = $1;`
     const values = [search_id];
     pool.query(query, values, (error, results) => {
@@ -622,7 +621,6 @@ const saveImage = async (request, response) => {
 
 const deleteImage = async (request, response) => {
     const {image_id} = request.body;
-    res.send(501)
     const query = `DELETE * FROM searches WHERE image_id = $1;`
     const values = [image_id]
     pool.query(query, values, (error, results) => {
