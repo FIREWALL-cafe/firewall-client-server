@@ -335,16 +335,33 @@ const getSearchesByTermWithImages = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
-    const page = parseInt(request.query.page) || 1;
-    const page_size = parseInt(request.query.page_size) || 100;
-    const offset = (page-1)*page_size;
-    // ignore pagination for now
     const query =  `SELECT s.*, i.image_hrefs FROM searches s
         INNER JOIN (SELECT array_agg(image_href) as image_hrefs, search_id FROM images GROUP BY search_id) i
         ON s.search_id = i.search_id
         WHERE s.search_term_initial = $1;`
-    // const query = `SELECT array_agg(image_href), search_id FROM images GROUP BY search_id`
-    // const values = [term, page_size, offset];
+    const values = [term];
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json({error, results});
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+}
+
+const getImagesByTermWithSearchInfo = (request, response) => {
+    const term = request.query.term;
+    if(!term) {
+        response.status(401).json("term not defined")
+        return
+    }
+    const query =  `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
+        s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
+        s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href 
+        FROM searches s
+        FULL OUTER JOIN images i
+        ON s.search_id = i.search_id
+        WHERE s.search_term_initial = $1;`
     const values = [term];
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -674,6 +691,7 @@ module.exports = {
     getSearchesWithVoteCountsAndImageInfoBySearchID,
     getSearchesByTerm,
     getSearchesByTermWithImages,
+    getImagesByTermWithSearchInfo,
     getAllInitialTerms,
 	getImages,
 	getImagesOnlyCensored,
