@@ -85,7 +85,8 @@ const getImage = (request, response) => {
     const image_id = parseInt(request.params.image_id);
     const query = `SELECT image_id, search_id, image_search_engine,
         image_href, image_rank, image_mime_type, wordpress_attachment_post_id,
-        wordpress_attachment_file_path`;
+        wordpress_attachment_file_path
+        FROM images WHERE image_id = $1`;
     const values = [image_id];
 
     pool.query(query, values, (error, results) => {
