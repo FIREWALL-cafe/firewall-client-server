@@ -59,7 +59,7 @@ app.get('/searches/:search_id/votecounts/images', db.getSearchesWithVoteCountsAn
 
 /* Image Info Only & Image Subsets */
 app.get('/images', db.getImages)
-app.get('/images/:image_id', db.getImageBinary)
+app.get('/images/image_id/:image_id', db.getImage)
 app.get('/images/search_id/:search_id', db.getImagesOnlyBySearchID)
 app.get('/images/type/censored_searches', db.getImagesOnlyCensored)
 app.get('/images/type/uncensored_searches', db.getImagesOnlyUnsensored)
@@ -68,6 +68,8 @@ app.get('/images/type/good_translation_searches', db.getImagesOnlyGoodTranslatio
 app.get('/images/type/lost_in_translation_searches', db.getImagesOnlyLostInTranslation)
 app.get('/images/type/nsfw_searches', db.getImagesOnlyNSFW)
 app.get('/images/type/wtf_searches', db.getImagesOnlyWTF)
+// we should not ever need to use this as we should have all binaries in the data lake
+app.get('/images/:image_id', db.getImageBinary)
 
 /* POST Routes */
 app.post('/createSearch', db.createSearch)

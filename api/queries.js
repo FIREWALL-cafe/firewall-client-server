@@ -81,6 +81,22 @@ const getImagesWithSearch = (request, response) => {
     })
 }
 
+const getImage = (request, response) => {
+    const image_id = parseInt(request.params.image_id);
+    const query = `SELECT image_id, search_id, image_search_engine,
+        image_href, image_rank, image_mime_type, wordpress_attachment_post_id,
+        wordpress_attachment_file_path`;
+    const values = [image_id];
+
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json({error, image_id});
+        } else {
+            response.status(200).json(results.rows);
+        }
+    })
+}
+
 const getImageBinary = (request, response) => {
     const image_id = parseInt(request.params.image_id);
     const query = `SELECT * FROM images WHERE image_id = $1`;
@@ -695,6 +711,7 @@ module.exports = {
     getImagesByTermWithSearchInfo,
     getAllInitialTerms,
 	getImages,
+    getImage,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
 	getImagesOnlyBadTranslation,
