@@ -357,7 +357,8 @@ const getImagesByTermWithSearchInfo = (request, response) => {
     }
     const query =  `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
         s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
-        s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href 
+        s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href,
+        i.image_id
         FROM searches s
         FULL OUTER JOIN images i
         ON s.search_id = i.search_id
