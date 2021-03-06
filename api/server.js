@@ -50,7 +50,7 @@ app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
 /* Query searches by search term */
 app.get('/searches/terms', db.getSearchesByTermWithImages)
 app.get('/images/terms', db.getImagesByTermWithSearchInfo)
-app.get('/terms', db.getAllInitialTerms)
+app.get('/terms', db.getAllTerms)
 
 /* All Available Information, With Vote Counts */
 app.get('/searches/votecounts/images', db.getSearchesWithVoteCountsAndImageInfo)

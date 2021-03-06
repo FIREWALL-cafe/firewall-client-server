@@ -390,8 +390,8 @@ const getImagesByTermWithSearchInfo = (request, response) => {
     })
 }
 
-const getAllInitialTerms = (request, response) => {
-    const query = `SELECT DISTINCT search_term_initial, search_timestamp 
+const getAllTerms = (request, response) => {
+    const query = `SELECT DISTINCT search_term_initial, search_term_translation, search_timestamp 
         FROM searches;`;
     pool.query(query, (error, results) => {
         if (error) {
@@ -710,7 +710,7 @@ module.exports = {
     getSearchesByTerm,
     getSearchesByTermWithImages,
     getImagesByTermWithSearchInfo,
-    getAllInitialTerms,
+    getAllTerms,
 	getImages,
     getImage,
 	getImagesOnlyCensored,
