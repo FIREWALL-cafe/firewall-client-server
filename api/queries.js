@@ -503,7 +503,7 @@ const getImagesOnlyWTF = (request, response) => {
 /****************/
 
 const checkSecret = (request, response, next) => {
-    if(request.params.secret !== secret) {
+    if(request.body.secret !== secret) {
         response.status(401).json("wrong secret")
     } else {
         next()
