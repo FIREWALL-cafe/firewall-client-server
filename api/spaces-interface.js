@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 // const fs = require('fs'); // Needed for example below
-const config = require('./config.js').spaces;
+const config = require('./config.js').spaces_config;
 const spacesEndpoint = new AWS.Endpoint(`${config.region}.digitaloceanspaces.com`);
 AWS.config.update({
     region: config.region,

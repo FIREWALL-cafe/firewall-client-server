@@ -10,7 +10,7 @@ const pool = new Pool({
 	password: '',
 });
 // Digital Ocean Space info
-const spaces = {
+const spaces_config = {
     bucket: "digital-ocean-bucket-name",
     region: "nyc3",
     SPACES_KEY: "",
@@ -18,4 +18,4 @@ const spaces = {
 }
 const secret = "keep it safe"
 
-module.exports = { pool, spaces, secret };
+module.exports = { pool, spaces_config, secret };

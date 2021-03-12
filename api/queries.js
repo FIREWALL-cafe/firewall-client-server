@@ -1,6 +1,6 @@
 const config = require('./config.js')
-const pool = config.pool
-const spaces = require('./spaces-interface.js')
+const {pool,secret} = config
+const space = require('./spaces-interface.js')
 
 /*****************************/
 /*searches w/o Images & Votes*/
@@ -502,6 +502,13 @@ const getImagesOnlyWTF = (request, response) => {
 /*POST Statements*/
 /****************/
 
+const checkSecret = (request, response, next) => {
+    if(request.params.secret !== secret) {
+        response.status(401).json("wrong secret")
+    } else {
+        next()
+    }
+}
 
 //POST: createSearch -- Add searches
 const createSearch = (request, response) => {
@@ -635,7 +642,7 @@ const saveImage = async (request, response) => {
             return;
         }
         try {
-            new_url = await spaces.saveImage(file_content, image_href);
+            new_url = await space.saveImage(file_content, image_href);
             console.log(typeof new_url, new_url)
         } catch (err){
             response.status(500).json(err);
@@ -720,6 +727,7 @@ module.exports = {
 	getImagesOnlyLostInTranslation,
 	getImagesOnlyNSFW,
 	getImagesOnlyWTF,
+    checkSecret,
 	createSearch,
     deleteSearch,
 	createVote,
