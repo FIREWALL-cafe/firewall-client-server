@@ -9,5 +9,13 @@ const pool = new Pool({
 	user: '',
 	password: '',
 });
+// Digital Ocean Space info
+const spaces = {
+    bucket: "digital-ocean-bucket-name",
+    region: "nyc3",
+    SPACES_KEY: "",
+    SPACES_SECRET: ""
+}
+const secret = "keep it safe"
 
-module.exports = { pool };
+module.exports = { pool, spaces, secret };
