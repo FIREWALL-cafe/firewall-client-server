@@ -381,7 +381,7 @@ function startQuery(query, callback) {
 		secret: config.sharedSecret
 	};
 	$.ajax({
-		url: config.serverURL + 'query',
+		url: config.serverURL + 'translate',
 		method: 'POST',
 		data: data
 	}).done(function(result) {
