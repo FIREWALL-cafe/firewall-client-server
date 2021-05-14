@@ -660,7 +660,7 @@ const saveImage = async (request, response) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(201).json({url: new_url, query_result: results.rows});
+            response.status(201).json({url: new_url ? new_url : image_href, query_result: results});
         }
 	})
 }
