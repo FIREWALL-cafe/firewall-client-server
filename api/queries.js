@@ -692,7 +692,7 @@ const saveImages = (request, response) => {
         response.status(400).json("if including 'original_urls', there must be the same number as 'urls'")
         return;
     }
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
     let promises = [];
     // for each given URL, call that SQL query with that value
     for(let i=0; i<urls.length; i++) {
