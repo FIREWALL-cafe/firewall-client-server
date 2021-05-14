@@ -43,6 +43,7 @@ CREATE TABLE images (
 	search_id                               serial not null references searches(search_id),
 	image_search_engine                     text,
 	image_href                              text,
+    image_href_original                     text,
 	image_rank                              text,
 	image_mime_type                         text,
 	image_data                              bytea,
