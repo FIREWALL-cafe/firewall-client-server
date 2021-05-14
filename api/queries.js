@@ -654,7 +654,7 @@ const saveImage = async (request, response) => {
         }
     }
     
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
     const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_href_original? image_href_original : "", image_rank];
 	pool.query(query, values, (error, results) => {
         if (error) {
