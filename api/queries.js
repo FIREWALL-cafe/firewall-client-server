@@ -48,7 +48,7 @@ const getImagesAndSearchBySearchID = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
+    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
         WHERE s.search_id = $1 ORDER BY i.image_id DESC LIMIT $2 OFFSET $3`;
     const values = [search_id, page_size, offset];
@@ -67,7 +67,7 @@ const getImagesWithSearch = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type
+    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
         ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
@@ -84,7 +84,7 @@ const getImagesWithSearch = (request, response) => {
 const getImage = (request, response) => {
     const image_id = parseInt(request.params.image_id);
     const query = `SELECT image_id, search_id, image_search_engine,
-        image_href, image_rank, image_mime_type, wordpress_attachment_post_id,
+        image_href, image_href_original, image_rank, image_mime_type, wordpress_attachment_post_id,
         wordpress_attachment_file_path
         FROM images WHERE image_id = $1`;
     const values = [image_id];
@@ -274,7 +274,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
+    const query = `SELECT s.*, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
         COUNT(hv.*) total,
         COUNT(case when vote_id = '1' then 1 end) AS Censored,
         COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -301,7 +301,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 //GET: All Search Results With Vote Counts & Image Info
 const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 	const search_id = parseInt(request.params.search_id)
-	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_search_engine, i.image_rank,
+	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
 							COUNT(hv.*) total,
 							COUNT(case when vote_id = '1' then 1 end) AS Censored,
 							COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -375,7 +375,7 @@ const getImagesByTermWithSearchInfo = (request, response) => {
     const query =  `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
         s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
         s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href,
-        i.image_id
+        i.image_href_original, i.image_id
         FROM searches s
         FULL OUTER JOIN images i
         ON s.search_id = i.search_id
@@ -414,7 +414,7 @@ const getImages = (request, response) => {
     pool.query(`SELECT MAX(image_id) FROM images`, (err, res) => {
         console.log(err, res)
         const max_img_id = res.rows[0].max;
-        const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+        const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
             i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
             ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
         const values = [page_size, offset];
@@ -431,7 +431,7 @@ const getImages = (request, response) => {
 //GET: Image Info Only individual search result (BY search_id)
 const getImagesOnlyBySearchID = (request, response) => {
     const search_id = parseInt(request.params.search_id);
-    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
     i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
     FROM searches s FULL JOIN images i ON s.search_id = i.search_id
     WHERE s.search_id = $1`;
@@ -449,7 +449,7 @@ const getImagesVoteCategory = (request, response, category) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_rank, i.image_mime_type, 
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
         i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
@@ -625,15 +625,19 @@ const updateImageUrl = (request, response) => {
 }
 
 //POST: saveImage -- Add searches
-// there are two types of saveImage calls: with and without a file
+// there are two types of saveImage calls: with and without a file. If with a file, it is uploaded
 const saveImage = async (request, response) => {
-    const {search_id, image_search_engine, image_href, image_rank, image_mime_type, image_data} = request.body
+    const {search_id, image_search_engine, image_href, image_href_original, image_rank, image_mime_type, image_data} = request.body
     if(!search_id || !image_search_engine || !image_rank || !image_href) {
         response.status(400).json("Need a search_id, image_rank, image_href, and image_search_engine. If uploading a file, the source URL is still needed for its name")        
         return;
     }
     let new_url = null;
     if(request.files) {
+        response.status(501).json("Uploading files via the API not supported because image hashing in the JS ecosystem isn't as robust as in Python. \
+        Upload the file separately using a Python script (see Great Firewall Codebase Space interface for an implementation)")
+        return;
+
         let file_content;
         try {
             file_content = Buffer.from(request.files.image.data, 'binary');
@@ -649,9 +653,9 @@ const saveImage = async (request, response) => {
             return;
         }
     }
-
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
-    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_rank];
+    
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_href_original? image_href_original : "", image_rank];
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -675,7 +679,7 @@ const deleteImage = async (request, response) => {
 }
 
 const saveImages = (request, response) => {
-    const {search_id, image_search_engine, urls, image_ranks } = request.body
+    const {search_id, image_search_engine, urls, original_urls, image_ranks } = request.body
     if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
         response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
         return;
@@ -684,11 +688,17 @@ const saveImages = (request, response) => {
         response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
         return;
     }
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    if(original_urls.length > 0 && original_urls.length !== urls.length) {
+        response.status(400).json("if including 'original_urls', there must be the same number as 'urls'")
+        return;
+    }
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
     let promises = [];
     // for each given URL, call that SQL query with that value
-    for(let i=0; i<urls.length; i++)
-        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i]]))
+    for(let i=0; i<urls.length; i++) {
+        let original_url = original_urls.length > 0 ? original_urls[i] : "";
+        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
+    }
     // don't respond before all promises have resolved
     Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
 }
