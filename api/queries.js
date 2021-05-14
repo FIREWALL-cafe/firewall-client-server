@@ -700,7 +700,7 @@ const saveImages = (request, response) => {
         promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
     }
     // don't respond before all promises have resolved
-    Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
+    Promise.all(promises).then(results => response.status(201).json(results.rows)).catch(err => response.status(500).json(err));
 }
 
 module.exports = {
