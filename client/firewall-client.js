@@ -378,7 +378,9 @@ function startQuery(query, callback) {
 	var data = {
 		query: query,
 		searchEngine: getSource(),
-		secret: config.sharedSecret
+		secret: config.sharedSecret,
+        langFrom: "EN",
+        langTo: "zh-CN"
 	};
 	$.ajax({
 		url: config.serverURL + 'translate',
