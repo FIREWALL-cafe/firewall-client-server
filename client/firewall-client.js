@@ -667,21 +667,24 @@ function submitImages(callback) {
 			type: 'images_saved'
 		});
 		console.log('Failed sending post to WP:', textStatus, '/', xhr.responseText);
+        console.log('url', url)
 	});
 
 	// Send data back to server for entry into the Google spreadsheet.
-	console.log('Saving images to spreadsheet');
-	var url = config.serverURL + 'submit-images';
-	$.ajax({
-		url: url,
-		method: 'POST',
-		data: gs_data
-	}).done(function() {
-		console.log('Done saving images to spreadsheet');
-		// callback();
-	}).fail(function(xhr, textStatus) {
-		console.log('Failed submitting images to library: ' + textStatus + ' / ' + xhr.responseText);
-	});
+    console.log("NOTE: not saving anything to the spreadsheet")
+	// console.log('Saving images to spreadsheet');
+	// var url = config.serverURL + 'submit-images';
+	// $.ajax({
+	// 	url: url,
+	// 	method: 'POST',
+	// 	data: gs_data
+	// }).done(function() {
+	// 	console.log('Done saving images to spreadsheet');
+	// 	// callback();
+	// }).fail(function(xhr, textStatus) {
+	// 	console.log('Failed submitting images to library: ' + textStatus + ' / ' + xhr.responseText);
+    //     console.log('url', url)
+	// });
 }
 
 // Looks at URL query string and extracts search term.
