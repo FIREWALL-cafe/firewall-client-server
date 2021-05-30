@@ -688,7 +688,7 @@ const saveImages = (request, response) => {
         response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
         return;
     }
-    if(original_urls.length > 0 && original_urls.length !== urls.length) {
+    if(original_urls && original_urls.length > 0 && original_urls.length !== urls.length) {
         response.status(400).json("if including 'original_urls', there must be the same number as 'urls'")
         return;
     }
