@@ -696,7 +696,7 @@ const saveImages = (request, response) => {
     let promises = [];
     // for each given URL, call that SQL query with that value
     for(let i=0; i<urls.length; i++) {
-        let original_url = original_urls.length > 0 ? original_urls[i] : "";
+        let original_url = original_urls && original_urls.length > 0 ? original_urls[i] : "";
         promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
     }
     // don't respond before all promises have resolved
