@@ -15,8 +15,10 @@ var config = {
   // WordPress server URL, can be any other local or remote server endpoint
   libraryURL: 'https://firewallcafe.com/wp-admin/admin-ajax.php?action=fwc_submit_images',
 
-  // Set this to the 'private_key_id' value from service-key.json
+  // Set this to the 'private_key_id' value from service-key.json in the /server folder
   sharedSecret: '...',
+  // This is for the Wordpress AJAX API
+  wordpressSecret: '...',
 
   // This will send all non-Baidu traffic through a SOCKS proxy on port 8888
   enableProxy: false,
