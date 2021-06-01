@@ -534,9 +534,17 @@ function getImages() {
 		getGoogleDatastore().catch((error) => {
 		}).then((data) => {
 			// Get Google image URIs
+            if(!data) {
+                // console.log('google datastore is not defined');
+                return;
+            }
 			$('img.rg_i').each(function (index, element) {
-				_dedupeLimitedSet(images, element, data['flatDatastore']);
-			});
+                try {
+                    _dedupeLimitedSet(images, element, data['flatDatastore']);
+                } catch(err) {
+                    console.log(err);
+                }
+			})
 		});
 	}
 
@@ -610,7 +618,7 @@ function submitImages(callback) {
 		timestamp: pendingQuery.timestamp,
 		location: config.location,
 		client: clientId,
-		secret: config.sharedSecret,
+		secret: config.wordpressSecret,
 		search_engine: pendingQuery.searchEngine,
 		query: pendingQuery.query,
 		translated: pendingQuery.translated,
@@ -647,6 +655,7 @@ function submitImages(callback) {
 
 	console.log('Sending post to WP.');
 	var url = config.libraryURL;
+    console.log('url', url)
 
 	chrome.runtime.sendMessage({
 		type: 'images_loading'
@@ -667,7 +676,6 @@ function submitImages(callback) {
 			type: 'images_saved'
 		});
 		console.log('Failed sending post to WP:', textStatus, '/', xhr.responseText);
-        console.log('url', url)
 	});
 
 	// Send data back to server for entry into the Google spreadsheet.
@@ -724,9 +732,9 @@ function getGoogleDatastore() {
 		if (typeof AF_initDataChunkQueue != 'undefined' &&
 			Array.isArray(AF_initDataChunkQueue)) {
 			var datastoreIndex = AF_initDataChunkQueue.findIndex(function (element) {
-				return (element['key'] === 'ds:2');
+				return (element['key'] === 'ds:1');
 			});
-			var datastore = AF_initDataChunkQueue[datastoreIndex].data();
+			var datastore = AF_initDataChunkQueue[datastoreIndex].data;
 			// Flatten datastore for convenience
 			var flatDatastore = datastore.flat(Infinity);
 
@@ -753,7 +761,6 @@ function getGoogleDatastore() {
 		scriptTag.appendChild(scriptBody);
 		document.body.append(scriptTag);
 	})();
-
 	return new Promise((resolve, reject) => {
 		window.addEventListener('message', function (message) {
 			if (message['data']['hash'] != hash) {
