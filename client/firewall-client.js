@@ -358,7 +358,8 @@ function checkURLQuery() {
 				pendingQuery = $.extend(result, {
 					timestamp: timestamp,
 					googleImages: null,
-					baiduImages: null
+					baiduImages: null,
+					searchEngine: getSource()
 				});
 
 				storage.set({
