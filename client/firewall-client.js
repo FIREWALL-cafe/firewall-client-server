@@ -614,6 +614,77 @@ function toggleInputField(enable) {
 }
 
 function submitImages(callback) {
+  let googleImageUrls = [];
+	$.each(pendingQuery.googleImages, function (index, image) {
+		googleImageUrls.push(image.href);
+	});
+	let baiduImageUrls = [];
+	$.each(pendingQuery.baiduImages, function (index, image) {
+		baiduImageUrls.push(image.href);
+	});
+  // let data = {
+  //   google_urls: googleImageUrls,
+  //   baidu_urls: googleImageUrls,
+  //   secret: config.apiSecret
+  // }
+
+  // this is what a current call looks like to /saveImages, working in Postman
+  let data = {
+    // the search object to attach these images to. requires another call to create, would be better if we could just do one total API call
+    "search_id":9,
+    // I think this is unnecessary and should be removed
+    "image_ranks": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    "urls": [
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+        "https://example.com/img.jpg",
+    ],
+    "image_search_engine":"google",
+    "secret": config.apiSecret,
+    "original_urls":[]
+  }
+  const url = config.apiBase + "/saveImages"
+  console.log("sending images to API", url, data)
+
+  fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+  })
+  .then(response => {
+    console.log("response from API:", response)
+    result.type = 'images_saved';
+		chrome.runtime.sendMessage(rsp);
+    callback()
+  })
+  .catch(err => {
+    console.log("error from API:", err)
+  })
+  console.log("done sending images")
+}
+
+function submitImagesToWordpress(callback) {
+  // deprecating this function!
 	// WordPress will get all of the data-URI image data
 	var wp_data = {
 		timestamp: pendingQuery.timestamp,
