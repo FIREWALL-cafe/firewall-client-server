@@ -455,8 +455,8 @@ function getImages() {
 
 	var imagesKey = getSource() + 'Images';
 	var retryKey = getSource() + 'Retries';
-	var numImages = 20;
-	var maxRetries = 5;
+	var numImages = 10;
+	var maxRetries = 3;
 
 	// If getting images from Baidu, look for the phrase indicating banned search.
 	if (getSource() == 'baidu') {
@@ -614,67 +614,40 @@ function toggleInputField(enable) {
 }
 
 function submitImages(callback) {
-  let googleImageUrls = [];
-	$.each(pendingQuery.googleImages, function (index, image) {
-		googleImageUrls.push(image.href);
-	});
-	let baiduImageUrls = [];
-	$.each(pendingQuery.baiduImages, function (index, image) {
-		baiduImageUrls.push(image.href);
-	});
-  // let data = {
-  //   google_urls: googleImageUrls,
-  //   baidu_urls: googleImageUrls,
-  //   secret: config.apiSecret
-  // }
-
   // this is what a current call looks like to /saveImages, working in Postman
-  let data = {
-    // the search object to attach these images to. requires another call to create, would be better if we could just do one total API call
-    "search_id":9,
-    // I think this is unnecessary and should be removed
-    "image_ranks": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-    "urls": [
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-        "https://example.com/img.jpg",
-    ],
-    "image_search_engine":"google",
-    "secret": config.apiSecret,
-    "original_urls":[]
-  }
-  const url = config.apiBase + "/saveImages"
+	var data = {
+		timestamp: pendingQuery.timestamp,
+		location: config.location,
+		client: clientId,
+		secret: config.wordpressSecret,
+		search_engine: pendingQuery.searchEngine,
+		query: pendingQuery.query,
+		translated: pendingQuery.translated,
+		lang_from: pendingQuery.langFrom,
+		lang_to: pendingQuery.langTo,
+		lang_confidence: pendingQuery.langConfidence,
+		lang_alternate: pendingQuery.langAlternate,
+		lang_name: pendingQuery.langName,
+		google_images: JSON.stringify(pendingQuery.googleImages),
+		baidu_images: JSON.stringify(pendingQuery.baiduImages),
+		banned: pendingQuery.banned,
+		sensitive: pendingQuery.sensitive
+	};
+  const url = config.apiBase + "/saveSearchAndImages"
   console.log("sending images to API", url, data)
 
   fetch(url, {
     method: 'POST',
     body: JSON.stringify(data),
-    mode: 'no-cors',
+    // mode: 'no-cors',
     headers: {
       'Content-Type': 'application/json'
     },
   })
   .then(response => {
     console.log("response from API:", response)
-    result.type = 'images_saved';
-		chrome.runtime.sendMessage(rsp);
+    response.type = 'images_saved';
+		chrome.runtime.sendMessage(response);
     callback()
   })
   .catch(err => {
@@ -715,15 +688,15 @@ function submitImagesToWordpress(callback) {
 	});
 
 	// Google Sheets will get *just* the image URLs
-	var gs_data = jQuery.extend(true, {}, wp_data);
-	gs_data.google_images = JSON.stringify(googleImageUrls);
-	gs_data.baidu_images = JSON.stringify(baiduImageUrls);
+	// var gs_data = jQuery.extend(true, {}, wp_data);
+	// gs_data.google_images = JSON.stringify(googleImageUrls);
+	// gs_data.baidu_images = JSON.stringify(baiduImageUrls);
 
-	console.log('google images');
-	console.log(wp_data.google_images.substr(0, 100));
+	// console.log('google images');
+	// console.log(wp_data.google_images.substr(0, 100));
 
-	console.log('google image urls');
-	console.log(gs_data.google_images.substr(0, 100));
+	// console.log('google image urls');
+	// console.log(gs_data.google_images.substr(0, 100));
 
 	console.log('Sending post to WP.');
 	var url = config.libraryURL;

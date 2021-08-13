@@ -5,13 +5,26 @@ const fileUpload = require('express-fileupload')
 const app = express()
 const port = 11458
 
-app.use(bodyParser.json())
-app.use(
-    bodyParser.urlencoded({
-        extended: true,
-	})
-)
 app.use(fileUpload())
+// body parsing
+app.use(express.json()); //Used to parse JSON bodies
+app.use(express.urlencoded()); //Parse URL-encoded bodies
+
+// Add headers before the routes are defined (thanks Stack Overflow)
+// https://stackoverflow.com/questions/18310394/no-access-control-allow-origin-node-apache-port-issue
+app.use(function (req, res, next) {
+  // Website you wish to allow to connect... it's either one, or all, unless you set it dynamically depending on origin
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Request methods you wish to allow
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT');
+
+  // Request headers you wish to allow
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
+  // Pass to next layer of middleware
+  next();
+});
 
 app.get('/', (request, response) => {
 	response.json({ info: 'Firewall-Cafe API'})
