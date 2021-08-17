@@ -510,25 +510,23 @@ const checkSecret = (request, response, next) => {
     }
 }
 
-//POST: createSearch -- Add searches
-const createSearch = (request, response) => {
-	const {
-		search_timestamp,
-		search_location,
-		search_ip_address,
-		search_client_name,
-		search_engine_initial,
-		search_engine_translation,
-		search_term_initial,
-		search_term_initial_language_code,
-		search_term_initial_language_confidence,
-		search_term_initial_language_alternate_code,
-		search_term_translation,
-		search_term_translation_language_code,
-		search_term_status_banned,
-		search_term_status_sensitive,
-		search_schema_initial
-	} = request.body
+const buildSearchQuery = (request) => {
+    const {
+        search_timestamp,
+        search_location,
+        search_ip_address,
+        search_client_name,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_initial_language_confidence,
+        search_term_initial_language_alternate_code,
+        search_term_translation,
+        search_term_translation_language_code,
+        search_term_status_banned,
+        search_term_status_sensitive,
+    } = request.body
 
     const query = `INSERT INTO searches (
         search_id,
@@ -552,20 +550,27 @@ const createSearch = (request, response) => {
 
     const values = [
         search_timestamp,
-		search_location,
-		search_ip_address,
-		search_client_name,
-		search_engine_initial,
-		search_engine_translation,
-		search_term_initial,
-		search_term_initial_language_code,
-		search_term_initial_language_confidence,
-		search_term_initial_language_alternate_code,
-		search_term_translation,
-		search_term_translation_language_code,
-		search_term_status_banned,
-		search_term_status_sensitive
+        search_location,
+        search_ip_address,
+        search_client_name,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_initial_language_confidence,
+        search_term_initial_language_alternate_code,
+        search_term_translation,
+        search_term_translation_language_code,
+        search_term_status_banned,
+        search_term_status_sensitive
     ];
+
+    return { query, values };
+};
+
+//POST: createSearch -- Add searches
+const createSearch = (request, response) => {
+    const { query, values } = buildSearchQuery(request);
 
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -678,8 +683,9 @@ const deleteImage = async (request, response) => {
 	})
 }
 
-const saveImages = (request, response) => {
-    const {search_id, image_search_engine, urls, original_urls, image_ranks } = request.body
+const saveImages = async (request, response) => {
+    const { search_id, image_search_engine, urls, original_urls, image_ranks } = request.body
+
     if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
         response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
         return;
@@ -693,15 +699,30 @@ const saveImages = (request, response) => {
         return;
     }
     const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
-    let promises = [];
+    let imageQueries = [];
     // for each given URL, call that SQL query with that value
     for(let i=0; i<urls.length; i++) {
         let original_url = original_urls && original_urls.length > 0 ? original_urls[i] : "";
-        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
+        imageQueries.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
     }
-    // don't respond before all promises have resolved
-    Promise.all(promises).then(results => response.status(201).json(results.rows)).catch(err => response.status(500).json(err));
+
+    return imageQueries;
 }
+
+const saveSearchAndImages = async (request, response) => {
+    const { searchQuery, searchValues } = buildSearchQuery(request);
+    const searchPoolQuery = pool.query(searchQuery, searchValues);
+    const promises = [ ...saveImages(request, response),  searchPoolQuery];
+    let results;
+
+    try {
+        results = await Promise.all(promises);
+    } catch (error) {
+        response.status(500).json(error);
+    }
+
+    response.status(201).json(results);
+};
 
 module.exports = {
 	getAllSearches,
@@ -744,5 +765,6 @@ module.exports = {
     saveImage,
     deleteImage,
     saveImages,
-    updateImageUrl
+    updateImageUrl,
+    saveSearchAndImages
 }
