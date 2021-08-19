@@ -764,7 +764,6 @@ module.exports = {
 	createVote,
     saveImage,
     deleteImage,
-    saveImages,
     updateImageUrl,
     saveSearchAndImages
 }
