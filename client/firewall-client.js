@@ -35,18 +35,18 @@ storage.get([
 	}
 
 	console.log('Firewall Cafe | ' + clientId);
-	console.log('Server: ' + config.serverURL);
+	// console.log('Server: ' + config.serverURL);
 
 	// Get user autocomplete preference.
 	if (stored.autocompleteEnabled) {
 		autocompleteEnabled = (stored.autocompleteEnabled == 'on');
 	}
 
-	if (autocompleteEnabled) {
-		console.log('Autocomplete enabled.');
-	} else {
-		console.log('Autocomplete disabled.');
-	}
+	// if (autocompleteEnabled) {
+	// 	console.log('Autocomplete enabled.');
+	// } else {
+	// 	console.log('Autocomplete disabled.');
+	// }
 
 	// Check for a pending query in storage and set it.
 	if (stored.pendingQuery) {
@@ -106,8 +106,8 @@ function setupUI() {
 			clientId: clientId,
 			autocompleteEnabled: autocompleteStatus
 		}, function() {
-			console.log('Changing settings...');
-			console.log('Firewall client: ' + clientId);
+			// console.log('Changing settings...');
+			// console.log('Firewall client: ' + clientId);
 			console.log('Autocomplete: ' + autocompleteStatus);
 			$firewallForm.removeClass('visible');
 		});
@@ -188,15 +188,12 @@ function setupIntroScreen() {
 }
 
 function setupInterval() {
-	console.log('Setting up URL checking interval...');
 	setInterval(function() {
 		checkURLQuery();
 	}, 100);
 }
 
 function setupStorageListener() {
-	console.log('Setting up storage listener...');
-
 	// Listen to chrome storage for changes.
 	chrome.storage.onChanged.addListener(function(changes, area) {
 
@@ -216,9 +213,8 @@ function setupStorageListener() {
 }
 
 function setupMessageListener() {
-	console.log('Setting up messages listener...');
 	chrome.runtime.onMessage.addListener(function(e) {
-		console.log('MSG: ' + e.type, e);
+		// console.log('MSG: ' + e.type, e);
 		if (e.type == 'toggle_input') {
 			/*
 			if (e.enabled) {
@@ -248,14 +244,14 @@ function setupMessageListener() {
 
 function checkPendingQuery() {
 	if (pendingQuery.query) {
-		console.log("Pending query: ");
-		console.log(pendingQuery);
+		console.log("Pending query: ", pendingQuery);
 	}
 
 	// If we're ignoring incoming query data because we're in the middle of handling a query, move on.
 	if (ignorePending) {
+    console.log("!!!NOT!!!")
 		console.log('Ignoring pending queries.');
-//		return;
+		// return;
 	}
 
 	// Look at the URL query string to get the search term.
@@ -272,7 +268,7 @@ function checkPendingQuery() {
 	    pendingQuery.translated &&
 	    pendingQuery.translated == queryMatch) {
 		// We've just searched for this one, let getImages take it from here
-		console.log('Already getting these images.');
+		// console.log('Already getting these images.');
 		return;
 	} else if (pendingQuery &&
 	           pendingQuery.timestamp &&
@@ -294,7 +290,7 @@ function checkPendingQuery() {
 		// If the origin of the search was in the other search engine,
 		// start a search for the term in the current search engine.
 		console.log('Found a pending query from', pendingQuery.source, ':', pendingQuery.query);
-		console.log('SETTING ignorePending to TRUE');
+		// console.log('SETTING ignorePending to TRUE');
 		ignorePending = true;
 		searchPendingQuery();
 	}
@@ -341,12 +337,12 @@ function checkURLQuery() {
 		// If the primary search term is pending and is the original "source" search term,
 		// just continue along.
 		if (isPending == 'source') {
-			console.log('Query is already pending');
+			// console.log('Query is already pending');
 			return;
 		} else if (isPending == 'translated') {
 			// If the primary search term is pending and is the translation of an original search,
 			// start ignoring subsequent pending queries and begin getting images.
-			console.log('Translation: ' + pendingQuery.translated);
+			// console.log('Translation: ' + pendingQuery.translated);
 			console.log('SETTING ignorePending to TRUE');
 			ignorePending = true;
 			startGettingImages();
@@ -424,8 +420,8 @@ function searchPendingQuery() {
 	var inputQuery = 'input[name=q], input[name=word]';
 	if ($(inputQuery).length == 0 ||
 	    $(inputQuery).first().closest('form').length == 0) {
-		console.log('Could not find form input, giving up.');
-		console.log('SETTING ignorePending to FALSE');
+		// console.log('Could not find form input, giving up.');
+		// console.log('SETTING ignorePending to FALSE');
 		ignorePending = false;
 		return;
 	}
@@ -439,8 +435,8 @@ function findInputField() {
 		$inputField = $(inputField);
 
 	if ($inputField.length == 0 || $inputField.first().closest('form').length == 0) {
-		console.log('Could not find form input. Giving up.');
-		console.log('SETTING ignorePending to FALSE');
+		// console.log('Could not find form input. Giving up.');
+		// console.log('SETTING ignorePending to FALSE');
 		ignorePending = false;
 		return;
 	}
@@ -472,7 +468,7 @@ function getImages() {
 		pendingQuery[retryKey] = 0;
 	}
 
-	console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
+	// console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
 
 	function _dedupeLimitedSet(imageSet, image, flatDatastore) {
 		var dupe = false;
@@ -554,7 +550,7 @@ function getImages() {
 		_dedupeLimitedSet(images, element);
 	});
 
-	console.log('Found ' + images.length + ' images from', getSource());
+	// console.log('Found ' + images.length + ' images from', getSource());
 	pendingQuery[imagesKey] = images;
 
 	if (images.length < numImages &&
@@ -567,14 +563,14 @@ function getImages() {
 		storage.set({
 			pendingQuery: pendingQuery
 		});
-		console.log('SETTING ignorePending to FALSE');
+		// console.log('SETTING ignorePending to FALSE');
 		ignorePending = false;
 	}
 }
 
 function checkPendingImages() {
 	if (pendingQuery && pendingQuery.googleImages && pendingQuery.baiduImages) {
-		console.log('Image gathering complete.');
+		// console.log('Image gathering complete.');
 
 		if (pendingQuery.googleImages.length) {
 			console.log('Looks like we have', pendingQuery.googleImages.length, 'images from Google!');
@@ -595,7 +591,7 @@ function checkPendingImages() {
 			storage.set({
 				pendingQuery: {}
 			});
-			console.log('SETTING ignorePending to FALSE');
+			// console.log('SETTING ignorePending to FALSE');
 			ignorePending = false;
 		});
 		return true;
@@ -605,11 +601,11 @@ function checkPendingImages() {
 }
 
 function toggleInputField(enable) {
-	console.log('toggling input field: ' + enable);
+	// console.log('toggling input field: ' + enable);
 	var input = document.querySelector('input[name=word], input[name=q]');
 	if (input) {
 		input.disabled = ! enable;
-		console.log(input);
+		// console.log(input);
 	}
 }
 
@@ -634,7 +630,7 @@ function submitImages(callback) {
 		sensitive: pendingQuery.sensitive
 	};
   const url = config.apiBase + "/saveSearchAndImages"
-  console.log("sending images to API", url, data)
+  // console.log("sending images to API", url, data)
 
   fetch(url, {
     method: 'POST',
@@ -645,13 +641,13 @@ function submitImages(callback) {
     },
   })
   .then(response => {
-    console.log("response from API:", response)
+    // console.log("response from API:", response)
     response.type = 'images_saved';
 		chrome.runtime.sendMessage(response);
     callback()
   })
   .catch(err => {
-    console.log("error from API:", err)
+    // console.log("error from API:", err)
   })
   console.log("done sending images")
 }
@@ -815,4 +811,13 @@ function getGoogleDatastore() {
 			}
 		});
 	});
+}
+
+// slow things down so we can understand execution flow
+function sleep(milliseconds) {
+  const date = Date.now();
+  let currentDate = null;
+  do {
+    currentDate = Date.now();
+  } while (currentDate - date < milliseconds);
 }
