@@ -38,7 +38,7 @@
 			"jquery-ui/jquery-ui.js",
 			"config.js",
 			"sensitive.js",
-			"firewall-client.js"
+			"firewall-client-rewrite.js"
 		]
 	}],
 	"web_accessible_resources": [
