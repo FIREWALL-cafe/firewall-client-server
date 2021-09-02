@@ -1,7 +1,7 @@
 var storage = chrome.storage.local;
 
 var clientId = randomClientId();
-var pendingQuery = {};
+var queryData = {};
 var query = null;
 
 var ignoreSubmit = false;
@@ -49,9 +49,9 @@ storage.get(
 
     // Check for a pending query in storage and set it.
     if (stored.pendingQuery) {
-      pendingQuery = stored.pendingQuery;
-      if (pendingQuery.query) {
-        console.log("Stored pending query: " + pendingQuery.query);
+      queryData = stored.pendingQuery;
+      if (queryData.query) {
+        console.log("Stored pending query: " + queryData.query);
       } else {
         console.log("No stored pending query. Starting fresh.");
       }
@@ -225,7 +225,7 @@ function setupStorageListener() {
     // If the client performs a search and saves results to storage,
     // update the pending query with the incoming data.
     if (changes.pendingQuery) {
-      pendingQuery = $.extend(pendingQuery, changes.pendingQuery.newValue);
+      queryData = $.extend(queryData, changes.pendingQuery.newValue);
       checkPendingQuery();
       checkPendingImages();
     }
@@ -264,8 +264,8 @@ function setupMessageListener() {
 }
 
 function checkPendingQuery() {
-  if (pendingQuery.query) {
-    console.log("[checkPendingQuery] Pending query: ", pendingQuery);
+  if (queryData.query) {
+    console.log("[checkPendingQuery] Pending query: ", queryData);
   }
 
   // If we're ignoring incoming query data because we're in the middle of handling a query, move on.
@@ -286,22 +286,22 @@ function checkPendingQuery() {
 
   // If the search term is the translation of an original search term, move on.
   if (
-    pendingQuery &&
-    pendingQuery.translated &&
-    pendingQuery.translated == queryMatch
+    queryData &&
+    queryData.translated &&
+    queryData.translated == queryMatch
   ) {
     // We've just searched for this one, let getImages take it from here
     console.log("[checkPendingQuery] Already getting these images.");
     return;
   } else if (
-    pendingQuery &&
-    pendingQuery.timestamp &&
-    currTime - pendingQuery.timestamp > 60 * 1000
+    queryData &&
+    queryData.timestamp &&
+    currTime - queryData.timestamp > 60 * 1000
   ) {
     // Pending queries expire after 1 min.
     // If the query has expired, reset everything.
     console.log("[checkPendingQuery] Query has expired.");
-    pendingQuery = {};
+    queryData = {};
     storage.set(
       {
         pendingQuery: {},
@@ -313,14 +313,14 @@ function checkPendingQuery() {
     // toggleInputField(true, function(){
     // 	console.log('Input field enabled.');
     // });
-  } else if (pendingQuery.query && pendingQuery.searchEngine != getSource()) {
+  } else if (queryData.query && queryData.searchEngine != getSource()) {
     // If the origin of the search was in the other search engine,
     // start a search for the term in the current search engine.
     console.log(
       "[checkPendingQuery] Found a pending query from",
-      pendingQuery.source,
+      queryData.source,
       ":",
-      pendingQuery.query
+      queryData.query
     );
     // console.log('SETTING ignorePending to TRUE');
     ignorePending = true;
@@ -368,13 +368,13 @@ function checkURLQuery() {
 
     var timestamp = new Date().getTime();
 
-    if (!pendingQuery) {
+    if (!queryData) {
       // If neither search is in progress,
       // start the first query for images.
       startQuery(query, function (result) {
         console.log("[checkURLQuery] Translated query: " + result.translated);
         console.log("[checkURLQuery] creating new pendingQuery object");
-        pendingQuery = $.extend(result, {
+        queryData = $.extend(result, {
           timestamp: timestamp,
           googleImages: null,
           baiduImages: null,
@@ -383,7 +383,7 @@ function checkURLQuery() {
 
         storage.set(
           {
-            pendingQuery: pendingQuery,
+            pendingQuery: queryData,
           },
           function () {
             console.log(
@@ -449,8 +449,8 @@ function startGettingImages() {
 }
 
 function isQueryTranslated(query) {
-  if (pendingQuery) {
-    if (pendingQuery.translated === query) {
+  if (queryData) {
+    if (queryData.translated === query) {
       return true;
     } else {
       return false;
@@ -468,9 +468,9 @@ function searchPendingQuery() {
 
   console.log(
     "[searchPendingQuery] Searching for",
-    pendingQuery.translated,
+    queryData.translated,
     "(translation of",
-    pendingQuery.query,
+    queryData.query,
     ") in",
     getSource()
   );
@@ -490,7 +490,7 @@ function searchPendingQuery() {
   }
   console.log("%c[searchPendingQuery] %s", rainbowCSS, "CLICKING SUBMIT");
   sleep(1000);
-  $(inputQuery).first().val(pendingQuery.translated);
+  $(inputQuery).first().val(queryData.translated);
   $inputField.first().closest("form").submit();
   sleep(1000);
   console.log("[searchPendingQuery] done");
@@ -513,7 +513,7 @@ function findInputField() {
 }
 
 function getImages() {
-  if (!pendingQuery || !pendingQuery.query) {
+  if (!queryData || !queryData.query) {
     return;
   }
 
@@ -528,14 +528,14 @@ function getImages() {
       $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")')
         .length > 0;
     if (banned) {
-      pendingQuery["banned"] = true;
+      queryData["banned"] = true;
     } else {
-      pendingQuery["banned"] = false;
+      queryData["banned"] = false;
     }
   }
 
-  if (!pendingQuery[retryKey]) {
-    pendingQuery[retryKey] = 0;
+  if (!queryData[retryKey]) {
+    queryData[retryKey] = 0;
   }
 
   // console.log('Gathering', getSource(), 'images for ' + pendingQuery.query);
@@ -594,8 +594,8 @@ function getImages() {
     }
   }
 
-  if (pendingQuery[imagesKey]) {
-    var images = pendingQuery[imagesKey];
+  if (queryData[imagesKey]) {
+    var images = queryData[imagesKey];
   } else {
     var images = [];
   }
@@ -628,15 +628,15 @@ function getImages() {
   });
 
   // console.log('Found ' + images.length + ' images from', getSource());
-  pendingQuery[imagesKey] = images;
+  queryData[imagesKey] = images;
 
-  if (images.length < numImages && pendingQuery[retryKey] < maxRetries) {
-    pendingQuery[retryKey]++;
+  if (images.length < numImages && queryData[retryKey] < maxRetries) {
+    queryData[retryKey]++;
     console.log(
       "[getImages] Still only have " +
         images.length +
         " images; retry in 2 seconds (" +
-        pendingQuery[retryKey] +
+        queryData[retryKey] +
         " of " +
         maxRetries +
         ")"
@@ -645,7 +645,7 @@ function getImages() {
   } else if (!checkPendingImages()) {
     // If we don't have all the images yet, save the first crop of them to storage
     storage.set({
-      pendingQuery: pendingQuery,
+      pendingQuery: queryData,
     });
     // console.log('SETTING ignorePending to FALSE');
     ignorePending = false;
@@ -653,23 +653,23 @@ function getImages() {
 }
 
 function checkPendingImages() {
-  if (pendingQuery && pendingQuery.googleImages && pendingQuery.baiduImages) {
+  if (queryData && queryData.googleImages && queryData.baiduImages) {
     // console.log('Image gathering complete.');
 
-    if (pendingQuery.googleImages.length) {
+    if (queryData.googleImages.length) {
       console.log(
         "[checkPendingImages] Looks like we have",
-        pendingQuery.googleImages.length,
+        queryData.googleImages.length,
         "images from Google!"
       );
     } else {
       console.log("[checkPendingImages] No image results from Google. :(");
     }
 
-    if (pendingQuery.baiduImages.length) {
+    if (queryData.baiduImages.length) {
       console.log(
         "[checkPendingImages] Looks like we have",
-        pendingQuery.baiduImages.length,
+        queryData.baiduImages.length,
         "images from Baidu!"
       );
     } else {
@@ -679,7 +679,7 @@ function checkPendingImages() {
     // If we have results from both search engines, submit them ... annnd we're done
     submitImages(function () {
       console.log("[checkPendingImages] Removing pending query");
-      pendingQuery = {};
+      queryData = {};
       storage.set({
         pendingQuery: {},
       });
@@ -704,22 +704,22 @@ function toggleInputField(enable) {
 function submitImages(callback) {
   // this is what a current call looks like to /saveImages, working in Postman
   var data = {
-    timestamp: pendingQuery.timestamp,
+    timestamp: queryData.timestamp,
     location: config.location,
     client: clientId,
     secret: config.wordpressSecret,
-    search_engine: pendingQuery.searchEngine,
-    query: pendingQuery.query,
-    translated: pendingQuery.translated,
-    lang_from: pendingQuery.langFrom,
-    lang_to: pendingQuery.langTo,
-    lang_confidence: pendingQuery.langConfidence,
-    lang_alternate: pendingQuery.langAlternate,
-    lang_name: pendingQuery.langName,
-    google_images: JSON.stringify(pendingQuery.googleImages),
-    baidu_images: JSON.stringify(pendingQuery.baiduImages),
-    banned: pendingQuery.banned,
-    sensitive: pendingQuery.sensitive,
+    search_engine: queryData.searchEngine,
+    query: queryData.query,
+    translated: queryData.translated,
+    lang_from: queryData.langFrom,
+    lang_to: queryData.langTo,
+    lang_confidence: queryData.langConfidence,
+    lang_alternate: queryData.langAlternate,
+    lang_name: queryData.langName,
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned,
+    sensitive: queryData.sensitive,
   };
   const url = config.apiBase + "/saveSearchAndImages";
   // console.log("sending images to API", url, data)
@@ -748,30 +748,30 @@ function submitImagesToWordpress(callback) {
   // deprecating this function!
   // WordPress will get all of the data-URI image data
   var wp_data = {
-    timestamp: pendingQuery.timestamp,
+    timestamp: queryData.timestamp,
     location: config.location,
     client: clientId,
     secret: config.wordpressSecret,
-    search_engine: pendingQuery.searchEngine,
-    query: pendingQuery.query,
-    translated: pendingQuery.translated,
-    lang_from: pendingQuery.langFrom,
-    lang_to: pendingQuery.langTo,
-    lang_confidence: pendingQuery.langConfidence,
-    lang_alternate: pendingQuery.langAlternate,
-    lang_name: pendingQuery.langName,
-    google_images: JSON.stringify(pendingQuery.googleImages),
-    baidu_images: JSON.stringify(pendingQuery.baiduImages),
-    banned: pendingQuery.banned,
-    sensitive: pendingQuery.sensitive,
+    search_engine: queryData.searchEngine,
+    query: queryData.query,
+    translated: queryData.translated,
+    lang_from: queryData.langFrom,
+    lang_to: queryData.langTo,
+    lang_confidence: queryData.langConfidence,
+    lang_alternate: queryData.langAlternate,
+    lang_name: queryData.langName,
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned,
+    sensitive: queryData.sensitive,
   };
 
   var googleImageUrls = [];
-  $.each(pendingQuery.googleImages, function (index, image) {
+  $.each(queryData.googleImages, function (index, image) {
     googleImageUrls.push(image.href);
   });
   var baiduImageUrls = [];
-  $.each(pendingQuery.baiduImages, function (index, image) {
+  $.each(queryData.baiduImages, function (index, image) {
     baiduImageUrls.push(image.href);
   });
 

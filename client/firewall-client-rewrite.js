@@ -8,17 +8,20 @@ const states = {
   INTRO_SCREEN: 'INTRO_SCREEN',
   WAITING_FOR_TRANSLATION: 'WAITING_FOR_TRANSLATION',
   WAITING_FOR_PAGE_LOAD: 'WAITING_FOR_PAGE_LOAD',
-  GETTING_IMAGES: 'GETTING_IMAGES', 
-  SAVING_IMAGES: 'SAVING_IMAGES'
+  GETTING_IMAGES: 'GETTING_IMAGES',
+  SAVING_IMAGES: 'SAVING_IMAGES',
+  DONE: 'DONE'
 }
 const loopInterval = 5000;
 const $googleQueryBox = $('[name=q]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
+const numImages = 10;
 
 let state = states.WAITING
 let autocompleteEnabled = true
-let queryData = {} // tracks overall information about the search that is currently happening
+let queryData = { search: undefined, translation: undefined } // tracks overall information about the search that is currently happening
 let clientId = "client-name"
+let cyclesInState = 0
 
 chrome.storage.local.get([
   'autocompleteEnabled',
@@ -61,7 +64,7 @@ function checkIfCorrectState() {
   console.log("[checkIfCorrectState] window.location=", window.location);
   const identity = getSearchEngine();
   if(state !== states.WAITING) {
-    if (identity === 'baidu' && windlow.location.pathname === '/') {
+    if (identity === 'baidu' && window.location.pathname === '/') {
       setState(states.WAITING)
     }
     if (identity === 'google' && window.location.pathname !== '/search') {
@@ -73,7 +76,7 @@ function checkIfCorrectState() {
 function setupUI() {
   // redirect to Google Images search (if needed)
   if (window.location.host == 'www.google.com' &&
-      window.location.pathname == '/') 
+      window.location.pathname == '/')
   {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
@@ -120,7 +123,7 @@ function setupUI() {
 			console.log('[setupUI] Autocomplete: ' + autocompleteEnabled);
 			$firewallForm.removeClass('visible');
 		});
-    
+
 		if (autocompleteEnabled) {
 			$googleQueryBox.autocomplete({
 				source: sensitiveQueries
@@ -155,6 +158,7 @@ function setupStorageListener() {
     if(changes.state) {
       state = changes.state.newValue
       console.log("%c %s", consoleHeaderCSS, state)
+      cyclesInState = 0
     }
     if(changes.queryData) {
       queryData = changes.queryData.newValue
@@ -172,9 +176,10 @@ function main() {
   // get any necessary data that could change as page loads
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
-
+  console.log("cycle", cyclesInState)
   // check if we have a new search replacing the old one; timestamp it
-  if(queryData && searchTerm && queryData.search !== searchTerm) {
+  // searchTerm will be different depending on if we're baidu or google since it comes from the URL
+  if(queryData && searchTerm && queryData.search !== searchTerm && queryData.translation !== searchTerm) {
     console.log(queryData.search, "!==", searchTerm)
     chrome.storage.local.set({queryData: { search: searchTerm, timestamp: +new Date()}})
     return
@@ -203,6 +208,7 @@ function main() {
         })
         setState(states.WAITING_FOR_TRANSLATION)
       }
+      break;
     case states.INTRO_SCREEN:
     case states.WAITING_FOR_TRANSLATION:
       if(queryData.translation) {
@@ -215,11 +221,46 @@ function main() {
         // at this point, we'll timestamp the search so we know when to time it out
         queryData.timestamp = +new Date()
       }
+      break
     case states.WAITING_FOR_PAGE_LOAD:
+      if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
+      break
     case states.GETTING_IMAGES:
-    case states.SAVING_IMAGES: 
-      console.log('[main]', identity, 'state:', state)
+      if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
+        console.log("[main] ready to submit images!")
+        setState(states.SAVING_IMAGES)
+      } else if(cyclesInState * loopInterval > 1000 * 10) {
+        console.log("[main] giving up on images :(")
+        queryData[identity+'Images'] = []
+        setState(states.SAVING_IMAGES)
+      } else if (queryData.images && queryData.images >= numImages) {
+        console.log("[main] we're good, tell storage about it")
+        queryData[identity+'Images'] = queryData.images
+        chrome.storage.local.set({queryData})
+      } else if(queryData.banned) {
+        console.log("[main] baidu says no")
+        queryData[identity+'Images'] = []
+        chrome.storage.local.set({queryData})
+      } else {
+        keepGettingImages()
+      }
+      break
+    case states.SAVING_IMAGES:
+      if(cyclesInState == 0) {
+        console.log('[main] pretending to save images')
+        console.log(queryData)
+        submitImages(() => { 
+          console.log("submitImages callback")
+          setState(states.DONE) 
+        })
+      } else {
+        console.log("waiting for submitImages to finish")
+      }
+      break
+    case states.DONE:
+      break
   }
+  cyclesInState ++
 }
 
 function setState(newState) {
@@ -239,6 +280,50 @@ function extractSearchTermFromURL() {
 	let query = decodeURIComponent(queryMatch[2]).replace(/\+/g, ' ');
 	query = query.toLowerCase().trim();
 	return query;
+}
+
+function submitImages(callback) {
+  // this is what a current call looks like to /saveImages, working in Postman
+  var data = {
+    timestamp: queryData.timestamp,
+    location: config.location,
+    client: clientId,
+    secret: config.wordpressSecret,
+    search_engine: queryData.searchEngine,
+    query: queryData.query,
+    translated: queryData.translated,
+    lang_from: queryData.langFrom,
+    lang_to: queryData.langTo,
+    lang_confidence: queryData.langConfidence,
+    lang_alternate: queryData.langAlternate,
+    lang_name: queryData.langName,
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned,
+    sensitive: queryData.sensitive,
+  };
+  const url = config.apiBase + "/saveSearchAndImages";
+  // console.log("sending images to API", url, data)
+
+  fetch(url, {
+    method: "POST",
+    body: JSON.stringify(data),
+    // mode: 'no-cors',
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      // console.log("response from API:", response)
+      response.type = "images_saved";
+      chrome.runtime.sendMessage(response);
+      callback();
+    })
+    .catch((err) => {
+      console.log("error from API:", err)
+      callback(err);
+    });
+  console.log("[submitImages] done");
 }
 
 function getTranslation(searchTerm) {
@@ -276,6 +361,157 @@ function searchTranslatedQuery() {
   console.log("[searchTranslatedQuery] done")
 }
 
+// this is meant to be called each update cycle until we either give up or have the number of images we want
+function keepGettingImages() {
+  const identity = getSearchEngine()
+
+  // If getting images from Baidu, look for the phrase indicating banned search.
+  if (identity === "baidu") {
+    const banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
+    if (banned) {
+      queryData.banned = true;
+    } else {
+      queryData.banned = false;
+    }
+  }
+
+  function _dedupeLimitedSet(imageSet, image, flatDatastore) {
+    var dupe = false;
+    var url = null;
+
+    if (identity === "baidu") {
+      // In Baidu result pages, the original image URL associated with a given
+      // image node is encoded in the `objurl` query parameter in the parent
+      // link's `href` attribute.
+      var parentNode = image.parentNode;
+      if (parentNode.nodeName === "A") {
+        var href = $(parentNode).attr("href");
+        if (href.match(/url=([^&]+)/)) {
+          // Baidu uses the specific parameter `objurl`
+          var encodedUrl = href.match(/url=([^&]+)/)[1];
+          url = decodeURIComponent(encodedUrl);
+        }
+      }
+    } else if (identity === "google" && typeof flatDatastore != "undefined") {
+      // The Baidu method originally worked for Google result pages too, which
+      // differed only in using the specific parameter `imgurl`. But in Feb. 2020
+      // the DOM implementation changed significantly. Now, each image node has an
+      // ancestor with a unique `data-id`, then used for lookup in a datastore
+      // that's loaded independently later on.
+      var dataId =
+        image.parentNode.parentNode.parentNode.getAttribute("data-id");
+      // Find first appearance of `data-id`
+      var dataIdFirstIndex = flatDatastore.indexOf(dataId);
+      // If available, the original image URL should occur 4 slots later
+      if (dataIdFirstIndex >= 0) {
+        // Verify that it's actually a URL
+        var urlCandidate = flatDatastore[dataIdFirstIndex + 4];
+        var result = urlCandidate.indexOf("http") === 0 ? urlCandidate : null;
+        url = result;
+      }
+    }
+
+    $.each(imageSet, function (index, element) {
+      if (element.url == url) {
+        dupe = true;
+      }
+    });
+
+    if (url && !dupe && imageSet.length < numImages) {
+      imageSet.push({
+        // TODO WP expects key `href` but `url` would be nicer for symmetry
+        href: url,
+        src: image.src,
+      });
+    }
+  }
+
+  // load whatever half-saved image set we have
+  let images = queryData.images ? queryData.images : [];
+
+  // Get Google datastore if relevant
+  if (identity === "google") {
+    getGoogleDatastore() // black magic function which extracts higher-res images from an object
+      .catch((error) => {
+        console.error(error);
+      })
+      .then((data) => {
+        // Get Google image URIs
+        if (!data) {
+          // console.log('google datastore is not defined');
+          return;
+        }
+        console.log("[keepGettingImages] got google datastore")
+        $("img.rg_i").each(function (index, element) {
+          try {
+            _dedupeLimitedSet(images, element, data["flatDatastore"]);
+          } catch (err) {
+            console.log(err);
+          }
+        });
+      });
+  }
+
+  // Get Baidu image URIs
+  $(".imglist img").each(function (index, element) {
+    _dedupeLimitedSet(images, element);
+  });
+
+  queryData["images"] = images;
+
+  console.log(`[keepGettingImages] ${identity} has ${images.length} images`)
+}
+
+function getGoogleDatastore() {
+  var hash = window.crypto.getRandomValues(new Uint32Array(2)).toString();
+
+  function sendVariableWithPostMessage(hash) {
+    if (
+      typeof AF_initDataChunkQueue != "undefined" &&
+      Array.isArray(AF_initDataChunkQueue)
+    ) {
+      var datastoreIndex = AF_initDataChunkQueue.findIndex(function (element) {
+        return element["key"] === "ds:1";
+      });
+      var datastore = AF_initDataChunkQueue[datastoreIndex].data;
+      // Flatten datastore for convenience
+      var flatDatastore = datastore.flat(Infinity);
+
+      var message = {
+        hash: hash,
+        flatDatastore: flatDatastore,
+      };
+    } else {
+      var message = {
+        hash: hash,
+        flatDatastore: null,
+      };
+    }
+
+    window.postMessage(message, "*");
+  }
+
+  (function injectPostMessageScript() {
+    var scriptContent =
+      "(" + sendVariableWithPostMessage.toString() + ")('" + hash + "');";
+    const scriptTag = document.createElement("script");
+    const scriptBody = document.createTextNode(scriptContent);
+
+    scriptTag.id = "getGoogleDatastore";
+    scriptTag.appendChild(scriptBody);
+    document.body.append(scriptTag);
+  })();
+  return new Promise((resolve, reject) => {
+    window.addEventListener("message", function (message) {
+      if (message["data"]["hash"] != hash) {
+        reject("Message hash mismatch");
+      } else {
+        resolve(message["data"]);
+      }
+    });
+  });
+}
+
 // slow things down so we can understand execution flow
 function sleep(milliseconds) {
   const date = Date.now();
@@ -290,10 +526,10 @@ function resetTabs() {
   const identity = getSearchEngine()
   queryData = {}
   // TODO: without taking search term out of URL, the code will just start
-  // on with the same search again since it's in the URL. Redirect to main 
+  // on with the same search again since it's in the URL. Redirect to main
   // search page would be best
   console.log('[resetTabs', identity, window.location)
-  if (identity === 'google' && window.location.pathname === '/search') 
+  if (identity === 'google' && window.location.pathname === '/search')
   {
     // Google homepage => Google image search homepage
     window.location = 'https://www.google.com/imghp';
