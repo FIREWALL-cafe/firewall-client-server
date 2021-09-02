@@ -164,7 +164,7 @@ function main() {
   // check if search has timed out
   const now = +new Date()
   if(!queryData.timestamp || (now - queryData.timestamp > 60*1000)) {
-    console.log("timeout")
+    console.log("timeout", queryData)
     queryData = {}
     chrome.storage.local.set({ queryData })
     setState(states.WAITING)
@@ -174,7 +174,7 @@ function main() {
     // if (identity === 'google' && window.pathname === '/search')
     //   window.location = 'https://www.google.com/imghp';
     // else window.location = 'https://image.baidu.com';
-    return
+    // return
   }
 
   // take actions based on state; state advances down then back to top
