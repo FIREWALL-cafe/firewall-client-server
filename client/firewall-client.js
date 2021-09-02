@@ -1,3 +1,11 @@
+///////////////////////////////////////////////////////////////////
+// Deprecated! Use firewall-client-rewrite.js instead
+// This file is kept for reference and may be deleted at any time
+//////////////////////////////////////////////////////////////////
+const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
+console.log("%c you are using an outdated version of the extension", consoleHeaderCSS);
+
+
 var storage = chrome.storage.local;
 
 var clientId = randomClientId();
