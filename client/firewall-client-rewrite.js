@@ -5,11 +5,11 @@
 // declare global variables
 const states = {
   WAITING: 'WAITING',
-  INTRO_SCREEN: 'INTRO_SCREEN',
-  WAITING_FOR_TRANSLATION: 'WAITING_FOR_TRANSLATION',
-  WAITING_FOR_PAGE_LOAD: 'WAITING_FOR_PAGE_LOAD',
-  GETTING_IMAGES: 'GETTING_IMAGES',
-  SAVING_IMAGES: 'SAVING_IMAGES',
+  INTRO_SCREEN: 'INTRO SCREEN',
+  WAITING_FOR_TRANSLATION: 'WAITING FOR TRANSLATION',
+  WAITING_FOR_PAGE_LOAD: 'WAITING FOR PAGE LOAD',
+  GETTING_IMAGES: 'GETTING IMAGES',
+  SAVING_IMAGES: 'SAVING IMAGES',
   DONE: 'DONE'
 }
 const loopInterval = 333;
@@ -61,7 +61,7 @@ function checkIfCorrectState() {
 
   // if the state is not WAITING, and we're at the Google homepage,
   // change our state back to WAITING
-  console.log("[checkIfCorrectState] window.location=", window.location);
+  // console.log("[checkIfCorrectState] window.location=", window.location);
   const identity = getSearchEngine();
   if(state !== states.WAITING) {
     if (identity === 'baidu' && window.location.pathname === '/') {
@@ -186,7 +186,9 @@ function main() {
   // get any necessary data that could change as page loads
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
-  console.log("cycle", cyclesInState)
+
+  if(state !== states.DONE)
+    console.log("cycle", cyclesInState)
   // check if we have a new search replacing the old one; timestamp it
   // searchTerm will be different depending on if we're baidu or google since it comes from the URL
   if(queryData && searchTerm && queryData.search !== searchTerm && queryData.translation !== searchTerm) {
@@ -449,7 +451,7 @@ function keepGettingImages() {
           // console.log('google datastore is not defined');
           return;
         }
-        console.log("[keepGettingImages] got google datastore")
+        // console.log("[keepGettingImages] got google datastore")
         $("img.rg_i").each(function (index, element) {
           try {
             _dedupeLimitedSet(images, element, data["flatDatastore"]);
@@ -536,7 +538,6 @@ function resetTabs() {
   // TODO: without taking search term out of URL, the code will just start
   // on with the same search again since it's in the URL. Redirect to main
   // search page would be best
-  console.log('[resetTabs', identity, window.location)
   if (identity === 'google' && window.location.pathname === '/search')
   {
     // Google homepage => Google image search homepage
