@@ -510,7 +510,8 @@ const checkSecret = (request, response, next) => {
     }
 }
 
-const buildSearchQuery = (request) => {
+//POST: createSearch -- Add searches
+const createSearch = (request, response) => {
     const {
         search_timestamp,
         search_location,
@@ -564,13 +565,6 @@ const buildSearchQuery = (request) => {
         search_term_status_banned,
         search_term_status_sensitive
     ];
-
-    return { query, values };
-};
-
-//POST: createSearch -- Add searches
-const createSearch = (request, response) => {
-    const { query, values } = buildSearchQuery(request);
 
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -683,45 +677,107 @@ const deleteImage = async (request, response) => {
 	})
 }
 
-const saveImages = async (request, response) => {
-    const { search_id, image_search_engine, urls, original_urls, image_ranks } = request.body
+const saveImages = async (searchId, request, response) => {
+    const {
+        search_engine,
+        google_images: googleImagesString,
+        baidu_images: baiduImagesString
+    } = request.body
+    const images = JSON.parse(googleImagesString) ||
+        JSON.parse(baiduImagesString);
+    console.log(images);
 
-    if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
-        response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
+    if (!searchId || !search_engine) {
+        response.status(400).json("Need a search id and search_engine.")
         return;
     }
-    if(urls.length !== image_ranks.length || urls.length == 0) {
-        response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
+
+    if (!images) {
+        response.status(400).json("No images provided.")
         return;
     }
-    if(original_urls && original_urls.length > 0 && original_urls.length !== urls.length) {
-        response.status(400).json("if including 'original_urls', there must be the same number as 'urls'")
-        return;
+
+    const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_href_original) VALUES ($1, $2, $3, $4)`;
+
+    const imageQueries = [];
+    // for each given URL, call that psql query with that value
+    for (const image of images) {
+        console.log(
+            searchId,
+            search_engine,
+            image.src, // TODO: phashed image ref
+            image.href,
+        )
+        imageQueries.push(pool.query(
+            query,
+            [
+                searchId,
+                search_engine,
+                image.src, // TODO: phashed image ref
+                image.href,
+            ]
+        ))
     }
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
-    let imageQueries = [];
-    // for each given URL, call that SQL query with that value
-    for(let i=0; i<urls.length; i++) {
-        let original_url = original_urls && original_urls.length > 0 ? original_urls[i] : "";
-        imageQueries.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
-    }
+    console.log(imageQueries);
 
     return imageQueries;
 }
 
 const saveSearchAndImages = async (request, response) => {
-    const { searchQuery, searchValues } = buildSearchQuery(request);
-    const searchPoolQuery = pool.query(searchQuery, searchValues);
-    const promises = [ ...saveImages(request, response),  searchPoolQuery];
-    let results;
+    const {
+        timestamp,
+        search_engine,
+        query,
+        lang_from,
+        translated,
+        banned,
+        sensitive,
+    } = request.body;
+
+    const searchQuery = `INSERT INTO searches (
+        search_timestamp,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_translation,
+        search_term_status_banned,
+        search_term_status_sensitive
+    ) VALUES (
+        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8
+    ) RETURNING search_id`;
+
+    const searchValues = [
+        new Date(timestamp),
+        search_engine,
+        search_engine === 'google' ? 'baidu' : 'google',
+        query,
+        lang_from,
+        translated,
+        banned ? banned : false,
+        sensitive,
+    ];
+
+    let searchId;
+    try {
+        const searchInsertResult = await pool.query(searchQuery, searchValues);
+        searchId = searchInsertResult.rows[0].search_id;
+    } catch (error) {
+        response.status(500).json(error);
+        return;
+    }
+    console.log('searchId', searchId)
+
+    const imagePromises = await saveImages(searchId, request, response);
+    let imageResults;
 
     try {
-        results = await Promise.all(promises);
+        imageResults = await Promise.all(imagePromises);
     } catch (error) {
         response.status(500).json(error);
     }
 
-    response.status(201).json(results);
+    response.status(201).json(imageResults);
 };
 
 module.exports = {
