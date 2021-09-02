@@ -12,7 +12,7 @@ const states = {
   SAVING_IMAGES: 'SAVING_IMAGES',
   DONE: 'DONE'
 }
-const loopInterval = 5000;
+const loopInterval = 333;
 const $googleQueryBox = $('[name=q]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const numImages = 10;
@@ -167,6 +167,16 @@ function setupStorageListener() {
   })
 }
 
+function checkIfTimedOut() {
+  // check if search has timed out
+  const now = +new Date()
+  if(now - queryData.timestamp > 60*1000) {
+    console.log("timeout")
+    resetTabs()
+    return true
+  }
+}
+
 //////////////////////////////////
 //      main logic flow
 //////////////////////////////////
@@ -192,13 +202,7 @@ function main() {
       if(!queryData.timestamp) {
         return
       }
-      // check if search has timed out
-      const now = +new Date()
-      if(now - queryData.timestamp > 60*1000) {
-        console.log("timeout")
-        resetTabs()
-        return
-      }
+      if(checkIfTimedOut()) return;
       if(searchTerm) { // we have a search!
         queryData.search = searchTerm
         getTranslation(searchTerm).then(response => {
@@ -226,16 +230,18 @@ function main() {
       if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
       break
     case states.GETTING_IMAGES:
+      console.log("[main]", identity, "queryData.images?queryData.images.length", queryData.images?queryData.images.length:"no images")
       if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
-        console.log("[main] ready to submit images!")
+        console.log("[main] ready to submit images! queryData:", queryData)
         setState(states.SAVING_IMAGES)
       } else if(cyclesInState * loopInterval > 1000 * 10) {
         console.log("[main] giving up on images :(")
         queryData[identity+'Images'] = []
         setState(states.SAVING_IMAGES)
-      } else if (queryData.images && queryData.images >= numImages) {
+      } else if (queryData.images && queryData.images.length >= numImages) {
         console.log("[main] we're good, tell storage about it")
         queryData[identity+'Images'] = queryData.images
+        console.log("[main] sending this object to storage:", queryData)
         chrome.storage.local.set({queryData})
       } else if(queryData.banned) {
         console.log("[main] baidu says no")
@@ -247,10 +253,8 @@ function main() {
       break
     case states.SAVING_IMAGES:
       if(cyclesInState == 0) {
-        console.log('[main] pretending to save images')
-        console.log(queryData)
         submitImages(() => { 
-          console.log("submitImages callback")
+          console.log("[main] submitImages callback")
           setState(states.DONE) 
         })
       } else {
@@ -258,6 +262,7 @@ function main() {
       }
       break
     case states.DONE:
+      // checkIfTimedOut()
       break
   }
   cyclesInState ++
@@ -289,9 +294,10 @@ function submitImages(callback) {
     location: config.location,
     client: clientId,
     secret: config.wordpressSecret,
-    search_engine: queryData.searchEngine,
-    query: queryData.query,
-    translated: queryData.translated,
+    search_engine: getSearchEngine(), // what should this even track? currently just logging which tab is submitting the
+                                      // images to API
+    search: queryData.search,
+    translation: queryData.translation,
     lang_from: queryData.langFrom,
     lang_to: queryData.langTo,
     lang_confidence: queryData.langConfidence,
@@ -302,8 +308,10 @@ function submitImages(callback) {
     banned: queryData.banned,
     sensitive: queryData.sensitive,
   };
+
   const url = config.apiBase + "/saveSearchAndImages";
-  // console.log("sending images to API", url, data)
+  console.log("[submitImages] sending images to API", url, data);
+  // console.log("[submitImages] from queryData:", queryData);
 
   fetch(url, {
     method: "POST",

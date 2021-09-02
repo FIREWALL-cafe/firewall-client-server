@@ -3,7 +3,7 @@ const fs = require('fs')
 const app = express();
 
 // body parsing
-app.use(express.json()); //Used to parse JSON bodies
+app.use(express.json({limit:'10mb'})); //Used to parse JSON bodies
 app.use(express.urlencoded()); //Parse URL-encoded bodies
 
 // Add headers before the routes are defined (thanks Stack Overflow)
@@ -28,10 +28,23 @@ const writeBody = (content) => {
   })
 }
 
+const bodyContainsImageData = (body) => {
+  const { google_images, baidu_images } = body;
+  if(google_images && google_images.length > 0) return true
+  if(baidu_images && baidu_images.length > 0) return true
+  return false
+}
+
 app.get(/.*/, (request, response) => { 
   console.log('\nquery', request.query); 
   console.log('params', request.params); 
   response.json("get ok"); 
+});
+
+app.post('/saveSearchAndImages', (request, response) => {
+  console.log(request.body.search, request.body.translation, bodyContainsImageData(request.body)); 
+  writeBody(request.body);
+  response.json("post ok"); 
 });
 
 app.post(/.*/, (request, response) => {
