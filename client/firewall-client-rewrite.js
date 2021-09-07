@@ -12,9 +12,10 @@ const states = {
   SAVING_IMAGES: 'SAVING IMAGES',
   DONE: 'DONE'
 }
-const loopInterval = 333;
+const loopInterval = 5000;
 const $googleQueryBox = $('[name=q]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
+const disabledColor = "rgb(180,180,180,1)"
 const numImages = 10;
 
 let state = states.WAITING
@@ -32,7 +33,8 @@ chrome.storage.local.get([
 
 // runs once on page load
 function init(storage) {
-  console.log("[init] got storage object:", storage)
+  console.log("[init] got storage object", storage)
+  console.log(storage.queryData)
 
   // unpack storage
 	if (storage.clientId) clientId = storage.clientId;
@@ -81,6 +83,18 @@ function setupUI() {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
     if(state !== states.WAITING) setState(states.WAITING)
+  }
+
+  // disable input boxes
+  // for now, always disable Baidu
+  // $( "input[name=word]" ).prop( "disabled", true )
+  $( "input[name=word]" ).css( "background-color", disabledColor)
+  $( "input[name=word]" ).parent().css( "background-color", disabledColor)
+
+  // if in a transition state, disable Google search
+  if([states.GETTING_IMAGES, states.SAVING_IMAGES, states.WAITING_FOR_PAGE_LOAD, states.WAITING_FOR_TRANSLATION].indexOf(state) != -1) {
+  //   $googleQueryBox.prop("disabled", true)
+    $googleQueryBox.parent().css("color", disabledColor)
   }
 
   // console.log('[setupUI] Setting up UI...');
@@ -154,7 +168,7 @@ function setupUI() {
 function setupStorageListener() {
   chrome.storage.onChanged.addListener((changes, area) => {
     if(area !== 'local') return
-    console.log("[storage onChanged] changes", changes)
+    // console.log("[storage onChanged] changes", changes)
     if(changes.state) {
       state = changes.state.newValue
       console.log("%c %s", consoleHeaderCSS, state)
@@ -162,7 +176,8 @@ function setupStorageListener() {
     }
     if(changes.queryData) {
       queryData = changes.queryData.newValue
-      console.log("updated queryData to", queryData)
+      console.log("updated queryData")
+      console.log(queryData)
     }
   })
 }
@@ -180,7 +195,7 @@ function checkIfTimedOut() {
 //////////////////////////////////
 //      main logic flow
 //////////////////////////////////
-// runs every 100 ms
+// runs every N milliseconds
 // should be as concise as possible while directing all state changes
 function main() {
   // get any necessary data that could change as page loads
@@ -190,10 +205,23 @@ function main() {
   if(state !== states.DONE)
     console.log("cycle", cyclesInState)
   // check if we have a new search replacing the old one; timestamp it
-  // searchTerm will be different depending on if we're baidu or google since it comes from the URL
-  if(queryData && searchTerm && queryData.search !== searchTerm && queryData.translation !== searchTerm) {
+  // we have to check that this isn't 1) what was first typed in 2) the translation of that or 3) the translation of the previous search,
+  // that is this is actually a new search that's just happened
+  if(queryData && searchTerm && 
+    queryData.search !== searchTerm && 
+    queryData.translation !== searchTerm && 
+    queryData.oldTranslation !== searchTerm)
+  {
     console.log(queryData.search, "!==", searchTerm)
-    chrome.storage.local.set({queryData: { search: searchTerm, timestamp: +new Date()}})
+    chrome.storage.local.set({
+      queryData: { 
+        search: searchTerm, 
+        timestamp: +new Date(), 
+        oldSearch: queryData.search, 
+        oldTranslation: queryData.translation
+      }
+    })
+    if(state === states.DONE) setState(states.WAITING)
     return
   }
 
@@ -213,6 +241,7 @@ function main() {
           chrome.storage.local.set({queryData})
         })
         setState(states.WAITING_FOR_TRANSLATION)
+        $googleQueryBox.parent().css("color", disabledColor)
       }
       break;
     case states.INTRO_SCREEN:
@@ -220,6 +249,7 @@ function main() {
       if(queryData.translation) {
         if(identity === 'baidu') {
           searchTranslatedQuery()
+          sleep(2500)
           setState(states.WAITING_FOR_PAGE_LOAD)
         } else {
           console.log("[main] we're not baidu, so no need to do anything... wait for Baidu to tell us it has searched")
@@ -265,6 +295,7 @@ function main() {
       break
     case states.DONE:
       // checkIfTimedOut()
+      $googleQueryBox.parent().css("color", undefined)
       break
   }
   cyclesInState ++
