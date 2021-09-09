@@ -623,6 +623,26 @@ const updateImageUrl = (request, response) => {
 	})
 }
 
+// Converts Base64 image data to binary and uploads it to data lake
+const uploadImageContent = async (content, href, response) => {
+    let fileContent;
+    try {
+        fileContent = Buffer.from(content, 'binary');
+    } catch {
+        response.status(400).json("Needs an image string to convert to binary.");
+        return;
+    }
+
+    let newUrl;
+    try {
+        newUrl = await space.saveImage(fileContent, href);
+        console.log('saved new image with url', newUrl);
+    } catch (error) {
+        response.status(500).json(err);
+        return;
+    }
+};
+
 //POST: saveImage -- Add searches
 // there are two types of saveImage calls: with and without a file. If with a file, it is uploaded
 const saveImage = async (request, response) => {
@@ -685,7 +705,6 @@ const saveImages = async (searchId, request, response) => {
     } = request.body
     const images = JSON.parse(googleImagesString) ||
         JSON.parse(baiduImagesString);
-    console.log(images);
 
     if (!searchId || !search_engine) {
         response.status(400).json("Need a search id and search_engine.")
@@ -697,7 +716,7 @@ const saveImages = async (searchId, request, response) => {
         return;
     }
 
-    const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_href_original) VALUES ($1, $2, $3, $4)`;
+    const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
 
     const imageQueries = [];
     // for each given URL, call that psql query with that value
@@ -705,18 +724,17 @@ const saveImages = async (searchId, request, response) => {
         console.log(
             searchId,
             search_engine,
-            image.src, // TODO: phashed image ref
-            image.href,
+            image.href, // TODO: phashed image ref
         )
         imageQueries.push(pool.query(
             query,
             [
                 searchId,
                 search_engine,
-                image.src, // TODO: phashed image ref
-                image.href,
+                image.href, // TODO: phashed image ref
             ]
         ))
+        imageQueries.push(uploadImageContent(image.src, image.href, response))
     }
     console.log(imageQueries);
 

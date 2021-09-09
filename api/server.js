@@ -7,7 +7,7 @@ const port = 11458
 
 app.use(fileUpload())
 // body parsing
-app.use(express.json()); //Used to parse JSON bodies
+app.use(express.json({ limit: '10mb' })); //Used to parse JSON bodies
 app.use(express.urlencoded()); //Parse URL-encoded bodies
 
 // Add headers before the routes are defined (thanks Stack Overflow)

@@ -330,7 +330,7 @@ function submitImages(callback) {
     timestamp: queryData.timestamp,
     location: config.location,
     client: clientId,
-    secret: config.wordpressSecret,
+    secret: config.apiSecret,
     search_engine: getSearchEngine(), // what should this even track? currently just logging which tab is submitting the
                                       // images to API
     search: queryData.search,
