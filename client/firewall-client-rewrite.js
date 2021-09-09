@@ -97,7 +97,8 @@ function setupUI() {
     $googleQueryBox.parent().css("color", disabledColor)
   }
 
-  // console.log('[setupUI] Setting up UI...');
+  // if the user clicks the Google logo, make sure it takes them back to image search
+  $("c-wiz a").attr("href", "/imghp")
 
   // add 'Firewall' button to bottom of page that lets user edit their name & toggle autocomplete
   // TODO: figure out why the autocomplete toggle isn't working
@@ -210,7 +211,8 @@ function main() {
   if(queryData && searchTerm && 
     queryData.search !== searchTerm && 
     queryData.translation !== searchTerm && 
-    queryData.oldTranslation !== searchTerm)
+    queryData.oldTranslation !== searchTerm &&
+    identity === 'google') // only let Google detect a new search (preventing searches in Baidu!). ideally we find a way to not require this
   {
     console.log(queryData.search, "!==", searchTerm)
     chrome.storage.local.set({
