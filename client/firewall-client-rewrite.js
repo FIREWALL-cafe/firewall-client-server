@@ -199,7 +199,7 @@ function checkIfTimedOut() {
 //      main logic flow
 //////////////////////////////////
 // runs every N milliseconds
-// should be as concise as possible while directing all state changes
+// should be concise and direct all state changes
 function main() {
   // get any necessary data that could change as page loads
   const searchTerm = extractSearchTermFromURL()
@@ -237,11 +237,11 @@ function main() {
         return
       }
       if(checkIfTimedOut()) return;
-      if(searchTerm) { // we have a search!
-        queryData.search = searchTerm
-        getTranslation(searchTerm).then(response => {
+      if(queryData.search) { // we have a search!
+        getTranslation(queryData.search).then(response => {
           queryData.translation = response.translated
           console.log("[main]", identity, "setting translation to", queryData.translation)
+          console.log(identity, "new queryData:", queryData)
           chrome.storage.local.set({queryData})
         })
         setState(states.WAITING_FOR_TRANSLATION)
@@ -396,13 +396,13 @@ function getSearchEngine() {
 
 function searchTranslatedQuery() {
   const identity = getSearchEngine()
-  // TODO: this doesn't seem to be working for Baidu
+  // $("input[name=word]").prop("disabled", false)
   const selector = 'input[name=q], input[name=word]',
 		    $inputField = $(selector).first();
-  console.log("[searchTranslatedQuery]", identity, $inputField)
+  console.log("[searchTranslatedQuery]", identity, queryData.translation)
   $inputField.val(queryData.translation);
-	// console.log($inputField.first().closest('form'));
 	$inputField.first().closest('form').submit();
+  // $("input[name=word]").prop("disabled", true)
   console.log("[searchTranslatedQuery] done")
 }
 
