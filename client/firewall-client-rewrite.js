@@ -12,7 +12,7 @@ const states = {
   SAVING_IMAGES: 'SAVING IMAGES',
   DONE: 'DONE'
 }
-const loopInterval = 5000;
+const loopInterval = 1000;
 const $googleQueryBox = $('[name=q]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
@@ -190,6 +190,8 @@ function checkIfTimedOut() {
     console.log("timeout")
     resetTabs()
     return true
+  } else if(Math.random() * 100 < 10) {
+    console.log(now - queryData.timestamp)
   }
 }
 
