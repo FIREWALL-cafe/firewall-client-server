@@ -697,14 +697,15 @@ const deleteImage = async (request, response) => {
 	})
 }
 
-const saveImages = async (searchId, request, response) => {
+const saveImages = (searchId, request, response) => {
     const {
         search_engine,
         google_images: googleImagesString,
         baidu_images: baiduImagesString
     } = request.body
-    const images = JSON.parse(googleImagesString) ||
-        JSON.parse(baiduImagesString);
+    const images = googleImagesString
+        ? JSON.parse(googleImagesString)
+        : JSON.parse(baiduImagesString);
 
     if (!searchId || !search_engine) {
         response.status(400).json("Need a search id and search_engine.")
@@ -751,6 +752,7 @@ const saveSearchAndImages = async (request, response) => {
         banned,
         sensitive,
     } = request.body;
+    console.log(`[saveSearchAndImages for  ${search_engine}]`);
 
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
@@ -778,24 +780,30 @@ const saveSearchAndImages = async (request, response) => {
 
     let searchId;
     try {
+        console.log(`[saving search for  ${search_engine}...]`);
         const searchInsertResult = await pool.query(searchQuery, searchValues);
         searchId = searchInsertResult.rows[0].search_id;
+        console.log(`[saved search for ${search_engine} ${searchId}]`);
     } catch (error) {
         response.status(500).json(error);
         return;
     }
     console.log('searchId', searchId)
 
-    const imagePromises = await saveImages(searchId, request, response);
+    console.log(`[saving images for ${search_engine}...]`);
+    const imagePromises = saveImages(searchId, request, response);
     let imageResults;
 
     try {
-        imageResults = await Promise.all(imagePromises);
+        // imageResults = await Promise.all(imagePromises);
+        imageResults = Promise.all(imagePromises);
+        console.log(`[saved images for ${search_engine} ${searchId}]`);
     } catch (error) {
         response.status(500).json(error);
     }
 
     response.status(201).json(imageResults);
+    return;
 };
 
 module.exports = {
