@@ -12,6 +12,10 @@ const states = {
   SAVING_IMAGES: 'SAVING IMAGES',
   DONE: 'DONE'
 }
+const searchEngines = Object.freeze({
+  google: 'google',
+  baidu: 'baidu'
+});
 const loopInterval = 1000;
 const $googleQueryBox = $('[name=q]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
@@ -340,15 +344,20 @@ function submitImages(callback) {
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
     lang_name: queryData.langName,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
+    // google_images: JSON.stringify(queryData.googleImages),
+    // baidu_images: JSON.stringify(queryData.baiduImages),
     banned: queryData.banned,
     sensitive: queryData.sensitive,
   };
 
+  // prevent sending too much data
+  if (data.search_engine === searchEngines.baidu)
+    data.baidu_images = JSON.stringify(queryData.baiduImages);
+  if (data.search_engine === searchEngines.google)
+    data.google_images = JSON.stringify(queryData.googleImages);
+
   const url = config.apiBase + "/saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
-  // console.log("[submitImages] from queryData:", queryData);
 
   fetch(url, {
     method: "POST",
