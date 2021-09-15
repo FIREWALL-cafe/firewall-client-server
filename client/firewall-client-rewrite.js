@@ -52,6 +52,7 @@ function init(storage) {
 
   // create event listeners
   setupStorageListener()
+  setupMessageListener()
 
   // begin main() loop
   setInterval(main, loopInterval);
@@ -76,6 +77,7 @@ function checkIfCorrectState() {
 }
 
 function setupUI() {
+  const identity = getSearchEngine()
   // redirect to Google Images search (if needed)
   if (window.location.host == 'www.google.com' &&
       window.location.pathname == '/')
@@ -83,6 +85,8 @@ function setupUI() {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
     if(state !== states.WAITING) setState(states.WAITING)
+  } else if(window.location.hash == "#intro") {
+    $(document.body).addClass("firewall-intro");
   }
 
   // disable input boxes
@@ -161,9 +165,68 @@ function setupUI() {
 
   // insert message asking user to wait for images to upload
   // TODO: this is only working in Baidu; Google's tag must have changed
-	// const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
-	// $('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
-	// $('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
+	const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
+	$('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
+	$('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
+
+  // add intro screen html
+  $(document.body).append('<div id="firewall-intro">' + getIntroHTML(identity) + "</div>");
+  if (identity !== "google") {
+    $("#firewall-intro").addClass("inverted");
+  }
+  function hide_intro(e) {
+    e.preventDefault();
+    var name = $("#firewall-intro-name").val();
+    if (name == "") {
+      name = "Anonymous";
+    }
+    chrome.storage.local.set({
+      clientId: name,
+    });
+    chrome.runtime.sendMessage({
+      type: "close_intro",
+      name: name,
+    });
+  }
+  $("#firewall-intro-form").on("submit", hide_intro);
+}
+
+function getIntroHTML(identity) {
+  let suffix
+  if (identity === "google") suffix = "white";
+  else suffix = "red";
+  let path = "/icons/firewall-hong-kong-" + suffix + ".png";
+  if (config.logoLabel != "default") {
+    path = "/icons/firewall-" + config.logoLabel + "-" + suffix + ".png";
+  }
+  console.log(path);
+  const logoURL = chrome.extension.getURL(path);
+  console.log(logoURL);
+  const googleIntroHTML = `
+  <img src="${logoURL}">
+  <div class="text">
+      <strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later.</strong>
+      <form action="#" id="firewall-intro-form" autocomplete="off"><input id="firewall-intro-name" placeholder="Pick a name" />
+      <br><input type="submit" id="firewall-begin" value="Let’s begin!" /></form>
+      <ol>
+      <li>Type a phrase into Google Image Search.</li>
+      <li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>
+      <li>Please wait patiently while the images save to our search library.</li>
+      <li>Once we’ve archived your images, tell us what you think: click on censored/mistranslated/NSFW/etc.</li>
+      <li>Have fun, and view your archived search session images at firewallcafe.com!</li>
+      </ol>
+  </div>
+  `;
+
+  const baiduIntroHTML = `
+  <img src="${logoURL}">
+  <div class="text">
+      <p>FIREWALL is an interactive digital art installation and research project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China.  The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>
+      <p>FIREWALL是一个社会互动性的美术研究项目，旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>
+  </div>
+  `;
+  if (identity === 'google') return googleIntroHTML;
+  else return baiduIntroHTML;
 }
 
 function setupStorageListener() {
@@ -183,16 +246,23 @@ function setupStorageListener() {
   })
 }
 
-function checkIfTimedOut() {
-  // check if search has timed out
-  const now = +new Date()
-  if(now - queryData.timestamp > 60*1000) {
-    console.log("timeout")
-    resetTabs()
-    return true
-  } else if(Math.random() * 100 < 10) {
-    console.log(now - queryData.timestamp)
-  }
+function setupMessageListener() {
+  chrome.runtime.onMessage.addListener(function (e) {
+    console.log("[onMessage] type:", e.type);
+    if (e.type == "toggle_input") {
+      if (e.enabled) {
+        $(document.body).removeClass("firewall-loading");
+      }
+      toggleInputField(e.enabled);
+    } else if (e.type == "images_loading") {
+      $(document.body).addClass("firewall-loading");
+    } else if (e.type == "close_intro") {
+      $(document.body).removeClass("firewall-intro");
+      $("#firewall-client-id").val(e.name);
+    } else if (e.type == "user_activity") {
+      $(document.body).removeClass("firewall-intro");
+    }
+  });
 }
 
 //////////////////////////////////
@@ -303,6 +373,18 @@ function main() {
       break
   }
   cyclesInState ++
+}
+
+function checkIfTimedOut() {
+  // check if search has timed out
+  const now = +new Date()
+  if(now - queryData.timestamp > 60*1000) {
+    console.log("timeout")
+    resetTabs()
+    return true
+  } else if(Math.random() * 100 < 10) {
+    console.log(now - queryData.timestamp)
+  }
 }
 
 function setState(newState) {
