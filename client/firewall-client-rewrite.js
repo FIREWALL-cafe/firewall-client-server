@@ -14,6 +14,7 @@ const states = {
 }
 const loopInterval = 1000;
 const $googleQueryBox = $('[name=q]');
+const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
 const numImages = 10;
@@ -23,6 +24,7 @@ let autocompleteEnabled = true
 let queryData = { search: undefined, translation: undefined } // tracks overall information about the search that is currently happening
 let clientId = "client-name"
 let cyclesInState = 0
+let currentSearchEngine = undefined; // the search engine the user is using
 
 chrome.storage.local.get([
   'autocompleteEnabled',
@@ -89,17 +91,10 @@ function setupUI() {
     $(document.body).addClass("firewall-intro");
   }
 
-  // disable input boxes
-  // for now, always disable Baidu
-  // $( "input[name=word]" ).prop( "disabled", true )
-  $( "input[name=word]" ).css( "background-color", disabledColor)
-  $( "input[name=word]" ).parent().css( "background-color", disabledColor)
-
-  // if in a transition state, disable Google search
-  if([states.GETTING_IMAGES, states.SAVING_IMAGES, states.WAITING_FOR_PAGE_LOAD, states.WAITING_FOR_TRANSLATION].indexOf(state) != -1) {
-  //   $googleQueryBox.prop("disabled", true)
-    $googleQueryBox.parent().css("color", disabledColor)
-  }
+  $googleQueryBox.on("click", event=>setCurrentSearchEngine('google'))
+  $googleQueryBox.on("keydown", event=>setCurrentSearchEngine('google'))
+  $baiduQueryBox.on("click", event=>setCurrentSearchEngine('baidu'))
+  $baiduQueryBox.on("keydown", event=>setCurrentSearchEngine('baidu'))
 
   // if the user clicks the Google logo, make sure it takes them back to image search
   $("c-wiz a").attr("href", "/imghp")
@@ -199,9 +194,7 @@ function getIntroHTML(identity) {
   if (config.logoLabel != "default") {
     path = "/icons/firewall-" + config.logoLabel + "-" + suffix + ".png";
   }
-  console.log(path);
   const logoURL = chrome.extension.getURL(path);
-  console.log(logoURL);
   const googleIntroHTML = `
   <img src="${logoURL}">
   <div class="text">
@@ -229,8 +222,14 @@ function getIntroHTML(identity) {
   else return baiduIntroHTML;
 }
 
+function setCurrentSearchEngine(engine) {
+  // console.log('[setCurrentSearchEngine]', engine);
+  chrome.storage.local.set({lastInteracted: engine})
+}
+
 function setupStorageListener() {
   chrome.storage.onChanged.addListener((changes, area) => {
+    console.log(changes)
     if(area !== 'local') return
     // console.log("[storage onChanged] changes", changes)
     if(changes.state) {
@@ -242,6 +241,10 @@ function setupStorageListener() {
       queryData = changes.queryData.newValue
       console.log("updated queryData")
       console.log(queryData)
+    }
+    if(changes.lastInteracted) {
+      currentSearchEngine = changes.lastInteracted.newValue
+      console.log("interacting with", currentSearchEngine)
     }
   })
 }
@@ -275,16 +278,17 @@ function main() {
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
 
-  if(state !== states.DONE)
-    console.log("cycle", cyclesInState)
+  // if(state !== states.DONE)
+  //   console.log("cycle", cyclesInState)
+
   // check if we have a new search replacing the old one; timestamp it
   // we have to check that this isn't 1) what was first typed in 2) the translation of that or 3) the translation of the previous search,
   // that is this is actually a new search that's just happened
+  // console.log(searchTerm, queryData, identity, currentSearchEngine)
   if(queryData && searchTerm && 
     queryData.search !== searchTerm && 
     queryData.translation !== searchTerm && 
-    queryData.oldTranslation !== searchTerm &&
-    identity === 'google') // only let Google detect a new search (preventing searches in Baidu!). ideally we find a way to not require this
+    identity === currentSearchEngine)
   {
     console.log(queryData.search, "!==", searchTerm)
     chrome.storage.local.set({
@@ -321,12 +325,12 @@ function main() {
     case states.INTRO_SCREEN:
     case states.WAITING_FOR_TRANSLATION:
       if(queryData.translation) {
-        if(identity === 'baidu') {
+        if(identity !== currentSearchEngine) {
           searchTranslatedQuery()
           sleep(2500)
           setState(states.WAITING_FOR_PAGE_LOAD)
         } else {
-          console.log("[main] we're not baidu, so no need to do anything... wait for Baidu to tell us it has searched")
+          console.log("[main] this is the original search engine, so no need to do anything... wait for other one to tell us it has searched")
         }
         // at this point, we'll timestamp the search so we know when to time it out
         queryData.timestamp = +new Date()
@@ -369,10 +373,27 @@ function main() {
       break
     case states.DONE:
       // checkIfTimedOut()
-      $googleQueryBox.parent().css("color", undefined)
+      
       break
   }
   cyclesInState ++
+}
+
+function changeSearchesDisabled(disable) {
+  if(disable) {
+    $baiduQueryBox.prop("disabled", true)
+    $baiduQueryBox.css( "background-color", disabledColor)
+    $baiduQueryBox.parent().css( "background-color", disabledColor)
+
+    $googleQueryBox.prop("disabled", true)
+    $googleQueryBox.parent().css("color", disabledColor)
+  } else {
+    $googleQueryBox.parent().css("color", undefined)
+    $baiduQueryBox.parent().css("color", undefined)
+
+    $googleQueryBox.prop("disabled", false)
+    $baiduQueryBox.prop("disabled", false)
+  }
 }
 
 function checkIfTimedOut() {
@@ -478,13 +499,13 @@ function getSearchEngine() {
 
 function searchTranslatedQuery() {
   const identity = getSearchEngine()
-  // $("input[name=word]").prop("disabled", false)
-  const selector = 'input[name=q], input[name=word]',
-		    $inputField = $(selector).first();
+  $baiduQueryBox.prop("disabled", false)
+  // const selector = 'input[name=q], input[name=word]',
+	// 	    $inputField = $(selector).first();
   console.log("[searchTranslatedQuery]", identity, queryData.translation)
-  $inputField.val(queryData.translation);
-	$inputField.first().closest('form').submit();
-  // $("input[name=word]").prop("disabled", true)
+  $baiduQueryBox.val(queryData.translation);
+	$baiduQueryBox.first().closest('form').submit();
+  $baiduQueryBox.prop("disabled", true)
   console.log("[searchTranslatedQuery] done")
 }
 
