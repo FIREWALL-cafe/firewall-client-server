@@ -95,6 +95,7 @@ function setupUI() {
   $googleQueryBox.on("keydown", event=>setCurrentSearchEngine('google'))
   $baiduQueryBox.on("click", event=>setCurrentSearchEngine('baidu'))
   $baiduQueryBox.on("keydown", event=>setCurrentSearchEngine('baidu'))
+  setCurrentSearchEngine('google') // without doing this, it can miss if user interacts with Baidu first
 
   // if the user clicks the Google logo, make sure it takes them back to image search
   $("c-wiz a").attr("href", "/imghp")
@@ -229,7 +230,6 @@ function setCurrentSearchEngine(engine) {
 
 function setupStorageListener() {
   chrome.storage.onChanged.addListener((changes, area) => {
-    console.log(changes)
     if(area !== 'local') return
     // console.log("[storage onChanged] changes", changes)
     if(changes.state) {
