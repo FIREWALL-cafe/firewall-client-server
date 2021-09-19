@@ -30,7 +30,8 @@ chrome.storage.local.get([
   'autocompleteEnabled',
   'clientId',
   'queryData',
-  'state'
+  'state',
+  'lastInteracted'
 ], init)
 
 // runs once on page load
@@ -44,6 +45,7 @@ function init(storage) {
   console.log('Firewall Cafe | ' + clientId);
   autocompleteEnabled = storage.autocompleteEnabled
   queryData = storage.queryData ? storage.queryData : {}
+  currentSearchEngine = storage.lastInteracted
   state = storage.state ? storage.state : states.WAITING
   console.log("%c %s", consoleHeaderCSS, state);
 
@@ -95,7 +97,6 @@ function setupUI() {
   $googleQueryBox.on("keydown", event=>setCurrentSearchEngine('google'))
   $baiduQueryBox.on("click", event=>setCurrentSearchEngine('baidu'))
   $baiduQueryBox.on("keydown", event=>setCurrentSearchEngine('baidu'))
-  setCurrentSearchEngine('google') // without doing this, it can miss if user interacts with Baidu first
 
   // if the user clicks the Google logo, make sure it takes them back to image search
   $("c-wiz a").attr("href", "/imghp")
@@ -284,7 +285,6 @@ function main() {
   // check if we have a new search replacing the old one; timestamp it
   // we have to check that this isn't 1) what was first typed in 2) the translation of that or 3) the translation of the previous search,
   // that is this is actually a new search that's just happened
-  // console.log(searchTerm, queryData, identity, currentSearchEngine)
   if(queryData && searchTerm && 
     queryData.search !== searchTerm && 
     queryData.translation !== searchTerm && 
@@ -337,9 +337,11 @@ function main() {
       }
       break
     case states.WAITING_FOR_PAGE_LOAD:
+      changeSearchesDisabled(true)
       if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
       break
     case states.GETTING_IMAGES:
+      changeSearchesDisabled(true)
       console.log("[main]", identity, "queryData.images?queryData.images.length", queryData.images?queryData.images.length:"no images")
       if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
         console.log("[main] ready to submit images! queryData:", queryData)
@@ -373,7 +375,7 @@ function main() {
       break
     case states.DONE:
       // checkIfTimedOut()
-      
+      changeSearchesDisabled(false)
       break
   }
   cyclesInState ++
@@ -499,13 +501,20 @@ function getSearchEngine() {
 
 function searchTranslatedQuery() {
   const identity = getSearchEngine()
-  $baiduQueryBox.prop("disabled", false)
   // const selector = 'input[name=q], input[name=word]',
 	// 	    $inputField = $(selector).first();
   console.log("[searchTranslatedQuery]", identity, queryData.translation)
-  $baiduQueryBox.val(queryData.translation);
-	$baiduQueryBox.first().closest('form').submit();
-  $baiduQueryBox.prop("disabled", true)
+  if (identity === 'baidu') {
+    $baiduQueryBox.prop("disabled", false)
+    $baiduQueryBox.val(queryData.translation);
+    $baiduQueryBox.first().closest('form').submit();
+    $baiduQueryBox.prop("disabled", true)
+  } else {
+    $googleQueryBox.prop("disabled", false)
+    $googleQueryBox.val(queryData.translation);
+    $googleQueryBox.first().closest('form').submit();
+    $googleQueryBox.prop("disabled", true)
+  }
   console.log("[searchTranslatedQuery] done")
 }
 
