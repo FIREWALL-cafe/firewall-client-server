@@ -20,3 +20,4 @@
 /intervalometer/images/*.jpg
 /intervalometer/config.sh
 /intervalometer/screenshot.png
+/.vscode

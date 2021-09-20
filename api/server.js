@@ -7,7 +7,7 @@ const port = 11458
 
 app.use(fileUpload())
 // body parsing
-app.use(express.json()); //Used to parse JSON bodies
+app.use(express.json({ limit: '10mb' })); //Used to parse JSON bodies
 app.use(express.urlencoded()); //Parse URL-encoded bodies
 
 // Add headers before the routes are defined (thanks Stack Overflow)
@@ -90,5 +90,5 @@ app.post('/deleteSearch', db.checkSecret, db.deleteSearch)
 app.post('/createVote', db.checkSecret, db.createVote)
 app.post('/saveImage', db.checkSecret, db.saveImage)
 app.post('/deleteImage', db.checkSecret, db.deleteImage)
-app.post('/saveImages', db.checkSecret, db.saveImages)
+app.post('/saveSearchAndImages', db.checkSecret, db.saveSearchAndImages)
 app.put('/images', db.checkSecret, db.updateImageUrl)
