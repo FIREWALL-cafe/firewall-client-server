@@ -194,7 +194,7 @@ function handleQuery(req, res, headers) {
 }
 
 /////// TRANSLATION ////////
-
+// data needs to be sent as x-www-form-urlencoded
 function handleTranslate(req, res, headers) {
 	getPostData(req, function(search) {
 		console.log('Translate: ' + search.query + ' from ' + search.langFrom + ' to ' + search.langTo);
