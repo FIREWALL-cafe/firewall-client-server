@@ -479,18 +479,24 @@ function submitImages(callback) {
 function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
-	var data = {
-		query: searchTerm,
-		searchEngine: getSearchEngine(),
-		secret: config.sharedSecret,
-        langFrom: "EN",
-        langTo: "zh-CN"
-	};
-	return $.ajax({
-		url: config.serverURL + 'translate',
-		method: 'POST',
-		data: data
-	}).fail(err => console.error(err))
+  return $.ajax({ 
+    url: config.serverURL + 'detect-language?query='+searchTerm
+  }).then(res => {
+    // todo: need to handle language detection failure
+    console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
+    const data = {
+      query: searchTerm,
+      searchEngine: getSearchEngine(),
+      secret: config.sharedSecret,
+      langFrom: res.language,
+      langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
+    };
+    return $.ajax({
+      url: config.serverURL + 'translate',
+      method: 'POST',
+      data: data
+    }).fail(err => console.error(err))
+  })
 }
 
 function getSearchEngine() {
