@@ -163,8 +163,12 @@ function setupUI() {
   // insert message asking user to wait for images to upload
   // TODO: this is only working in Baidu; Google's tag must have changed
 	const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
-	$('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
-	$('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
+	$('#lst-ib')
+    .closest('.sbtc')
+    .append('<div id="firewall-loading">' + msg + '</div>');
+	$('#kw')
+    .closest('form')
+    .append('<div id="firewall-loading">' + msg + '</div>');
 
   // add intro screen html
   $(document.body).append('<div id="firewall-intro">' + getIntroHTML(identity) + "</div>");
@@ -388,13 +392,18 @@ function changeSearchesDisabled(disable) {
     $baiduQueryBox.parent().css( "background-color", disabledColor)
 
     $googleQueryBox.prop("disabled", true)
-    $googleQueryBox.parent().css("color", disabledColor)
-  } else {
-    $googleQueryBox.parent().css("color", undefined)
-    $baiduQueryBox.parent().css("color", undefined)
+    $googleQueryBox.parent().parent().parent().css("background-color", disabledColor)
 
+    console.log("[changeSearchesDisabled] searches disabled")
+  } else {
     $googleQueryBox.prop("disabled", false)
+    $googleQueryBox.parent().parent().parent().css("background-color", "rgba(0,0,0,0)")
+    
     $baiduQueryBox.prop("disabled", false)
+    $baiduQueryBox.css( "background-color", "rgb(255,255,255)")
+    $baiduQueryBox.parent().css("background-color", "rgba(0,0,0,0)")
+
+    console.log("[changeSearchesDisabled] searches enabled")
   }
 }
 
@@ -435,7 +444,7 @@ function submitImages(callback) {
     timestamp: queryData.timestamp,
     location: config.location,
     client: clientId,
-    secret: config.wordpressSecret,
+    secret: config.apiSecret,
     search_engine: getSearchEngine(), // what should this even track? currently just logging which tab is submitting the
                                       // images to API
     search: queryData.search,
@@ -480,7 +489,7 @@ function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
   return $.ajax({ 
-    url: config.serverURL + 'detect-language?query='+searchTerm
+    url: config.serverURL + '/detect-language?query='+searchTerm
   }).then(res => {
     // todo: need to handle language detection failure
     console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
@@ -492,7 +501,7 @@ function getTranslation(searchTerm) {
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
     return $.ajax({
-      url: config.serverURL + 'translate',
+      url: config.serverURL + '/translate',
       method: 'POST',
       data: data
     }).fail(err => console.error(err))
