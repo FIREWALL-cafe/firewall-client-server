@@ -18,6 +18,7 @@ const searchEngines = Object.freeze({
 });
 const loopInterval = 1000;
 const $googleQueryBox = $('[name=q]');
+const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
 const numImages = 10;
@@ -27,12 +28,14 @@ let autocompleteEnabled = true
 let queryData = { search: undefined, translation: undefined } // tracks overall information about the search that is currently happening
 let clientId = "client-name"
 let cyclesInState = 0
+let currentSearchEngine = undefined; // the search engine the user is using
 
 chrome.storage.local.get([
   'autocompleteEnabled',
   'clientId',
   'queryData',
-  'state'
+  'state',
+  'lastInteracted'
 ], init)
 
 // runs once on page load
@@ -46,6 +49,7 @@ function init(storage) {
   console.log('Firewall Cafe | ' + clientId);
   autocompleteEnabled = storage.autocompleteEnabled
   queryData = storage.queryData ? storage.queryData : {}
+  currentSearchEngine = storage.lastInteracted
   state = storage.state ? storage.state : states.WAITING
   console.log("%c %s", consoleHeaderCSS, state);
 
@@ -56,6 +60,7 @@ function init(storage) {
 
   // create event listeners
   setupStorageListener()
+  setupMessageListener()
 
   // begin main() loop
   setInterval(main, loopInterval);
@@ -80,6 +85,7 @@ function checkIfCorrectState() {
 }
 
 function setupUI() {
+  const identity = getSearchEngine()
   // redirect to Google Images search (if needed)
   if (window.location.host == 'www.google.com' &&
       window.location.pathname == '/')
@@ -87,19 +93,14 @@ function setupUI() {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
     if(state !== states.WAITING) setState(states.WAITING)
+  } else if(window.location.hash == "#intro") {
+    $(document.body).addClass("firewall-intro");
   }
 
-  // disable input boxes
-  // for now, always disable Baidu
-  // $( "input[name=word]" ).prop( "disabled", true )
-  $( "input[name=word]" ).css( "background-color", disabledColor)
-  $( "input[name=word]" ).parent().css( "background-color", disabledColor)
-
-  // if in a transition state, disable Google search
-  if([states.GETTING_IMAGES, states.SAVING_IMAGES, states.WAITING_FOR_PAGE_LOAD, states.WAITING_FOR_TRANSLATION].indexOf(state) != -1) {
-  //   $googleQueryBox.prop("disabled", true)
-    $googleQueryBox.parent().css("color", disabledColor)
-  }
+  $googleQueryBox.on("click", event=>setCurrentSearchEngine('google'))
+  $googleQueryBox.on("keydown", event=>setCurrentSearchEngine('google'))
+  $baiduQueryBox.on("click", event=>setCurrentSearchEngine('baidu'))
+  $baiduQueryBox.on("keydown", event=>setCurrentSearchEngine('baidu'))
 
   // if the user clicks the Google logo, make sure it takes them back to image search
   $("c-wiz a").attr("href", "/imghp")
@@ -165,9 +166,75 @@ function setupUI() {
 
   // insert message asking user to wait for images to upload
   // TODO: this is only working in Baidu; Google's tag must have changed
-	// const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
-	// $('#lst-ib').closest('.sbtc').append('<div id="firewall-loading">' + msg + '</div>');
-	// $('#kw').closest('form').append('<div id="firewall-loading">' + msg + '</div>');
+	const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
+	$('#lst-ib')
+    .closest('.sbtc')
+    .append('<div id="firewall-loading">' + msg + '</div>');
+	$('#kw')
+    .closest('form')
+    .append('<div id="firewall-loading">' + msg + '</div>');
+
+  // add intro screen html
+  $(document.body).append('<div id="firewall-intro">' + getIntroHTML(identity) + "</div>");
+  if (identity !== "google") {
+    $("#firewall-intro").addClass("inverted");
+  }
+  function hide_intro(e) {
+    e.preventDefault();
+    var name = $("#firewall-intro-name").val();
+    if (name == "") {
+      name = "Anonymous";
+    }
+    chrome.storage.local.set({
+      clientId: name,
+    });
+    chrome.runtime.sendMessage({
+      type: "close_intro",
+      name: name,
+    });
+  }
+  $("#firewall-intro-form").on("submit", hide_intro);
+}
+
+function getIntroHTML(identity) {
+  let suffix
+  if (identity === "google") suffix = "white";
+  else suffix = "red";
+  let path = "/icons/firewall-hong-kong-" + suffix + ".png";
+  if (config.logoLabel != "default") {
+    path = "/icons/firewall-" + config.logoLabel + "-" + suffix + ".png";
+  }
+  const logoURL = chrome.extension.getURL(path);
+  const googleIntroHTML = `
+  <img src="${logoURL}">
+  <div class="text">
+      <strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later.</strong>
+      <form action="#" id="firewall-intro-form" autocomplete="off"><input id="firewall-intro-name" placeholder="Pick a name" />
+      <br><input type="submit" id="firewall-begin" value="Let’s begin!" /></form>
+      <ol>
+      <li>Type a phrase into Google Image Search.</li>
+      <li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>
+      <li>Please wait patiently while the images save to our search library.</li>
+      <li>Once we’ve archived your images, tell us what you think: click on censored/mistranslated/NSFW/etc.</li>
+      <li>Have fun, and view your archived search session images at firewallcafe.com!</li>
+      </ol>
+  </div>
+  `;
+
+  const baiduIntroHTML = `
+  <img src="${logoURL}">
+  <div class="text">
+      <p>FIREWALL is an interactive digital art installation and research project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China.  The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>
+      <p>FIREWALL是一个社会互动性的美术研究项目，旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>
+  </div>
+  `;
+  if (identity === 'google') return googleIntroHTML;
+  else return baiduIntroHTML;
+}
+
+function setCurrentSearchEngine(engine) {
+  // console.log('[setCurrentSearchEngine]', engine);
+  chrome.storage.local.set({lastInteracted: engine})
 }
 
 function setupStorageListener() {
@@ -184,19 +251,30 @@ function setupStorageListener() {
       console.log("updated queryData")
       console.log(queryData)
     }
+    if(changes.lastInteracted) {
+      currentSearchEngine = changes.lastInteracted.newValue
+      console.log("interacting with", currentSearchEngine)
+    }
   })
 }
 
-function checkIfTimedOut() {
-  // check if search has timed out
-  const now = +new Date()
-  if(now - queryData.timestamp > 60*1000) {
-    console.log("timeout")
-    resetTabs()
-    return true
-  } else if(Math.random() * 100 < 10) {
-    console.log(now - queryData.timestamp)
-  }
+function setupMessageListener() {
+  chrome.runtime.onMessage.addListener(function (e) {
+    console.log("[onMessage] type:", e.type);
+    if (e.type == "toggle_input") {
+      if (e.enabled) {
+        $(document.body).removeClass("firewall-loading");
+      }
+      toggleInputField(e.enabled);
+    } else if (e.type == "images_loading") {
+      $(document.body).addClass("firewall-loading");
+    } else if (e.type == "close_intro") {
+      $(document.body).removeClass("firewall-intro");
+      $("#firewall-client-id").val(e.name);
+    } else if (e.type == "user_activity") {
+      $(document.body).removeClass("firewall-intro");
+    }
+  });
 }
 
 //////////////////////////////////
@@ -209,16 +287,13 @@ function main() {
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
 
-  if(state !== states.DONE)
-    console.log("cycle", cyclesInState)
   // check if we have a new search replacing the old one; timestamp it
   // we have to check that this isn't 1) what was first typed in 2) the translation of that or 3) the translation of the previous search,
   // that is this is actually a new search that's just happened
   if(queryData && searchTerm && 
     queryData.search !== searchTerm && 
     queryData.translation !== searchTerm && 
-    queryData.oldTranslation !== searchTerm &&
-    identity === 'google') // only let Google detect a new search (preventing searches in Baidu!). ideally we find a way to not require this
+    identity === currentSearchEngine)
   {
     console.log(queryData.search, "!==", searchTerm)
     chrome.storage.local.set({
@@ -255,21 +330,23 @@ function main() {
     case states.INTRO_SCREEN:
     case states.WAITING_FOR_TRANSLATION:
       if(queryData.translation) {
-        if(identity === 'baidu') {
+        if(identity !== currentSearchEngine) {
           searchTranslatedQuery()
           sleep(2500)
           setState(states.WAITING_FOR_PAGE_LOAD)
         } else {
-          console.log("[main] we're not baidu, so no need to do anything... wait for Baidu to tell us it has searched")
+          console.log("[main] this is the original search engine, so no need to do anything... wait for other one to tell us it has searched")
         }
         // at this point, we'll timestamp the search so we know when to time it out
         queryData.timestamp = +new Date()
       }
       break
     case states.WAITING_FOR_PAGE_LOAD:
+      changeSearchesDisabled(true)
       if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
       break
     case states.GETTING_IMAGES:
+      changeSearchesDisabled(true)
       console.log("[main]", identity, "queryData.images?queryData.images.length", queryData.images?queryData.images.length:"no images")
       if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
         console.log("[main] ready to submit images! queryData:", queryData)
@@ -303,10 +380,44 @@ function main() {
       break
     case states.DONE:
       // checkIfTimedOut()
-      $googleQueryBox.parent().css("color", undefined)
+      changeSearchesDisabled(false)
       break
   }
   cyclesInState ++
+}
+
+function changeSearchesDisabled(disable) {
+  if(disable) {
+    $baiduQueryBox.prop("disabled", true)
+    $baiduQueryBox.css( "background-color", disabledColor)
+    $baiduQueryBox.parent().css( "background-color", disabledColor)
+
+    $googleQueryBox.prop("disabled", true)
+    $googleQueryBox.parent().parent().parent().css("background-color", disabledColor)
+
+    console.log("[changeSearchesDisabled] searches disabled")
+  } else {
+    $googleQueryBox.prop("disabled", false)
+    $googleQueryBox.parent().parent().parent().css("background-color", "rgba(0,0,0,0)")
+    
+    $baiduQueryBox.prop("disabled", false)
+    $baiduQueryBox.css( "background-color", "rgb(255,255,255)")
+    $baiduQueryBox.parent().css("background-color", "rgba(0,0,0,0)")
+
+    console.log("[changeSearchesDisabled] searches enabled")
+  }
+}
+
+function checkIfTimedOut() {
+  // check if search has timed out
+  const now = +new Date()
+  if(now - queryData.timestamp > 60*1000) {
+    console.log("timeout")
+    resetTabs()
+    return true
+  } else if(Math.random() * 100 < 10) {
+    console.log(now - queryData.timestamp)
+  }
 }
 
 function setState(newState) {
@@ -344,8 +455,8 @@ function submitImages(callback) {
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
     lang_name: queryData.langName,
-    // google_images: JSON.stringify(queryData.googleImages),
-    // baidu_images: JSON.stringify(queryData.baiduImages),
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
     banned: queryData.banned,
     sensitive: queryData.sensitive,
   };
@@ -383,18 +494,24 @@ function submitImages(callback) {
 function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
-	var data = {
-		query: searchTerm,
-		searchEngine: getSearchEngine(),
-		secret: config.sharedSecret,
-        langFrom: "EN",
-        langTo: "zh-CN"
-	};
-	return $.ajax({
-		url: config.serverURL + 'translate',
-		method: 'POST',
-		data: data
-	}).fail(err => console.error(err))
+  return $.ajax({ 
+    url: config.serverURL + '/detect-language?query='+searchTerm
+  }).then(res => {
+    // todo: need to handle language detection failure
+    console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
+    const data = {
+      query: searchTerm,
+      searchEngine: getSearchEngine(),
+      secret: config.sharedSecret,
+      langFrom: res.language,
+      langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
+    };
+    return $.ajax({
+      url: config.serverURL + '/translate',
+      method: 'POST',
+      data: data
+    }).fail(err => console.error(err))
+  })
 }
 
 function getSearchEngine() {
@@ -405,13 +522,20 @@ function getSearchEngine() {
 
 function searchTranslatedQuery() {
   const identity = getSearchEngine()
-  // $("input[name=word]").prop("disabled", false)
-  const selector = 'input[name=q], input[name=word]',
-		    $inputField = $(selector).first();
+  // const selector = 'input[name=q], input[name=word]',
+	// 	    $inputField = $(selector).first();
   console.log("[searchTranslatedQuery]", identity, queryData.translation)
-  $inputField.val(queryData.translation);
-	$inputField.first().closest('form').submit();
-  // $("input[name=word]").prop("disabled", true)
+  if (identity === 'baidu') {
+    $baiduQueryBox.prop("disabled", false)
+    $baiduQueryBox.val(queryData.translation);
+    $baiduQueryBox.first().closest('form').submit();
+    $baiduQueryBox.prop("disabled", true)
+  } else {
+    $googleQueryBox.prop("disabled", false)
+    $googleQueryBox.val(queryData.translation);
+    $googleQueryBox.first().closest('form').submit();
+    $googleQueryBox.prop("disabled", true)
+  }
   console.log("[searchTranslatedQuery] done")
 }
 
