@@ -710,27 +710,26 @@ function toggleInputField(enable) {
 }
 
 function submitImages(callback) {
-  // this is what a current call looks like to /saveImages, working in Postman
-  var data = {
-    timestamp: queryData.timestamp,
-    location: config.location,
-    client: clientId,
-    secret: config.wordpressSecret,
-    search_engine: queryData.searchEngine,
-    query: queryData.query,
-    translated: queryData.translated,
-    lang_from: queryData.langFrom,
-    lang_to: queryData.langTo,
-    lang_confidence: queryData.langConfidence,
-    lang_alternate: queryData.langAlternate,
-    lang_name: queryData.langName,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: queryData.sensitive,
-  };
-  const url = config.apiBase + "/saveSearchAndImages";
-  // console.log("sending images to API", url, data)
+	var data = {
+		timestamp: pendingQuery.timestamp,
+		location: config.location,
+		client: clientId,
+		secret: config.wordpressSecret,
+		search_engine: pendingQuery.searchEngine,
+		query: pendingQuery.query,
+		translated: pendingQuery.translated,
+		lang_from: pendingQuery.langFrom,
+		lang_to: pendingQuery.langTo,
+		lang_confidence: pendingQuery.langConfidence,
+		lang_alternate: pendingQuery.langAlternate,
+		lang_name: pendingQuery.langName,
+		google_images: JSON.stringify(pendingQuery.googleImages),
+		baidu_images: JSON.stringify(pendingQuery.baiduImages),
+		banned: pendingQuery.banned,
+		sensitive: pendingQuery.sensitive
+	};
+  const url = config.apiBase + "/saveSearchAndImages"
+  console.log("sending images to API", url, data)
 
   fetch(url, {
     method: "POST",

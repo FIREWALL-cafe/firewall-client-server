@@ -12,6 +12,10 @@ const states = {
   SAVING_IMAGES: 'SAVING IMAGES',
   DONE: 'DONE'
 }
+const searchEngines = Object.freeze({
+  google: 'google',
+  baidu: 'baidu'
+});
 const loopInterval = 1000;
 const $googleQueryBox = $('[name=q]');
 const $baiduQueryBox = $('input[name=word]');
@@ -283,9 +287,6 @@ function main() {
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
 
-  // if(state !== states.DONE)
-  //   console.log("cycle", cyclesInState)
-
   // check if we have a new search replacing the old one; timestamp it
   // we have to check that this isn't 1) what was first typed in 2) the translation of that or 3) the translation of the previous search,
   // that is this is actually a new search that's just happened
@@ -460,9 +461,14 @@ function submitImages(callback) {
     sensitive: queryData.sensitive,
   };
 
+  // prevent sending too much data
+  if (data.search_engine === searchEngines.baidu)
+    data.baidu_images = JSON.stringify(queryData.baiduImages);
+  if (data.search_engine === searchEngines.google)
+    data.google_images = JSON.stringify(queryData.googleImages);
+
   const url = config.apiBase + "/saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
-  // console.log("[submitImages] from queryData:", queryData);
 
   fetch(url, {
     method: "POST",

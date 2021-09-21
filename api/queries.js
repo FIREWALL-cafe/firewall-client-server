@@ -512,23 +512,22 @@ const checkSecret = (request, response, next) => {
 
 //POST: createSearch -- Add searches
 const createSearch = (request, response) => {
-	const {
-		search_timestamp,
-		search_location,
-		search_ip_address,
-		search_client_name,
-		search_engine_initial,
-		search_engine_translation,
-		search_term_initial,
-		search_term_initial_language_code,
-		search_term_initial_language_confidence,
-		search_term_initial_language_alternate_code,
-		search_term_translation,
-		search_term_translation_language_code,
-		search_term_status_banned,
-		search_term_status_sensitive,
-		search_schema_initial
-	} = request.body
+    const {
+        search_timestamp,
+        search_location,
+        search_ip_address,
+        search_client_name,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_initial_language_confidence,
+        search_term_initial_language_alternate_code,
+        search_term_translation,
+        search_term_translation_language_code,
+        search_term_status_banned,
+        search_term_status_sensitive,
+    } = request.body
 
     const query = `INSERT INTO searches (
         search_id,
@@ -552,19 +551,19 @@ const createSearch = (request, response) => {
 
     const values = [
         search_timestamp,
-		search_location,
-		search_ip_address,
-		search_client_name,
-		search_engine_initial,
-		search_engine_translation,
-		search_term_initial,
-		search_term_initial_language_code,
-		search_term_initial_language_confidence,
-		search_term_initial_language_alternate_code,
-		search_term_translation,
-		search_term_translation_language_code,
-		search_term_status_banned,
-		search_term_status_sensitive
+        search_location,
+        search_ip_address,
+        search_client_name,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_initial_language_confidence,
+        search_term_initial_language_alternate_code,
+        search_term_translation,
+        search_term_translation_language_code,
+        search_term_status_banned,
+        search_term_status_sensitive
     ];
 
 	pool.query(query, values, (error, results) => {
@@ -624,6 +623,26 @@ const updateImageUrl = (request, response) => {
 	})
 }
 
+// Converts Base64 image data to binary and uploads it to data lake
+const uploadImageContent = async (content, href, response) => {
+    let fileContent;
+    try {
+        fileContent = Buffer.from(content, 'binary');
+    } catch {
+        response.status(400).json("Needs an image string to convert to binary.");
+        return;
+    }
+
+    let newUrl;
+    try {
+        newUrl = await space.saveImage(fileContent, href);
+        console.log('saved new image with url', newUrl);
+    } catch (error) {
+        response.status(500).json(err);
+        return;
+    }
+};
+
 //POST: saveImage -- Add searches
 // there are two types of saveImage calls: with and without a file. If with a file, it is uploaded
 const saveImage = async (request, response) => {
@@ -678,30 +697,114 @@ const deleteImage = async (request, response) => {
 	})
 }
 
-const saveImages = (request, response) => {
-    const {search_id, image_search_engine, urls, original_urls, image_ranks } = request.body
-    if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
-        response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
+const saveImages = (searchId, request, response) => {
+    const {
+        search_engine,
+        google_images: googleImagesString,
+        baidu_images: baiduImagesString
+    } = request.body
+    const images = googleImagesString
+        ? JSON.parse(googleImagesString)
+        : JSON.parse(baiduImagesString);
+
+    if (!searchId || !search_engine) {
+        response.status(400).json("Need a search id and search_engine.")
         return;
     }
-    if(urls.length !== image_ranks.length || urls.length == 0) {
-        response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
+
+    if (!images) {
+        response.status(400).json("No images provided.")
         return;
     }
-    if(original_urls && original_urls.length > 0 && original_urls.length !== urls.length) {
-        response.status(400).json("if including 'original_urls', there must be the same number as 'urls'")
-        return;
+
+    const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
+
+    const imageQueries = [];
+    // for each given URL, call that psql query with that value
+    for (const image of images) {
+        console.log(
+            searchId,
+            search_engine,
+            image.href, // TODO: phashed image ref
+        )
+        imageQueries.push(pool.query(
+            query,
+            [
+                searchId,
+                search_engine,
+                image.href, // TODO: phashed image ref
+            ]
+        ))
+        imageQueries.push(uploadImageContent(image.src, image.href, response))
     }
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
-    let promises = [];
-    // for each given URL, call that SQL query with that value
-    for(let i=0; i<urls.length; i++) {
-        let original_url = original_urls && original_urls.length > 0 ? original_urls[i] : "";
-        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], original_url, image_ranks[i]]))
-    }
-    // don't respond before all promises have resolved
-    Promise.all(promises).then(results => response.status(201).json(results.rows)).catch(err => response.status(500).json(err));
+    console.log(imageQueries);
+
+    return imageQueries;
 }
+
+const saveSearchAndImages = async (request, response) => {
+    const {
+        timestamp,
+        search_engine,
+        query,
+        lang_from,
+        translated,
+        banned,
+        sensitive,
+    } = request.body;
+    console.log(`[saveSearchAndImages for  ${search_engine}]`);
+
+    const searchQuery = `INSERT INTO searches (
+        search_timestamp,
+        search_engine_initial,
+        search_engine_translation,
+        search_term_initial,
+        search_term_initial_language_code,
+        search_term_translation,
+        search_term_status_banned,
+        search_term_status_sensitive
+    ) VALUES (
+        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8
+    ) RETURNING search_id`;
+
+    const searchValues = [
+        new Date(timestamp),
+        search_engine,
+        search_engine === 'google' ? 'baidu' : 'google',
+        query,
+        lang_from,
+        translated,
+        banned ? banned : false,
+        sensitive,
+    ];
+
+    let searchId;
+    try {
+        console.log(`[saving search for  ${search_engine}...]`);
+        const searchInsertResult = await pool.query(searchQuery, searchValues);
+        searchId = searchInsertResult.rows[0].search_id;
+        console.log(`[saved search for ${search_engine} ${searchId}]`);
+    } catch (error) {
+        response.status(500).json(error);
+        return;
+    }
+    console.log('searchId', searchId)
+
+    console.log(`[saving images for ${search_engine}...]`);
+    const imagePromises = saveImages(searchId, request, response);
+    let imageResults;
+
+    try {
+        // imageResults = await Promise.all(imagePromises);
+        imageResults = Promise.all(imagePromises);
+        console.log(`[saved images for ${search_engine} ${searchId}]`);
+    } catch (error) {
+        response.status(500).json(error);
+    }
+
+    response.status(201).json(imageResults);
+    return;
+};
 
 module.exports = {
 	getAllSearches,
@@ -743,6 +846,6 @@ module.exports = {
 	createVote,
     saveImage,
     deleteImage,
-    saveImages,
-    updateImageUrl
+    updateImageUrl,
+    saveSearchAndImages
 }
