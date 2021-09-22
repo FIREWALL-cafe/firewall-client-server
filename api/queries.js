@@ -795,7 +795,6 @@ const saveSearchAndImages = async (request, response) => {
     let imageResults;
 
     try {
-        // imageResults = await Promise.all(imagePromises);
         imageResults = Promise.all(imagePromises);
         console.log(`[saved images for ${search_engine} ${searchId}]`);
     } catch (error) {

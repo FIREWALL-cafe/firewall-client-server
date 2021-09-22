@@ -442,6 +442,50 @@ function extractSearchTermFromURL() {
 	return query;
 }
 
+function submitImagesToWordpress() {
+  const wpData = {
+    timestamp: queryData.timestamp,
+    location: config.location,
+    client: clientId,
+    secret: config.wordpressSecret,
+    search_engine: queryData.searchEngine,
+    query: queryData.query,
+    translated: queryData.translated,
+    lang_from: queryData.langFrom,
+    lang_to: queryData.langTo,
+    lang_confidence: queryData.langConfidence,
+    lang_alternate: queryData.langAlternate,
+    lang_name: queryData.langName,
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned,
+    sensitive: queryData.sensitive,
+  };
+
+  console.log("[submitImagesToWordpress]");
+  console.log('url', config.libraryURL);
+
+  chrome.runtime.sendMessage({
+    type: "images_loading",
+  });
+
+  fetch(config.libraryURL, {
+    method: "POST",
+    mode: 'no-cors',
+    body: JSON.stringify(wpData),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => {
+    console.log("[submitImagesToWordpress] done");
+    console.log(res);
+    chrome.runtime.sendMessage({ type: 'images_saved' });
+  })
+  .catch((err) => {
+    console.log("[submitImagesToWordpress] Failed sending post to WP:", err);
+  });
+}
+
 function submitImages(callback) {
   // this is what a current call looks like to /saveImages, working in Postman
   var data = {
@@ -482,7 +526,8 @@ function submitImages(callback) {
     },
   })
     .then((response) => {
-      console.log("[submitImages] response from API:", response)
+      console.log("[submitImages] done");
+      console.log("response from API:", response)
       response.type = "images_saved";
       chrome.runtime.sendMessage(response);
       callback();
@@ -492,14 +537,15 @@ function submitImages(callback) {
       chrome.runtime.sendMessage({type:"images_saved"});
       callback(err);
     });
-  console.log("[submitImages] done");
+
+  submitImagesToWordpress();
 }
 
 function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
   return $.ajax({ 
-    url: config.serverURL + '/detect-language?query='+searchTerm
+    url: config.serverURL + 'detect-language?query='+searchTerm
   }).then(res => {
     // todo: need to handle language detection failure
     console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
@@ -511,7 +557,7 @@ function getTranslation(searchTerm) {
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
     return $.ajax({
-      url: config.serverURL + '/translate',
+      url: config.serverURL + 'translate',
       method: 'POST',
       data: data
     }).fail(err => console.error(err))
