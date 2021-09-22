@@ -479,13 +479,14 @@ function submitImages(callback) {
     },
   })
     .then((response) => {
-      // console.log("response from API:", response)
+      console.log("[submitImages] response from API:", response)
       response.type = "images_saved";
       chrome.runtime.sendMessage(response);
       callback();
     })
     .catch((err) => {
-      console.log("error from API:", err)
+      console.log("[submitImages] error from API:", err)
+      chrome.runtime.sendMessage({type:"images_saved"});
       callback(err);
     });
   console.log("[submitImages] done");

@@ -24,7 +24,8 @@ chrome.runtime.onMessage.addListener(function(e) {
 				});
 			}
 
-			if (e.permalink) {
+			// if (e.permalink) {
+			if (true) {
 				// Open limited width popup window with 50px padding on top/left
 				chrome.windows.create({
 					type: 'popup',
@@ -34,7 +35,8 @@ chrome.runtime.onMessage.addListener(function(e) {
 					height: (window.screen.height || 1000) - 100,
 					left: 50,
 					top: 50,
-					url: e.permalink + '#votes'
+					// url: e.permalink + '#votes'
+					url: "https://firewallcafe.com"
 				});
 
 				// TODO Now that voting page opens in new window, notification seems
