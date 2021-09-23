@@ -685,7 +685,7 @@ function checkPendingImages() {
     }
 
     // If we have results from both search engines, submit them ... annnd we're done
-    submitImages(function () {
+    submitImagesToWordpress(function () {
       console.log("[checkPendingImages] Removing pending query");
       queryData = {};
       storage.set({

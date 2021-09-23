@@ -374,6 +374,9 @@ function main() {
           console.log("[main] submitImages callback")
           setState(states.DONE) 
         })
+        submitImagesToWordpress(() => {
+          console.log("[main] submitImagesToWordpress callback")
+        })
       } else {
         console.log("waiting for submitImages to finish")
       }
@@ -718,4 +721,68 @@ function resetTabs() {
   }
   chrome.storage.local.set({ queryData })
   setState(states.WAITING)
+}
+
+function submitImagesToWordpress(callback) {
+  // deprecating this function!
+  // WordPress will get all of the data-URI image data
+  var wp_data = {
+    timestamp: queryData.timestamp,
+    location: config.location,
+    client: clientId,
+    secret: config.wordpressSecret,
+    search_engine: 'duckduckgo',
+    query: queryData.search,
+    translated: queryData.translation,
+    lang_from: 'fdsa',
+    lang_to: 'asdf',
+    lang_confidence: 1,
+    lang_alternate: 'nope',
+    lang_name: 'Derpish',
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned,
+    sensitive: false,
+  };
+
+  var googleImageUrls = [];
+  $.each(queryData.googleImages, function (index, image) {
+    googleImageUrls.push(image.href);
+  });
+  var baiduImageUrls = [];
+  $.each(queryData.baiduImages, function (index, image) {
+    baiduImageUrls.push(image.href);
+  });
+
+  console.log("[submitImagesToWordpress]", wp_data);
+  var url = config.wordpressURL;
+  console.log("url", url);
+
+  chrome.runtime.sendMessage({
+    type: "images_loading",
+  });
+
+  $.ajax({
+    url: url,
+    method: "POST",
+    data: wp_data,
+  })
+    .done(function (rsp) {
+      console.log("[submitImagesToWordpress] Done");
+      console.log(rsp);
+      rsp.type = "images_saved";
+      chrome.runtime.sendMessage(rsp);
+      callback();
+    })
+    .fail(function (xhr, textStatus) {
+      chrome.runtime.sendMessage({
+        type: "images_saved",
+      });
+      console.log(
+        "[submitImagesToWordpress] Failed sending post to WP:",
+        textStatus,
+        "/",
+        xhr.responseText
+      );
+    });
 }
