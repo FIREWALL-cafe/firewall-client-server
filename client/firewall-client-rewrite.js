@@ -321,7 +321,7 @@ function main() {
           queryData.translation = response.translated
           console.log("[main]", identity, "setting translation to", queryData.translation)
           console.log(identity, "new queryData:", queryData)
-          chrome.storage.local.set({queryData})
+          chrome.storage.local.set({ queryData });
         })
         setState(states.WAITING_FOR_TRANSLATION)
         $googleQueryBox.parent().css("color", disabledColor)
@@ -357,8 +357,9 @@ function main() {
         setState(states.SAVING_IMAGES)
       } else if (queryData.images && queryData.images.length >= numImages) {
         console.log("[main] we're good, tell storage about it")
-        queryData[identity+'Images'] = queryData.images
+        queryData[identity+'Images'] = [...queryData.images]
         console.log("[main] sending this object to storage:", queryData)
+        queryData.images = [];
         chrome.storage.local.set({queryData})
       } else if(queryData.banned) {
         console.log("[main] baidu says no")
@@ -442,48 +443,57 @@ function extractSearchTermFromURL() {
 	return query;
 }
 
-function submitImagesToWordpress() {
+function submitImagesToWordpress(callback) {
   const wpData = {
     timestamp: queryData.timestamp,
     location: config.location,
     client: clientId,
     secret: config.wordpressSecret,
-    search_engine: queryData.searchEngine,
-    query: queryData.query,
-    translated: queryData.translated,
-    lang_from: queryData.langFrom,
-    lang_to: queryData.langTo,
-    lang_confidence: queryData.langConfidence,
-    lang_alternate: queryData.langAlternate,
-    lang_name: queryData.langName,
+    search_engine: getSearchEngine(),
+    query: queryData.search,
+    translated: queryData.translation,
+    lang_from: `${queryData.langFrom}`,
+    lang_to: `${queryData.langTo}`,
+    lang_confidence: 1,
+    lang_alternate: `${queryData.langAlternate}`,
+    lang_name: `${queryData.langName}`,
     google_images: JSON.stringify(queryData.googleImages),
     baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: queryData.sensitive,
+    banned: queryData.banned ? queryData.banned : false,
+    sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
 
   console.log("[submitImagesToWordpress]");
-  console.log('url', config.libraryURL);
+  console.log('url', config.wordpressURL);
+  console.log('wpData', wpData);
 
   chrome.runtime.sendMessage({
     type: "images_loading",
   });
 
-  fetch(config.libraryURL, {
+  $.ajax({
+    url: config.wordpressURL,
     method: "POST",
-    mode: 'no-cors',
-    body: JSON.stringify(wpData),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  }).then((res) => {
-    console.log("[submitImagesToWordpress] done");
-    console.log(res);
-    chrome.runtime.sendMessage({ type: 'images_saved' });
+    data: wpData,
   })
-  .catch((err) => {
-    console.log("[submitImagesToWordpress] Failed sending post to WP:", err);
-  });
+    .done(function (rsp) {
+      console.log("[submitImagesToWordpress] Done");
+      console.log(rsp);
+      rsp.type = "images_saved";
+      chrome.runtime.sendMessage(rsp);
+      callback();
+    })
+    .fail(function (xhr, textStatus) {
+      chrome.runtime.sendMessage({
+        type: "images_saved",
+      });
+      console.log(
+        "[submitImagesToWordpress] Failed sending post to WP:",
+        textStatus,
+        "/",
+        xhr.responseText
+      );
+    });
 }
 
 function submitImages(callback) {
@@ -502,19 +512,17 @@ function submitImages(callback) {
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
     lang_name: queryData.langName,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: queryData.sensitive,
+    banned: queryData.banned ? queryData.banned : false,
+    sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
 
   // prevent sending too much data
-  if (data.search_engine === searchEngines.baidu)
+  if (data.search_engine.toLowerCase() === searchEngines.baidu)
     data.baidu_images = JSON.stringify(queryData.baiduImages);
-  if (data.search_engine === searchEngines.google)
+  if (data.search_engine.toLowerCase() === searchEngines.google)
     data.google_images = JSON.stringify(queryData.googleImages);
 
-  const url = config.apiBase + "/saveSearchAndImages";
+  const url = config.apiBase + "saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
 
   fetch(url, {
@@ -537,8 +545,6 @@ function submitImages(callback) {
       chrome.runtime.sendMessage({type:"images_saved"});
       callback(err);
     });
-
-  submitImagesToWordpress();
 }
 
 function getTranslation(searchTerm) {
@@ -767,68 +773,4 @@ function resetTabs() {
   }
   chrome.storage.local.set({ queryData })
   setState(states.WAITING)
-}
-
-function submitImagesToWordpress(callback) {
-  // deprecating this function!
-  // WordPress will get all of the data-URI image data
-  var wp_data = {
-    timestamp: queryData.timestamp,
-    location: config.location,
-    client: clientId,
-    secret: config.wordpressSecret,
-    search_engine: 'duckduckgo',
-    query: queryData.search,
-    translated: queryData.translation,
-    lang_from: 'fdsa',
-    lang_to: 'asdf',
-    lang_confidence: 1,
-    lang_alternate: 'nope',
-    lang_name: 'Derpish',
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: false,
-  };
-
-  var googleImageUrls = [];
-  $.each(queryData.googleImages, function (index, image) {
-    googleImageUrls.push(image.href);
-  });
-  var baiduImageUrls = [];
-  $.each(queryData.baiduImages, function (index, image) {
-    baiduImageUrls.push(image.href);
-  });
-
-  console.log("[submitImagesToWordpress]", wp_data);
-  var url = config.wordpressURL;
-  console.log("url", url);
-
-  chrome.runtime.sendMessage({
-    type: "images_loading",
-  });
-
-  $.ajax({
-    url: url,
-    method: "POST",
-    data: wp_data,
-  })
-    .done(function (rsp) {
-      console.log("[submitImagesToWordpress] Done");
-      console.log(rsp);
-      rsp.type = "images_saved";
-      chrome.runtime.sendMessage(rsp);
-      callback();
-    })
-    .fail(function (xhr, textStatus) {
-      chrome.runtime.sendMessage({
-        type: "images_saved",
-      });
-      console.log(
-        "[submitImagesToWordpress] Failed sending post to WP:",
-        textStatus,
-        "/",
-        xhr.responseText
-      );
-    });
 }

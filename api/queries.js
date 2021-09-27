@@ -1,3 +1,5 @@
+// const https = require('https');
+const axios = require('axios')
 const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
@@ -742,17 +744,72 @@ const saveImages = (searchId, request, response) => {
     return imageQueries;
 }
 
+const uploadImagesToWordpress = async (data) => {
+    const wpData = {
+        timestamp: data.timestamp,
+        location: data.location,
+        client: data.client,
+        secret: config.wordpress.secret,
+        search_engine: data.search_engine,
+        query: data.query,
+        translated: data.translated,
+        lang_from: `${data.lang_from}`,
+        lang_to: `${data.lang_to}`,
+        lang_confidence: 1,
+        lang_alternate: `${data.lang_alternate}`,
+        lang_name: `${data.lang_name}`,
+        banned: data.banned ? data.banned : false,
+        sensitive: data.sensitive ? data.sensitive : false,
+    };
+
+    console.log(`[uploadImagesToWordpress data ${JSON.stringify(wpData)}]`);
+
+    wpData.google_images = data.google_images ? data.google_images : '{}';
+    wpData.baidu_images = data.baidu_images ? data.baidu_images : '{}';
+
+    // TODO: figure out why clientside ajax works, but client and serverside fetch and axios
+    //       does not
+    try {
+        console.log(`[uploading images to Wordpress...]`);
+        const url = config.wordpress.url;
+        const result = await axios.post(url, wpData);
+        console.log(`[done uploading images to Wordpress ${JSON.stringify(result.data)}]`);
+    } catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
+};
+
+const saveImagesToWordpress = async (request, response) => {
+    try {
+        await uploadImagesToWordpress(response);
+    } catch (error) {
+        response.status(500).json(error);
+    }
+
+    response.sendStatus(200);
+};
+
 const saveSearchAndImages = async (request, response) => {
     const {
         timestamp,
+        location,
+        client,
+        secret,
         search_engine,
-        query,
+        search,
+        translation,
         lang_from,
-        translated,
+        lang_to,
+        lang_confidence,
+        lang_alternate,
+        lang_name,
+        google_images,
+        baidu_images,
         banned,
         sensitive,
     } = request.body;
-    console.log(`[saveSearchAndImages for  ${search_engine}]`);
+    console.log(`[saveSearchAndImages for ${search_engine}]`);
 
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
@@ -771,20 +828,22 @@ const saveSearchAndImages = async (request, response) => {
         new Date(timestamp),
         search_engine,
         search_engine === 'google' ? 'baidu' : 'google',
-        query,
+        search,
         lang_from,
-        translated,
+        translation,
         banned ? banned : false,
-        sensitive,
+        sensitive ? sensitive : false,
     ];
 
     let searchId;
     try {
-        console.log(`[saving search for  ${search_engine}...]`);
+        console.log('[searchValues]', searchValues);
+        console.log(`[saving search for ${search_engine}...]`);
         const searchInsertResult = await pool.query(searchQuery, searchValues);
         searchId = searchInsertResult.rows[0].search_id;
         console.log(`[saved search for ${search_engine} ${searchId}]`);
     } catch (error) {
+        console.error(error);
         response.status(500).json(error);
         return;
     }
@@ -799,10 +858,34 @@ const saveSearchAndImages = async (request, response) => {
         console.log(`[saved images for ${search_engine} ${searchId}]`);
     } catch (error) {
         response.status(500).json(error);
+        return;
     }
 
+    // try {
+    //     uploadImagesToWordpress({
+    //         timestamp,
+    //         location,
+    //         client,
+    //         secret,
+    //         search_engine,
+    //         query: search,
+    //         translated: translation,
+    //         lang_from,
+    //         lang_to,
+    //         lang_confidence,
+    //         lang_alternate,
+    //         lang_name,
+    //         google_images,
+    //         baidu_images,
+    //         banned,
+    //         sensitive,
+    //     });
+    // } catch (error) {
+    //     response.status(500).json(error);
+    //     return;
+    // }
+
     response.status(201).json(imageResults);
-    return;
 };
 
 module.exports = {
@@ -846,5 +929,6 @@ module.exports = {
     saveImage,
     deleteImage,
     updateImageUrl,
-    saveSearchAndImages
+    saveSearchAndImages,
+    saveImagesToWordpress,
 }
