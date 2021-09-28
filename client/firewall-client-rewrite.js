@@ -17,7 +17,7 @@ const searchEngines = Object.freeze({
   baidu: 'baidu'
 });
 const loopInterval = 1000;
-const $googleQueryBox = $('[name=q]');
+const $googleQueryBox = $('[name=q]').autocomplete();
 const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
@@ -134,9 +134,9 @@ function setupUI() {
 	$firewallForm.submit(function(e) {
 		e.preventDefault();
 		clientId = $firewallClientId.val();
-		autocompleteEnabled = $firewallSuggest.checked;
+    autocompleteEnabled = $firewallSuggest ? $firewallSuggest.checked : false;
 
-		storage.set({
+		chrome.storage.local.set({
 			clientId,
 			autocompleteEnabled
 		}, function() {
@@ -480,7 +480,20 @@ function submitImagesToWordpress(callback) {
       console.log("[submitImagesToWordpress] Done");
       console.log(rsp);
       rsp.type = "images_saved";
-      chrome.runtime.sendMessage(rsp);
+
+      chrome.runtime.sendMessage({
+        action: 'createWindow',
+        type: 'popup',
+        state: 'normal',
+        focused: true,
+        width: 1100,
+        height: (window.screen.height || 1000) - 100,
+        left: 50,
+        top: 50,
+        // url: e.permalink + '#votes'
+        url: rsp.permalink,
+      });
+
       callback();
     })
     .fail(function (xhr, textStatus) {
