@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"aws-sdk": "^2.828.0",
+		"axios": "^0.21.4",
 		"body-parser": "*",
 		"express": "*",
 		"express-fileupload": "^1.2.1",

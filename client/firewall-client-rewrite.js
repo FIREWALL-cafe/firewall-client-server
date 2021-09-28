@@ -17,7 +17,7 @@ const searchEngines = Object.freeze({
   baidu: 'baidu'
 });
 const loopInterval = 1000;
-const $googleQueryBox = $('[name=q]');
+const $googleQueryBox = $('[name=q]').autocomplete();
 const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
@@ -134,9 +134,9 @@ function setupUI() {
 	$firewallForm.submit(function(e) {
 		e.preventDefault();
 		clientId = $firewallClientId.val();
-		autocompleteEnabled = $firewallSuggest.checked;
+    autocompleteEnabled = $firewallSuggest ? $firewallSuggest.checked : false;
 
-		storage.set({
+		chrome.storage.local.set({
 			clientId,
 			autocompleteEnabled
 		}, function() {
@@ -321,7 +321,7 @@ function main() {
           queryData.translation = response.translated
           console.log("[main]", identity, "setting translation to", queryData.translation)
           console.log(identity, "new queryData:", queryData)
-          chrome.storage.local.set({queryData})
+          chrome.storage.local.set({ queryData });
         })
         setState(states.WAITING_FOR_TRANSLATION)
         $googleQueryBox.parent().css("color", disabledColor)
@@ -357,8 +357,9 @@ function main() {
         setState(states.SAVING_IMAGES)
       } else if (queryData.images && queryData.images.length >= numImages) {
         console.log("[main] we're good, tell storage about it")
-        queryData[identity+'Images'] = queryData.images
+        queryData[identity+'Images'] = [...queryData.images]
         console.log("[main] sending this object to storage:", queryData)
+        queryData.images = [];
         chrome.storage.local.set({queryData})
       } else if(queryData.banned) {
         console.log("[main] baidu says no")
@@ -442,6 +443,72 @@ function extractSearchTermFromURL() {
 	return query;
 }
 
+function submitImagesToWordpress(callback) {
+  const wpData = {
+    timestamp: queryData.timestamp,
+    location: config.location,
+    client: clientId,
+    secret: config.wordpressSecret,
+    search_engine: getSearchEngine(),
+    query: queryData.search,
+    translated: queryData.translation,
+    lang_from: `${queryData.langFrom}`,
+    lang_to: `${queryData.langTo}`,
+    lang_confidence: 1,
+    lang_alternate: `${queryData.langAlternate}`,
+    lang_name: `${queryData.langName}`,
+    google_images: JSON.stringify(queryData.googleImages),
+    baidu_images: JSON.stringify(queryData.baiduImages),
+    banned: queryData.banned ? queryData.banned : false,
+    sensitive: queryData.sensitive ? queryData.sensitive : false,
+  };
+
+  console.log("[submitImagesToWordpress]");
+  console.log('url', config.wordpressURL);
+  console.log('wpData', wpData);
+
+  chrome.runtime.sendMessage({
+    type: "images_loading",
+  });
+
+  $.ajax({
+    url: config.wordpressURL,
+    method: "POST",
+    data: wpData,
+  })
+    .done(function (rsp) {
+      console.log("[submitImagesToWordpress] Done");
+      console.log(rsp);
+      rsp.type = "images_saved";
+
+      chrome.runtime.sendMessage({
+        action: 'createWindow',
+        type: 'popup',
+        state: 'normal',
+        focused: true,
+        width: 1100,
+        height: (window.screen.height || 1000) - 100,
+        left: 50,
+        top: 50,
+        // url: e.permalink + '#votes'
+        url: rsp.permalink,
+      });
+
+      callback();
+    })
+    .fail(function (xhr, textStatus) {
+      chrome.runtime.sendMessage({
+        type: "images_saved",
+      });
+      console.log(
+        "[submitImagesToWordpress] Failed sending post to WP:",
+        textStatus,
+        "/",
+        xhr.responseText
+      );
+    });
+}
+
 function submitImages(callback) {
   // this is what a current call looks like to /saveImages, working in Postman
   var data = {
@@ -458,19 +525,17 @@ function submitImages(callback) {
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
     lang_name: queryData.langName,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: queryData.sensitive,
+    banned: queryData.banned ? queryData.banned : false,
+    sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
 
   // prevent sending too much data
-  if (data.search_engine === searchEngines.baidu)
+  if (data.search_engine.toLowerCase() === searchEngines.baidu)
     data.baidu_images = JSON.stringify(queryData.baiduImages);
-  if (data.search_engine === searchEngines.google)
+  if (data.search_engine.toLowerCase() === searchEngines.google)
     data.google_images = JSON.stringify(queryData.googleImages);
 
-  const url = config.apiBase + "/saveSearchAndImages";
+  const url = config.apiBase + "saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
 
   fetch(url, {
@@ -482,7 +547,8 @@ function submitImages(callback) {
     },
   })
     .then((response) => {
-      console.log("[submitImages] response from API:", response)
+      console.log("[submitImages] done");
+      console.log("response from API:", response)
       response.type = "images_saved";
       chrome.runtime.sendMessage(response);
       callback();
@@ -492,14 +558,13 @@ function submitImages(callback) {
       chrome.runtime.sendMessage({type:"images_saved"});
       callback(err);
     });
-  console.log("[submitImages] done");
 }
 
 function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
   return $.ajax({ 
-    url: config.serverURL + '/detect-language?query='+searchTerm
+    url: config.serverURL + 'detect-language?query='+searchTerm
   }).then(res => {
     // todo: need to handle language detection failure
     console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
@@ -511,7 +576,7 @@ function getTranslation(searchTerm) {
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
     return $.ajax({
-      url: config.serverURL + '/translate',
+      url: config.serverURL + 'translate',
       method: 'POST',
       data: data
     }).fail(err => console.error(err))
@@ -721,68 +786,4 @@ function resetTabs() {
   }
   chrome.storage.local.set({ queryData })
   setState(states.WAITING)
-}
-
-function submitImagesToWordpress(callback) {
-  // deprecating this function!
-  // WordPress will get all of the data-URI image data
-  var wp_data = {
-    timestamp: queryData.timestamp,
-    location: config.location,
-    client: clientId,
-    secret: config.wordpressSecret,
-    search_engine: 'duckduckgo',
-    query: queryData.search,
-    translated: queryData.translation,
-    lang_from: 'fdsa',
-    lang_to: 'asdf',
-    lang_confidence: 1,
-    lang_alternate: 'nope',
-    lang_name: 'Derpish',
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
-    banned: queryData.banned,
-    sensitive: false,
-  };
-
-  var googleImageUrls = [];
-  $.each(queryData.googleImages, function (index, image) {
-    googleImageUrls.push(image.href);
-  });
-  var baiduImageUrls = [];
-  $.each(queryData.baiduImages, function (index, image) {
-    baiduImageUrls.push(image.href);
-  });
-
-  console.log("[submitImagesToWordpress]", wp_data);
-  var url = config.wordpressURL;
-  console.log("url", url);
-
-  chrome.runtime.sendMessage({
-    type: "images_loading",
-  });
-
-  $.ajax({
-    url: url,
-    method: "POST",
-    data: wp_data,
-  })
-    .done(function (rsp) {
-      console.log("[submitImagesToWordpress] Done");
-      console.log(rsp);
-      rsp.type = "images_saved";
-      chrome.runtime.sendMessage(rsp);
-      callback();
-    })
-    .fail(function (xhr, textStatus) {
-      chrome.runtime.sendMessage({
-        type: "images_saved",
-      });
-      console.log(
-        "[submitImagesToWordpress] Failed sending post to WP:",
-        textStatus,
-        "/",
-        xhr.responseText
-      );
-    });
 }
