@@ -27,9 +27,9 @@ INSERT INTO images VALUES
   (14, 7, 'Google', '/filePath/fileFourteen.jpg', NULL),
   (12, 7, 'Baidu', '/filePath/fileTwelve.jpg', NULL);
 
--- INSERT INTO have_votes VALUES
---   (1, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
---   (4, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
---   (2, 7, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
---   (1, 4, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
---   (6, 6, CURRENT_TIMESTAMP, 'testUser878', '78.242.52.42');
+INSERT INTO have_votes VALUES
+  (1, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
+  (4, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
+  (2, 7, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
+  (1, 4, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
+  (6, 6, CURRENT_TIMESTAMP, 'testUser878', '78.242.52.42');

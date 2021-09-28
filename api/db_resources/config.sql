@@ -13,7 +13,7 @@ DROP TABLE IF EXISTS searches;
 -- Queries --
 CREATE TABLE searches (
 	search_id                                   serial not null,
-	search_timestamp                            timestamp,
+	search_timestamp                            bigint,
 	search_location                             text,
 	search_ip_address                           text,
 	search_client_name                          text,
@@ -75,7 +75,7 @@ CREATE TABLE have_votes (
 	vote_serial       serial not null,
 	vote_id           serial not null references votes(vote_id),
 	search_id         serial not null references searches(search_id),
-	vote_timestamp    timestamp,
+	vote_timestamp    bigint,
 	vote_client_name  text,
 	vote_ip_address   text,
 	primary key(vote_serial)
