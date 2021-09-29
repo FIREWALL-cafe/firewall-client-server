@@ -114,7 +114,7 @@ function setupUI() {
 			'<a href="#firewall" id="firewall-show" class="skin_from_link">Firewall</a>' +
 			'<form action="#" id="firewall-form" autocomplete="off">' +
 				'<label>Client ID: <input name="client-id" id="firewall-client-id" value="' + clientId + '"></label>' +
-				// '<label><input type="checkbox" id="firewall-suggest"' + suggestChecked + ' /> Suggest sensitive queries</label>' +
+				'<label><input type="checkbox" id="firewall-suggest"' + suggestChecked + ' /> Suggest sensitive queries</label>' +
 				'<input type="submit" value="Save" />' +
 			'</form>' +
 		'</div>'
@@ -171,11 +171,9 @@ function setupUI() {
   // insert message asking user to wait for images to upload
   // TODO: this is only working in Baidu; Google's tag must have changed
 	const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
-	$('#lst-ib')
-    .closest('.sbtc')
+	$googleQueryBox.closest('form')
     .append('<div id="firewall-loading">' + msg + '</div>');
-	$('#kw')
-    .closest('form')
+	$baiduQueryBox.closest('form')
     .append('<div id="firewall-loading">' + msg + '</div>');
 
   // add intro screen html
@@ -326,8 +324,8 @@ function main() {
           console.log(identity, "new queryData:", queryData)
           chrome.storage.local.set({ queryData });
         })
+        changeSearchesDisabled(true)
         setState(states.WAITING_FOR_TRANSLATION)
-        $googleQueryBox.parent().css("color", disabledColor)
       }
       break;
     case states.INTRO_SCREEN:
@@ -484,7 +482,7 @@ function submitImagesToWordpress(callback) {
     .done(function (rsp) {
       console.log("[submitImagesToWordpress] Done");
       console.log(rsp);
-      rsp.type = "images_saved";
+      rsp.type = "create_popup";
 
       chrome.runtime.sendMessage({
         action: 'createWindow',
@@ -502,15 +500,7 @@ function submitImagesToWordpress(callback) {
       callback();
     })
     .fail(function (xhr, textStatus) {
-      chrome.runtime.sendMessage({
-        type: "images_saved",
-      });
-      console.log(
-        "[submitImagesToWordpress] Failed sending post to WP:",
-        textStatus,
-        "/",
-        xhr.responseText
-      );
+      console.log("[submitImagesToWordpress] Failed sending post to WP:", textStatus, "/", xhr.responseText);
     });
 }
 
@@ -554,13 +544,10 @@ function submitImages(callback) {
     .then((response) => {
       console.log("[submitImages] done");
       console.log("response from API:", response)
-      response.type = "images_saved";
-      chrome.runtime.sendMessage(response);
       callback();
     })
     .catch((err) => {
       console.log("[submitImages] error from API:", err)
-      chrome.runtime.sendMessage({type:"images_saved"});
       callback(err);
     });
 }

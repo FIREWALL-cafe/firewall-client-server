@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					type: 'images_loading'
 				});
 			}
-		} else if (e.type == 'images_saved') {
+		} else if (e.type == 'create_popup') {
 			for (var i = 0; i < tabs.length; i++) {
 				chrome.tabs.sendMessage(tabs[i].id, {
 					type: 'toggle_input',
@@ -35,8 +35,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					height: (window.screen.height || 1000) - 100,
 					left: 50,
 					top: 50,
-					// url: e.permalink + '#votes'
-					url: "https://firewallcafe.com"
+					url: e.url
 				});
 
 				// TODO Now that voting page opens in new window, notification seems
