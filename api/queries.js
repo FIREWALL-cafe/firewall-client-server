@@ -1,4 +1,3 @@
-// const https = require('https');
 const axios = require('axios')
 const config = require('./config.js')
 const {pool,secret} = config
@@ -825,7 +824,7 @@ const saveSearchAndImages = async (request, response) => {
     ) RETURNING search_id`;
 
     const searchValues = [
-        new Date(timestamp),
+        timestamp,
         search_engine,
         search_engine === 'google' ? 'baidu' : 'google',
         search,
