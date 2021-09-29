@@ -335,9 +335,9 @@ function main() {
       if(queryData.translation) {
         if(identity !== currentSearchEngine) {
           searchTranslatedQuery()
-          sleep(2500)
+          sleep(250)
           setState(states.WAITING_FOR_PAGE_LOAD)
-        } else {
+        } else if(cyclesInState == 0) {
           console.log("[main] this is the original search engine, so no need to do anything... wait for other one to tell us it has searched")
         }
         // at this point, we'll timestamp the search so we know when to time it out
@@ -345,10 +345,12 @@ function main() {
       }
       break
     case states.WAITING_FOR_PAGE_LOAD:
+      if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
       changeSearchesDisabled(true)
       if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
       break
     case states.GETTING_IMAGES:
+      if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
       changeSearchesDisabled(true)
       console.log("[main]", identity, "queryData.images?queryData.images.length", queryData.images?queryData.images.length:"no images")
       if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
