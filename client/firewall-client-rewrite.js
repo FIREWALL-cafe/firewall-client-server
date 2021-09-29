@@ -16,8 +16,8 @@ const searchEngines = Object.freeze({
   google: 'google',
   baidu: 'baidu'
 });
-const loopInterval = 1000;
-const $googleQueryBox = $('[name=q]').autocomplete();
+const loopInterval = 333;
+const $googleQueryBox = $('[name=q]')
 const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
 const disabledColor = "rgb(180,180,180,1)"
@@ -145,17 +145,21 @@ function setupUI() {
 		});
 
 		if (autocompleteEnabled) {
+      console.log("autocomplete now enabled")
 			$googleQueryBox.autocomplete({
 				source: sensitiveQueries
 			});
 			$googleQueryBox.autocomplete('enable');
 			$body.addClass('firewall-autocomplete');
 		} else {
+      console.log("autocomplete now disabled")
 			$googleQueryBox.autocomplete('disable');
 			$body.removeClass('firewall-autocomplete');
 		}
 	});
 
+  // initialize googleQueryBox for autocomplete
+  // $googleQueryBox.autocomplete()
 	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
 		$googleQueryBox.autocomplete({
@@ -265,7 +269,6 @@ function setupMessageListener() {
       if (e.enabled) {
         $(document.body).removeClass("firewall-loading");
       }
-      toggleInputField(e.enabled);
     } else if (e.type == "images_loading") {
       $(document.body).addClass("firewall-loading");
     } else if (e.type == "close_intro") {
@@ -535,7 +538,7 @@ function submitImages(callback) {
   if (data.search_engine.toLowerCase() === searchEngines.google)
     data.google_images = JSON.stringify(queryData.googleImages);
 
-  const url = config.apiBase + "saveSearchAndImages";
+  const url = config.apiBase + "/saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
 
   fetch(url, {
