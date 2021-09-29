@@ -564,7 +564,7 @@ function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
   return $.ajax({ 
-    url: config.serverURL + 'detect-language?query='+searchTerm
+    url: config.serverURL + '/detect-language?query='+searchTerm
   }).then(res => {
     // todo: need to handle language detection failure
     console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
