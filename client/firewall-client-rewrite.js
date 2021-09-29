@@ -80,6 +80,7 @@ function checkIfCorrectState() {
     }
     if (identity === 'google' && window.location.pathname !== '/search') {
       setState(states.WAITING)
+      resetTabs()
     }
   }
 }
@@ -143,7 +144,6 @@ function setupUI() {
 			console.log('[setupUI] Autocomplete: ' + autocompleteEnabled);
 			$firewallForm.removeClass('visible');
 		});
-
 		if (autocompleteEnabled) {
       console.log("autocomplete now enabled")
 			$googleQueryBox.autocomplete({
@@ -159,7 +159,7 @@ function setupUI() {
 	});
 
   // initialize googleQueryBox for autocomplete
-  // $googleQueryBox.autocomplete()
+  $googleQueryBox.autocomplete()
 	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
 		$googleQueryBox.autocomplete({
@@ -388,6 +388,8 @@ function main() {
     case states.DONE:
       // checkIfTimedOut()
       changeSearchesDisabled(false)
+      // console.log("[main] removing firewall-loading")
+      $(document.body).removeClass("firewall-loading");
       break
   }
   cyclesInState ++
@@ -778,7 +780,8 @@ function resetTabs() {
   // TODO: without taking search term out of URL, the code will just start
   // on with the same search again since it's in the URL. Redirect to main
   // search page would be best
-  if (identity === 'google' && window.location.pathname === '/search')
+  // if (identity === 'google' && window.location.pathname === '/search')
+  if (identity === 'google')
   {
     // Google homepage => Google image search homepage
     window.location = 'https://www.google.com/imghp';
