@@ -576,7 +576,7 @@ function getTranslation(searchTerm) {
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
     return $.ajax({
-      url: config.serverURL + 'translate',
+      url: config.serverURL + '/translate',
       method: 'POST',
       data: data
     }).fail(err => console.error(err))
