@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					left: 50,
 					top: 50,
 					url: e.url
-				});
+				}, result => console.log(result));
 
 				// TODO Now that voting page opens in new window, notification seems
 				// redundant, testing new UX without it

@@ -1,6 +1,7 @@
 //////////////////////////////////
 //      init
 //////////////////////////////////
+console.log("[[global]] chrome obj", chrome)
 
 // declare global variables
 const states = {
@@ -481,11 +482,23 @@ function submitImagesToWordpress(callback) {
   })
     .done(function (rsp) {
       console.log("[submitImagesToWordpress] Done");
-      console.log(rsp);
-      rsp.type = "create_popup";
+      console.log('wordpress response:', rsp);
+      // rsp.type = "create_popup";
 
-      chrome.runtime.sendMessage({
-        action: 'createWindow',
+      // chrome.runtime.sendMessage({
+      //   action: 'createWindow',
+      //   type: 'popup',
+      //   state: 'normal',
+      //   focused: true,
+      //   width: 1100,
+      //   height: (window.screen.height || 1000) - 100,
+      //   left: 50,
+      //   top: 50,
+      //   // url: e.permalink + '#votes'
+      //   url: rsp.permalink,
+      // });
+      console.log("[submit wordpress] chrome obj", chrome)
+      chrome.windows.create({
         type: 'popup',
         state: 'normal',
         focused: true,
@@ -493,8 +506,7 @@ function submitImagesToWordpress(callback) {
         height: (window.screen.height || 1000) - 100,
         left: 50,
         top: 50,
-        // url: e.permalink + '#votes'
-        url: rsp.permalink,
+        url: rsp.permalink
       });
 
       callback();
