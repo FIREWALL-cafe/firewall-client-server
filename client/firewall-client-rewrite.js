@@ -1,7 +1,6 @@
 //////////////////////////////////
 //      init
 //////////////////////////////////
-console.log("[[global]] chrome obj", chrome)
 
 // declare global variables
 const states = {
@@ -17,7 +16,7 @@ const searchEngines = Object.freeze({
   google: 'google',
   baidu: 'baidu'
 });
-const loopInterval = 333;
+const loopInterval = 500;
 const $googleQueryBox = $('[name=q]')
 const $baiduQueryBox = $('input[name=word]');
 const consoleHeaderCSS = "text-shadow: -1px -1px hsl(0,100%,50%); font-size: 40px;";
@@ -275,6 +274,8 @@ function setupMessageListener() {
       $("#firewall-client-id").val(e.name);
     } else if (e.type == "user_activity") {
       $(document.body).removeClass("firewall-intro");
+    } else if (e.type == "popup_window_result") {
+      console.log(e)
     }
   });
 }
@@ -483,33 +484,12 @@ function submitImagesToWordpress(callback) {
     .done(function (rsp) {
       console.log("[submitImagesToWordpress] Done");
       console.log('wordpress response:', rsp);
-      // rsp.type = "create_popup";
+      rsp.type = "create_popup";
 
-      // chrome.runtime.sendMessage({
-      //   action: 'createWindow',
-      //   type: 'popup',
-      //   state: 'normal',
-      //   focused: true,
-      //   width: 1100,
-      //   height: (window.screen.height || 1000) - 100,
-      //   left: 50,
-      //   top: 50,
-      //   // url: e.permalink + '#votes'
-      //   url: rsp.permalink,
-      // });
-      console.log("[submit wordpress] chrome obj", chrome)
-      chrome.windows.create({
-        type: 'popup',
-        state: 'normal',
-        focused: true,
-        width: 1100,
-        height: (window.screen.height || 1000) - 100,
-        left: 50,
-        top: 50,
-        url: rsp.permalink
+      chrome.runtime.sendMessage({
+        type: 'create_popup',
+        url: rsp.permalink,
       });
-
-      callback();
     })
     .fail(function (xhr, textStatus) {
       console.log("[submitImagesToWordpress] Failed sending post to WP:", textStatus, "/", xhr.responseText);

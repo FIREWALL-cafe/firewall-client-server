@@ -24,8 +24,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 				});
 			}
 
-			// if (e.permalink) {
-			if (true) {
+			if (e.url) {
 				// Open limited width popup window with 50px padding on top/left
 				chrome.windows.create({
 					type: 'popup',
@@ -36,7 +35,7 @@ chrome.runtime.onMessage.addListener(function(e) {
 					left: 50,
 					top: 50,
 					url: e.url
-				}, result => console.log(result));
+				}, result => chrome.runtime.sendMessage({type: "popup_window_result", result}));
 
 				// TODO Now that voting page opens in new window, notification seems
 				// redundant, testing new UX without it
