@@ -171,7 +171,7 @@ function setupUI() {
   // insert message asking user to wait for images to upload
   // TODO: this is only working in Baidu; Google's tag must have changed
 	const msg = 'Please wait while we archive your search results in the FIREWALL Cafe library...';
-	$googleQueryBox.closest('form')
+	$googleQueryBox.closest('.e3JjXb')
     .append('<div id="firewall-loading">' + msg + '</div>');
 	$baiduQueryBox.closest('form')
     .append('<div id="firewall-loading">' + msg + '</div>');
