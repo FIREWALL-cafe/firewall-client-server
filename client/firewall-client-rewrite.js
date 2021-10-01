@@ -93,9 +93,7 @@ function setupUI() {
   {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
-    if(state !== states.WAITING) {
-      setState(states.WAITING)
-    }
+    if(state !== states.WAITING) setState(states.WAITING)
   } else if(window.location.hash == "#intro") {
     $(document.body).addClass("firewall-intro");
   }
@@ -391,12 +389,6 @@ function main() {
         console.log("waiting for submitImages to finish")
       }
       break
-    // case states.DONE:
-      // checkIfTimedOut()
-      // changeSearchesDisabled(false)
-      // console.log("[main] removing firewall-loading")
-      // $(document.body).removeClass("firewall-loading");
-      // break
   }
   cyclesInState ++
 }
@@ -435,9 +427,9 @@ function checkIfTimedOut() {
   }
 }
 
-function setState(value, key='state') {
+function setState(newState) {
   // inform storage so other tab knows
-  chrome.storage.local.set({ [key]: value });
+  chrome.storage.local.set({ state: newState });
 }
 
 function extractSearchTermFromURL() {
