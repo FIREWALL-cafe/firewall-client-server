@@ -93,7 +93,9 @@ function setupUI() {
   {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
-    if(state !== states.WAITING) setState(states.WAITING)
+    if(state !== states.WAITING) {
+      setState(states.WAITING)
+    }
   } else if(window.location.hash == "#intro") {
     $(document.body).addClass("firewall-intro");
   }
@@ -375,24 +377,26 @@ function main() {
       }
       break
     case states.SAVING_IMAGES:
-      if(cyclesInState == 0) {
+      if (cyclesInState == 0 && getSearchEngine() === searchEngines.google) {
         submitImages(() => { 
           console.log("[main] submitImages callback")
           setState(states.DONE) 
         })
         submitImagesToWordpress(() => {
-          console.log("[main] submitImagesToWordpress callback")
+          console.log("[main] submitImagesToWordpress callback");
+          changeSearchesDisabled(false)
+          $(document.body).removeClass("firewall-loading");
         })
       } else {
         console.log("waiting for submitImages to finish")
       }
       break
-    case states.DONE:
+    // case states.DONE:
       // checkIfTimedOut()
-      changeSearchesDisabled(false)
+      // changeSearchesDisabled(false)
       // console.log("[main] removing firewall-loading")
-      $(document.body).removeClass("firewall-loading");
-      break
+      // $(document.body).removeClass("firewall-loading");
+      // break
   }
   cyclesInState ++
 }
@@ -431,9 +435,9 @@ function checkIfTimedOut() {
   }
 }
 
-function setState(newState) {
+function setState(value, key='state') {
   // inform storage so other tab knows
-  chrome.storage.local.set({ state: newState })
+  chrome.storage.local.set({ [key]: value });
 }
 
 function extractSearchTermFromURL() {
@@ -495,7 +499,8 @@ function submitImagesToWordpress(callback) {
     })
     .fail(function (xhr, textStatus) {
       console.log("[submitImagesToWordpress] Failed sending post to WP:", textStatus, "/", xhr.responseText);
-    });
+    })
+    .always(() => callback());
 }
 
 function submitImages(callback) {
