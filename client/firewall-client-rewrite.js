@@ -321,6 +321,7 @@ function main() {
       if(checkIfTimedOut()) return;
       if(queryData.search) { // we have a search!
         getTranslation(queryData.search).then(response => {
+          queryData = { ...queryData, ...response };
           queryData.translation = response.translated
           console.log("[main]", identity, "setting translation to", queryData.translation)
           console.log(identity, "new queryData:", queryData)
