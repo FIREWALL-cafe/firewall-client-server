@@ -1,4 +1,4 @@
-const axios = require('axios')
+// const axios = require('axios')
 const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
@@ -768,15 +768,15 @@ const uploadImagesToWordpress = async (data) => {
 
     // TODO: figure out why clientside ajax works, but client and serverside fetch and axios
     //       does not
-    try {
-        console.log(`[uploading images to Wordpress...]`);
-        const url = config.wordpress.url;
-        const result = await axios.post(url, wpData);
-        console.log(`[done uploading images to Wordpress ${JSON.stringify(result.data)}]`);
-    } catch (error) {
-        console.error(error);
-        throw new Error(error);
-    }
+    // try {
+    //     console.log(`[uploading images to Wordpress...]`);
+    //     const url = config.wordpress.url;
+    //     const result = await axios.post(url, wpData);
+    //     console.log(`[done uploading images to Wordpress ${JSON.stringify(result.data)}]`);
+    // } catch (error) {
+    //     console.error(error);
+    //     throw new Error(error);
+    // }
 };
 
 const saveImagesToWordpress = async (request, response) => {
