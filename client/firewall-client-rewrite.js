@@ -375,16 +375,18 @@ function main() {
       }
       break
     case states.SAVING_IMAGES:
-      if (cyclesInState == 0 && getSearchEngine() === searchEngines.google) {
+      if (cyclesInState == 0) {
         submitImages(() => { 
           console.log("[main] submitImages callback")
           setState(states.DONE) 
         })
-        submitImagesToWordpress(() => {
-          console.log("[main] submitImagesToWordpress callback");
-          changeSearchesDisabled(false)
-          $(document.body).removeClass("firewall-loading");
-        })
+        if (getSearchEngine() === searchEngines.google) {
+          submitImagesToWordpress(() => {
+            console.log("[main] submitImagesToWordpress callback");
+            changeSearchesDisabled(false)
+            $(document.body).removeClass("firewall-loading");
+          })
+        }
       } else {
         console.log("waiting for submitImages to finish")
       }
