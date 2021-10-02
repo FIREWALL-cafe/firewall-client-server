@@ -145,7 +145,7 @@ function setupUI() {
 			$firewallForm.removeClass('visible');
 		});
 		if (autocompleteEnabled) {
-      console.log("autocomplete now enabled", sensitiveQueries)
+      console.log("autocomplete now enabled")
       $googleQueryBox.autocomplete()
 			$googleQueryBox.autocomplete({
 				source: sensitiveQueries
@@ -162,7 +162,7 @@ function setupUI() {
   // initialize googleQueryBox for autocomplete
 	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
-    console.log("autocomplete is enabled", sensitiveQueries)
+    console.log("autocomplete is enabled")
     $googleQueryBox.autocomplete()
 		$googleQueryBox.autocomplete({
 			source: sensitiveQueries
@@ -392,6 +392,13 @@ function main() {
         }
       } else {
         console.log("waiting for submitImages to finish")
+      }
+      break
+    case states.DONE:
+      // wait for a second for wordpress popup, then unlock search boxes
+      if(cyclesInState * loopInterval > 1000) {
+        changeSearchesDisabled(false)
+        $(document.body).removeClass("firewall-loading");
       }
       break
   }
