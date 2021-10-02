@@ -464,9 +464,9 @@ function submitImagesToWordpress(callback) {
     lang_to: `${queryData.langTo}`,
     lang_confidence: 1,
     lang_alternate: `${queryData.langAlternate}`,
-    lang_name: `${queryData.langName}`,
-    google_images: queryData.googleImages ? JSON.stringify(queryData.googleImages) : [],
-    baidu_images: queryData.baiduImages ? JSON.stringify(queryData.baiduImages) : [],
+    lang_name: `${queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom}`,
+    google_images: queryData.googleImages ? JSON.stringify(queryData.googleImages) : `[]`,
+    baidu_images: queryData.baiduImages ? JSON.stringify(queryData.baiduImages) : `[]`,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
