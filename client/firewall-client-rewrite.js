@@ -465,8 +465,8 @@ function submitImagesToWordpress(callback) {
     lang_confidence: 1,
     lang_alternate: `${queryData.langAlternate}`,
     lang_name: `${queryData.langName}`,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
+    google_images: queryData.googleImages ? JSON.stringify(queryData.googleImages) : [],
+    baidu_images: queryData.baiduImages ? JSON.stringify(queryData.baiduImages) : [],
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
@@ -563,6 +563,7 @@ function getTranslation(searchTerm) {
       langFrom: res.language,
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
+    queryData.langName = res.name;
     return $.ajax({
       url: config.serverURL + '/translate',
       method: 'POST',
