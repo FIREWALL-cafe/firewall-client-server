@@ -350,7 +350,7 @@ function main() {
     case states.WAITING_FOR_PAGE_LOAD:
       if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
       changeSearchesDisabled(true)
-      if (cyclesInState * loopInterval > 2000) setState(states.GETTING_IMAGES)
+      if (cyclesInState * loopInterval > 2500) setState(states.GETTING_IMAGES)
       break
     case states.GETTING_IMAGES:
       if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
@@ -394,7 +394,7 @@ function main() {
       break
     case states.DONE:
       // wait for a second for wordpress popup, then unlock search boxes
-      if(cyclesInState * loopInterval > 2000) {
+      if(cyclesInState * loopInterval > 2500) {
         console.log("[main] unlocking search boxes after wait")
         changeSearchesDisabled(false)
         $(document.body).removeClass("firewall-loading");
