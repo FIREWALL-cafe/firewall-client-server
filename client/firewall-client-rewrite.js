@@ -515,7 +515,7 @@ function submitImages(callback) {
     lang_to: queryData.langTo,
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
-    lang_name: queryData.langName,
+    lang_name: queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
