@@ -101,10 +101,18 @@ function setupUI() {
   $googleQueryBox.on("click", event=>setCurrentSearchEngine('google'))
   $googleQueryBox.on("keydown", event=>setCurrentSearchEngine('google'))
   $baiduQueryBox.on("click", event=>setCurrentSearchEngine('baidu'))
+  $baiduQueryBox.on("keydown", event=>  {
+    // hide the Baidu autocomplete menu. needs to be done on user interaction with the box
+    $("#sugWrapper").css("visibility", "hidden")  
+    setCurrentSearchEngine('baidu')
+  })
   $baiduQueryBox.on("keydown", event=>setCurrentSearchEngine('baidu'))
 
   // if the user clicks the Google logo, make sure it takes them back to image search
   $("c-wiz a").attr("href", "/imghp")
+
+  // disable google autocomplete menu
+  $('[jsname=UUbT9').css("visibility", "hidden")
 
   // add 'Firewall' button to bottom of page that lets user edit their name & toggle autocomplete
   // TODO: figure out why the autocomplete toggle isn't working
@@ -151,10 +159,12 @@ function setupUI() {
 				source: sensitiveQueries
 			});
 			$googleQueryBox.autocomplete('enable');
+			$baiduQueryBox.autocomplete('enable');
 			$body.addClass('firewall-autocomplete');
 		} else {
       console.log("autocomplete now disabled")
 			$googleQueryBox.autocomplete('disable');
+			$baiduQueryBox.autocomplete('disable');
 			$body.removeClass('firewall-autocomplete');
 		}
 	});
@@ -164,9 +174,13 @@ function setupUI() {
 	if (autocompleteEnabled) {
     console.log("autocomplete is enabled")
     $googleQueryBox.autocomplete()
+    $baiduQueryBox.autocomplete()
 		$googleQueryBox.autocomplete({
 			source: sensitiveQueries
 		});
+    $baiduQueryBox.autocomplete({
+      source: sensitiveQueries
+    });
 		$body.addClass('firewall-autocomplete');
 	}
 
