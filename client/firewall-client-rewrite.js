@@ -145,7 +145,7 @@ function setupUI() {
 			$firewallForm.removeClass('visible');
 		});
 		if (autocompleteEnabled) {
-      console.log("autocomplete now enabled", sensitiveQueries)
+      console.log("autocomplete now enabled")
       $googleQueryBox.autocomplete()
 			$googleQueryBox.autocomplete({
 				source: sensitiveQueries
@@ -162,7 +162,7 @@ function setupUI() {
   // initialize googleQueryBox for autocomplete
 	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
-    console.log("autocomplete is enabled", sensitiveQueries)
+    console.log("autocomplete is enabled")
     $googleQueryBox.autocomplete()
 		$googleQueryBox.autocomplete({
 			source: sensitiveQueries
@@ -385,13 +385,21 @@ function main() {
         })
         if (getSearchEngine() === searchEngines.google) {
           submitImagesToWordpress(() => {
-            console.log("[main] submitImagesToWordpress callback");
+            console.log("[main] submitImagesToWordpress callback, unlocking search boxes");
             changeSearchesDisabled(false)
             $(document.body).removeClass("firewall-loading");
           })
         }
       } else {
         console.log("waiting for submitImages to finish")
+      }
+      break
+    case states.DONE:
+      // wait for a second for wordpress popup, then unlock search boxes
+      if(cyclesInState * loopInterval > 1000) {
+        console.log("[main] unlocking search boxes after wait")
+        changeSearchesDisabled(false)
+        $(document.body).removeClass("firewall-loading");
       }
       break
   }
@@ -464,9 +472,9 @@ function submitImagesToWordpress(callback) {
     lang_to: `${queryData.langTo}`,
     lang_confidence: 1,
     lang_alternate: `${queryData.langAlternate}`,
-    lang_name: `${queryData.langName}`,
-    google_images: JSON.stringify(queryData.googleImages),
-    baidu_images: JSON.stringify(queryData.baiduImages),
+    lang_name: `${queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom}`,
+    google_images: queryData.googleImages ? JSON.stringify(queryData.googleImages) : `[]`,
+    baidu_images: queryData.baiduImages ? JSON.stringify(queryData.baiduImages) : `[]`,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
@@ -515,7 +523,7 @@ function submitImages(callback) {
     lang_to: queryData.langTo,
     lang_confidence: queryData.langConfidence,
     lang_alternate: queryData.langAlternate,
-    lang_name: queryData.langName,
+    lang_name: queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
   };
@@ -563,6 +571,7 @@ function getTranslation(searchTerm) {
       langFrom: res.language,
       langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
+    queryData.langName = res.name;
     return $.ajax({
       url: config.serverURL + '/translate',
       method: 'POST',
