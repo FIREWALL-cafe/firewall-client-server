@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Firewall Cafe",
 	"description": "Client software that synchronizes and translates search queries between Google/Baidu",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"icons": {
 		"16": "icons/firewall-16.png",
 		"48": "icons/firewall-48.png",
