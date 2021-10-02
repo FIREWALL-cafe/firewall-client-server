@@ -386,8 +386,6 @@ function main() {
         if (getSearchEngine() === searchEngines.google) {
           submitImagesToWordpress(() => {
             console.log("[main] submitImagesToWordpress callback, unlocking search boxes");
-            changeSearchesDisabled(false)
-            $(document.body).removeClass("firewall-loading");
           })
         }
       } else {
@@ -396,7 +394,7 @@ function main() {
       break
     case states.DONE:
       // wait for a second for wordpress popup, then unlock search boxes
-      if(cyclesInState * loopInterval > 1000) {
+      if(cyclesInState * loopInterval > 2000) {
         console.log("[main] unlocking search boxes after wait")
         changeSearchesDisabled(false)
         $(document.body).removeClass("firewall-loading");
