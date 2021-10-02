@@ -44,6 +44,13 @@ function resetTabs() {
 		var inactive = [];
 		for (var i = 0; i < tabs.length; i++) {
 			var tab = tabs[i];
+
+			// close voting tabs
+			if (tab.url.includes('/archive/')) {
+				inactive.push(tab.id);
+				continue;
+			}
+
 			if (tab.active) {
 				active.push(tab.id);
 				windowIds.push(tab.windowId);
