@@ -568,6 +568,10 @@ function submitImages(callback) {
     });
 }
 
+function isChinese(langCode) {
+  return ['zh-CN', 'zh-TW'].index(langCode) >= 0
+}
+
 function getTranslation(searchTerm) {
 	console.log('[getTranslation] translating', searchTerm);
 
@@ -581,7 +585,7 @@ function getTranslation(searchTerm) {
       searchEngine: getSearchEngine(),
       secret: config.sharedSecret,
       langFrom: res.language,
-      langTo: res.language === 'zh-CN' ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
+      langTo: isChinese(res.language) ? 'en' : 'zh-CN' // translate to Chinese, unless the original search term is in Chinese
     };
     queryData.langName = res.name;
     return $.ajax({
