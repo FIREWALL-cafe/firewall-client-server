@@ -47,7 +47,7 @@ function init(storage) {
 	if (storage.clientId) clientId = storage.clientId;
 	else chrome.storage.local.set({ clientId });
   console.log('Firewall Cafe | ' + clientId);
-  autocompleteEnabled = storage.autocompleteEnabled
+  autocompleteEnabled = storage.autocompleteEnabled ? storage.autocompleteEnabled : autocompleteEnabled
   queryData = storage.queryData ? storage.queryData : {}
   currentSearchEngine = storage.lastInteracted
   state = storage.state ? storage.state : states.WAITING
@@ -145,7 +145,8 @@ function setupUI() {
 			$firewallForm.removeClass('visible');
 		});
 		if (autocompleteEnabled) {
-      console.log("autocomplete now enabled")
+      console.log("autocomplete now enabled", sensitiveQueries)
+      $googleQueryBox.autocomplete()
 			$googleQueryBox.autocomplete({
 				source: sensitiveQueries
 			});
@@ -159,9 +160,10 @@ function setupUI() {
 	});
 
   // initialize googleQueryBox for autocomplete
-  $googleQueryBox.autocomplete()
 	// Set initial autocomplete preferences.
 	if (autocompleteEnabled) {
+    console.log("autocomplete is enabled", sensitiveQueries)
+    $googleQueryBox.autocomplete()
 		$googleQueryBox.autocomplete({
 			source: sensitiveQueries
 		});
