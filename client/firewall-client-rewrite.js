@@ -394,23 +394,24 @@ function main() {
       break
     case states.SAVING_IMAGES:
       if (cyclesInState == 0) {
-        submitImages(() => { 
-          console.log("[main] submitImages callback")
-          setState(states.DONE) 
-        })
         if (getSearchEngine() === searchEngines.google) {
+          console.log("[main] sending to wordpress")
           submitImagesToWordpress(() => {
             console.log("[main] submitImagesToWordpress callback, unlocking search boxes");
           })
         }
+        submitImages(() => { 
+          console.log("[main] submitImages callback")
+          setState(states.DONE) 
+        })
       } else {
         console.log("waiting for submitImages to finish")
       }
       break
     case states.DONE:
       // wait for a second for wordpress popup, then unlock search boxes
-      if(cyclesInState * loopInterval > 2500) {
-        console.log("[main] unlocking search boxes after wait")
+      if(cyclesInState * loopInterval > 2500 && cyclesInState * loopInterval < 5000) {
+        // console.log("[main] unlocking search boxes after wait")
         changeSearchesDisabled(false)
         $(document.body).removeClass("firewall-loading");
       }
