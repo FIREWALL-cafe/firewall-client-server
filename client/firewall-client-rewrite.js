@@ -230,11 +230,12 @@ function getIntroHTML(identity) {
       <form action="#" id="firewall-intro-form" autocomplete="off"><input id="firewall-intro-name" placeholder="Pick a name" />
       <br><input type="submit" id="firewall-begin" value="Let’s begin!" /></form>
       <ol>
-      <li>Type a phrase into Google Image Search.</li>
-      <li>Your query will be auto-translated into Chinese to search Baidu Image Search.</li>
-      <li>Please wait patiently while the images save to our search library.</li>
-      <li>Once we’ve archived your images, tell us what you think: click on censored/mistranslated/NSFW/etc.</li>
-      <li>Have fun, and view your archived search session images at firewallcafe.com!</li>
+      <li>Type a search query into Google (in English, etc.) OR in Baidu (in simplified Chinese)</li>
+      <li>Your query will automatically translate into the opposing browser</li>
+      <li>Please be patient... the Internet in China is slow! 😉</li>
+      <li>FIREWALL will archive your search to https://firewallcafe.com/</li>
+      <li>Vote in the Search Archive whether your search is affected by censorship!</li>
+      <li>Have fun, and view your archived search session images at <a href="https://firewallcafe.com">firewallcafe.com</a>!</li>
       </ol>
   </div>
   `;
@@ -289,7 +290,7 @@ function setupMessageListener() {
       $(document.body).removeClass("firewall-intro");
       $("#firewall-client-id").val(e.name);
     } else if (e.type == "user_activity") {
-      $(document.body).removeClass("firewall-intro");
+      // $(document.body).removeClass("firewall-intro");
     } else if (e.type == "popup_window_result") {
       console.log(e)
     }
