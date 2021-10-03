@@ -352,7 +352,7 @@ function main() {
       if(queryData.translation) {
         if(identity !== currentSearchEngine) {
           searchTranslatedQuery()
-          sleep(250)
+          sleep(250) // probably not necessary
           setState(states.WAITING_FOR_PAGE_LOAD)
         } else if(cyclesInState == 0) {
           console.log("[main] this is the original search engine, so no need to do anything... wait for other one to tell us it has searched")
@@ -569,7 +569,7 @@ function submitImages(callback) {
 }
 
 function isChinese(langCode) {
-  return ['zh-CN', 'zh-TW'].index(langCode) >= 0
+  return ['zh-CN', 'zh-TW'].indexOf(langCode) >= 0
 }
 
 function getTranslation(searchTerm) {
