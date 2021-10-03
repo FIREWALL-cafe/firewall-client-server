@@ -17,7 +17,7 @@ var config = {
 
 	*/
 	resetTo: [
-		["https://www.google.com/imghp?#intro"],
+		["https://www.google.com/imghp#intro"],
 		["https://image.baidu.com/#intro"]
 	]
 
