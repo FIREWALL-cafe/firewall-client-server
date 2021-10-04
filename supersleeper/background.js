@@ -6,8 +6,7 @@ function resetTimeout() {
 	}
 	sleepTimeout = setTimeout(function() {
 		resetTabs();
-	// }, config.timeoutMinutes * 60 * 1000);
-	}, 10 * 1000);
+	}, config.timeoutMinutes * 60 * 1000);
 }
 
 chrome.runtime.onMessage.addListener(function(msg) {
