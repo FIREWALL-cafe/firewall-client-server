@@ -83,7 +83,6 @@ body.firewall-loading #firewall-loading {
 }
 
 #firewall-intro {
-	display: none;
 	font: 24px "helvetica neue", sans-serif;
 	color: #fff;
 	background: #E60016;
