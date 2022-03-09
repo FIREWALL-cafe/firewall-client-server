@@ -56,7 +56,9 @@ function init(storage) {
   checkIfCorrectState()
 
   // set up UI
-  setupUI()
+  if (getSearchEngine() === searchEngines.baidu)
+    setTimeout(() => setupUI(), 300)
+  else setupUI()
 
   // create event listeners
   setupStorageListener()
@@ -95,7 +97,8 @@ function setupUI() {
 	  // Google homepage => Google image search homepage
 	  window.location = 'https://www.google.com/imghp';
     if(state !== states.WAITING) setState(states.WAITING)
-  } else if (window.location.hash == "#intro") {
+  // } else if (window.location.hash == "#intro") {
+  } else if (!window.location.href.includes('/search')) {
     $(document.body).addClass("firewall-intro");
   }
 
@@ -118,9 +121,7 @@ function setupUI() {
   // add 'Firewall' button to bottom of page that lets user edit their name & toggle autocomplete
   // TODO: figure out why the autocomplete toggle isn't working
 	const suggestChecked = autocompleteEnabled ? ' checked' : '';
-  const $foo = $('#fsr, #lh, #ft, .wrapper_imgfrom_box')
-  console.log('[$foo]', $foo);
-	$foo.append(
+  $('#fsr, #lh, #ft, .wrapper_imgfrom_box').append(
 		'<div id="firewall">' +
 			'<a href="#firewall" id="firewall-show" class="skin_from_link">Firewall</a>' +
 			'<form action="#" id="firewall-form" autocomplete="off">' +
