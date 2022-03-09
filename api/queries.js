@@ -698,12 +698,19 @@ const deleteImage = async (request, response) => {
 	})
 }
 
-const saveImages = (searchId, request, response) => {
+const saveImages = (request, response, searchId) => {
     const {
         search_engine,
         google_images: googleImagesString,
         baidu_images: baiduImagesString
     } = request.body
+    
+    if(!searchId) searchId = request.body.searchId;
+
+    if(!searchId) {
+        return response.status(400).json("searchId not found")
+    }
+
     const images = googleImagesString
         ? JSON.parse(googleImagesString)
         : JSON.parse(baiduImagesString);
@@ -849,7 +856,7 @@ const saveSearchAndImages = async (request, response) => {
     console.log('searchId', searchId)
 
     console.log(`[saving images for ${search_engine}...]`);
-    const imagePromises = saveImages(searchId, request, response);
+    const imagePromises = saveImages(request, response, searchId);
     let imageResults;
 
     try {
