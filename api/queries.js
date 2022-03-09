@@ -928,6 +928,7 @@ module.exports = {
     saveImage,
     deleteImage,
     updateImageUrl,
+    saveImages,
     saveSearchAndImages,
     saveImagesToWordpress,
 }
