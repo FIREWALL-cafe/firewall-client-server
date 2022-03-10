@@ -699,13 +699,12 @@ const deleteImage = async (request, response) => {
 }
 
 const saveImages = (request, response, searchId) => {
+    // assists endpoints by handling putting images into the database
     const {
         search_engine,
         google_images: googleImagesString,
         baidu_images: baiduImagesString
     } = request.body
-    
-    if(!searchId) searchId = request.body.searchId;
 
     if(!searchId) {
         return response.status(400).json("searchId not found")
@@ -748,6 +747,25 @@ const saveImages = (request, response, searchId) => {
     console.log(imageQueries);
 
     return imageQueries;
+}
+
+const saveImagesEndpoint = (request, response) => {
+    const {search_id, image_search_engine, urls, image_ranks } = request.body
+    if(!search_id || !image_search_engine || !image_ranks || !urls || request.files) {
+        response.status(400).json("Need a search_id, image_ranks, urls, and image_search_engine. No file uploads")        
+        return;
+    }
+    if(urls.length !== image_ranks.length || urls.length == 0) {
+        response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
+        return;
+    }
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    let promises = [];
+    // for each given URL, call that SQL query with that value
+    for(let i=0; i<urls.length; i++)
+        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i]]))
+    // don't respond before all promises have resolved
+    Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
 }
 
 const uploadImagesToWordpress = async (data) => {
@@ -935,7 +953,7 @@ module.exports = {
     saveImage,
     deleteImage,
     updateImageUrl,
-    saveImages,
+    saveImagesEndpoint,
     saveSearchAndImages,
     saveImagesToWordpress,
 }
