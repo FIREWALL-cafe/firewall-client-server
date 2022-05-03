@@ -49,7 +49,7 @@ const getFilteredSearches = (request, response) => {
     // const page_size = parseInt(request.query.page_size) || 100;
     // const offset = (page-1)*page_size;
     
-    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE s.search_term_initial = 'badiucao' AND `;
+    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
     const conditions = [];
 
     if (vote_names.length) {
