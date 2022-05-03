@@ -144,7 +144,7 @@ const getFilteredSearches = async (request, response) => {
     query += conditions.join(' AND ');
     if (!vote_names.length && !search_locations.length && !years.length)
         query = `SELECT s.* FROM searches s`;
-    query += ` GROUP BY s.search_id LIMIT $1 OFFSET $2`;
+    query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
 
     pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
