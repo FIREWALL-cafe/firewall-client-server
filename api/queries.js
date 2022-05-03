@@ -55,7 +55,7 @@ const appendImageIds = async (searchData) => {
         const filteredImages = imageData.filter(i => i.search_id === s.search_id);
         console.log('filteredImages', filteredImages);
         filteredImages.forEach(i => {
-            if (i.image_search_engine === 'google')
+            if (i.image_search_engine.toLowerCase() === 'google')
                 s.galleries[0]['src'].push(i.image_href || i.image_href_original)
             else
                 s.galleries[1]['src'].push(i.image_href || i.image_href_original)
@@ -146,6 +146,8 @@ const getFilteredSearches = async (request, response) => {
     // TODO: pagination
 
     query += conditions.join(' AND ');
+    if (!vote_names.length && !search_locations.length && !years.length)
+        query = `SELECT *, (SELECT COUNT(*) FROM (SELECT s.* FROM searches s`;
     query += `) as subtotal) as total from searches LIMIT $1 OFFSET $2`;
 
     pool.query(query, [page_size, offset], async (error, results) => {
