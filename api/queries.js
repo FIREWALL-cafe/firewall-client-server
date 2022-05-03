@@ -38,6 +38,32 @@ const getSearchByID = (request, response) => {
 	})
 }
 
+const appendImageIds = async (searchData) => {
+    let query = `SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE `;
+    const conditions = [];
+
+    searchData.map(s => conditions.push(`i.search_id = ${s.search_id}`));
+
+    query += conditions.join(' OR ');
+
+    const results = await pool.query(query, []);
+    const imageData = results.rows;
+    console.log(imageData)
+
+    searchData.map(s => {
+        s.galleries = [{src: []}, {src: []}];
+        const filteredImages = imageData.filter(i => i.search_id === s.search_id);
+        console.log('filteredImages', filteredImages);
+        filteredImages.forEach(i => {
+            if (i.image_search_engine === 'google')
+                s.galleries[0]['src'].push(i.image_href)
+            else
+                s.galleries[1]['src'].push(i.image_href)
+        })
+    })
+    return searchData;
+}
+
 const getFilteredSearches = async (request, response) => {
     let { vote_names, search_locations, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
@@ -45,9 +71,9 @@ const getFilteredSearches = async (request, response) => {
     search_locations = extractData(search_locations);
     years = extractData(years);
 
-    // const page = parseInt(request.query.page) || 1;
-    // const page_size = parseInt(request.query.page_size) || 100;
-    // const offset = (page-1)*page_size;
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
     
     let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
     const conditions = [];
@@ -117,12 +143,12 @@ const getFilteredSearches = async (request, response) => {
         }
     }
 
-    // TODO: add image data
     // TODO: pagination
 
     query += conditions.join(' AND ');
+    query += `LIMIT $1 OFFSET $2`;
 
-    pool.query(query, [], async (error, results) => {
+    pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
@@ -130,32 +156,6 @@ const getFilteredSearches = async (request, response) => {
             response.status(200).json(dataWithImages);
         }
     });
-}
-
-const appendImageIds = async (searchData) => {
-    let query = `SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE `;
-    const conditions = [];
-
-    searchData.map(s => conditions.push(`i.search_id = ${s.search_id}`));
-
-    query += conditions.join(' OR ');
-
-    const results = await pool.query(query, []);
-    const imageData = results.rows;
-    console.log(imageData)
-
-    searchData.map(s => {
-        s.galleries = [{src: []}, {src: []}];
-        const filteredImages = imageData.filter(i => i.search_id === s.search_id);
-        console.log('filteredImages', filteredImages);
-        filteredImages.forEach(i => {
-            if (i.image_search_engine === 'google')
-                s.galleries[0]['src'].push(i.image_href)
-            else
-                s.galleries[1]['src'].push(i.image_href)
-        })
-    })
-    return searchData;
 }
 
 /********/
