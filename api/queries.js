@@ -39,7 +39,7 @@ const getSearchByID = (request, response) => {
 }
 
 const appendImageIds = async (searchData) => {
-    let query = `SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE `;
+    let query = `SELECT i.search_id, i.image_href, i.image_href_original, i.image_search_engine FROM images i WHERE `;
     const conditions = [];
 
     searchData.map(s => conditions.push(`i.search_id = ${s.search_id}`));
@@ -56,9 +56,9 @@ const appendImageIds = async (searchData) => {
         console.log('filteredImages', filteredImages);
         filteredImages.forEach(i => {
             if (i.image_search_engine === 'google')
-                s.galleries[0]['src'].push(i.image_href)
+                s.galleries[0]['src'].push(i.image_href || i.image_href_original)
             else
-                s.galleries[1]['src'].push(i.image_href)
+                s.galleries[1]['src'].push(i.image_href || i.image_href_original)
         })
     })
     return searchData;
