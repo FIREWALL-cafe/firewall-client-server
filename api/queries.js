@@ -73,7 +73,7 @@ const getFilteredSearches = async (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     
-    let query = `SELECT *, (SELECT COUNT(*) FROM (SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
+    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
     const conditions = [];
 
     if (vote_names.length) {
@@ -143,8 +143,8 @@ const getFilteredSearches = async (request, response) => {
 
     query += conditions.join(' AND ');
     if (!vote_names.length && !search_locations.length && !years.length)
-        query = `SELECT *, (SELECT COUNT(*) FROM (SELECT s.* FROM searches s`;
-    query += `) as subtotal) as total from searches s ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+        query = `SELECT s.* FROM searches s`;
+    query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
 
     pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
