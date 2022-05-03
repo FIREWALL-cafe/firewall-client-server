@@ -53,7 +53,7 @@ const getFilteredSearches = (request, response) => {
     if (vote_names.length) {
         if (vote_names.length > 1) {
             const condition = vote_names
-                .map(name => `v.vote_name = ${name}`)
+                .map(name => `hv.vote_id = ${name}`)
                 .join(' OR ');
             query += `(${condition})`;
         } else {
@@ -61,18 +61,16 @@ const getFilteredSearches = (request, response) => {
         }
     }
     
-    // DONE
-    // let query = 'SELECT * FROM searches s WHERE';
-    // if (search_locations.length) {
-    //     if (search_locations.length > 1) {
-    //         const condition = search_locations
-    //             .map(name => `s.search_location = '${name}'`)
-    //             .join(' OR ');
-    //         query += `(${condition})`;
-    //     } else {
-    //         query += ` s.search_location = '${search_locations[0]}'`;
-    //     }
-    // }
+    if (search_locations.length) {
+        if (search_locations.length > 1) {
+            const condition = search_locations
+                .map(name => `s.search_location = '${name}'`)
+                .join(' OR ');
+            query += ` AND (${condition})`;
+        } else {
+            query += ` AND s.search_location = '${search_locations[0]}'`;
+        }
+    }
     
     // if (years.length) {
     //     // TODO: search between years
