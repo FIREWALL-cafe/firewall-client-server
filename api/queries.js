@@ -62,16 +62,35 @@ const getFilteredSearches = (request, response) => {
             conditions.push(` hv.vote_id = ${parseInt(vote_names[0])}`);
         }
     }
-    
-    if (search_locations.length) {
+
+    // Filter locations that weren't tagged in the db
+    const blacklist = ['miami_beach'];
+    const filteredLocations = search_locations.filter(location => !blacklist.includes(location));
+
+    // Approximate blacklisted locations by using timestamps
+    const getApproximatedLocations = () => {
+        // for example, miami_beach searches took place between Oct 1 - 6, 2021
+        const time1 = '2021-10-01 20:00:00-04';
+        const time2 = '2021-10-06 20:00:00-04';
+        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${time1}' AND '${time2}'`;
+    }
+
+    if (filteredLocations.length) {
         if (search_locations.length > 1) {
-            const condition = search_locations
-                .map(name => `s.search_location = '${name}'`)
-                .join(' OR ');
+            let condition = filteredLocations
+                .map(name => `s.search_location = '${name}'`);
+
+            if (search_locations.includes('miami_beach')) {
+                condition.push(getApproximatedLocations());
+            }
+
+            condition = condition.join(' OR ');
             conditions.push(` (${condition})`);
         } else {
-            conditions.push(` s.search_location = '${search_locations[0]}'`);
+            conditions.push(` s.search_location = '${filteredLocations[0]}'`);
         }
+    } else if (!filteredLocations.length && search_locations.length) {
+        conditions.push(getApproximatedLocations());
     }
 
     // Create a timestamp formatted for psql
