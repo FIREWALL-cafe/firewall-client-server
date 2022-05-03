@@ -41,34 +41,40 @@ const getSearchByID = (request, response) => {
 // GET: Filter searches by vote name, search location, and year
 const getFilteredSearches = (request, response) => {
     let vote_names = JSON.parse(request.query.vote_names);
+    let search_locations = JSON.parse(request.query.search_locations ? request.query.search_locations : '[]');
     // const page = parseInt(request.query.page) || 1;
     // const page_size = parseInt(request.query.page_size) || 100;
     // const offset = (page-1)*page_size;
-    let query = 'SELECT * FROM votes v WHERE';
+    // let query = 'SELECT * FROM searches s WHERE';
+    // SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
+    // ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id
     
-    if (vote_names) {
+    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE `
+    if (vote_names.length) {
         if (vote_names.length > 1) {
             const condition = vote_names
                 .map(name => `v.vote_name = ${name}`)
                 .join(' OR ');
             query += `(${condition})`;
         } else {
-            query += ` v.vote_name = '${vote_names[0]}'`;
+            query += ` hv.vote_id = ${parseInt(vote_names[0])}`;
         }
     }
     
-    // if (search_locations) {
+    // DONE
+    // let query = 'SELECT * FROM searches s WHERE';
+    // if (search_locations.length) {
     //     if (search_locations.length > 1) {
     //         const condition = search_locations
-    //             .map(name => `s.search_location = ${name}`)
+    //             .map(name => `s.search_location = '${name}'`)
     //             .join(' OR ');
     //         query += `(${condition})`;
     //     } else {
-    //         query += ` s.search_location = ${search_locations[0]}`;
+    //         query += ` s.search_location = '${search_locations[0]}'`;
     //     }
     // }
     
-    // if (years) {
+    // if (years.length) {
     //     // TODO: search between years
     // }
 
