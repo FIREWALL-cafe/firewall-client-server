@@ -149,7 +149,7 @@ const appendImageIds = async (searchData) => {
         const filteredImages = imageData.filter(i => i.search_id === s.search_id);
         console.log('filteredImages', filteredImages);
         filteredImages.forEach(i => {
-            if (i.image_search_engine === 'Google')
+            if (i.image_search_engine === 'google')
                 s.galleries[0]['src'].push(i.image_href)
             else
                 s.galleries[1]['src'].push(i.image_href)
