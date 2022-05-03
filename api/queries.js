@@ -48,12 +48,10 @@ const appendImageIds = async (searchData) => {
 
     const results = await pool.query(query, []);
     const imageData = results.rows;
-    console.log(imageData)
 
     searchData.map(s => {
         s.galleries = [{src: []}, {src: []}];
         const filteredImages = imageData.filter(i => i.search_id === s.search_id);
-        console.log('filteredImages', filteredImages);
         filteredImages.forEach(i => {
             if (i.image_search_engine.toLowerCase() === 'google')
                 s.galleries[0]['src'].push(i.image_href || i.image_href_original)
@@ -129,12 +127,12 @@ const getFilteredSearches = async (request, response) => {
     // Create condition to filter for searches by year
     const buildYearCondition = (year) => {
         const parsedYear = parseInt(year);
-        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}'`;
+        return `(to_timestamp(s.search_timestamp/1000) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}')`;
     };
 
     if (years.length) {
         if (years.length > 1) {
-            const condition = search_locations
+            const condition = years
                 .map(year => buildYearCondition(year))
                 .join(' OR ');
             conditions.push(` (${condition})`);
