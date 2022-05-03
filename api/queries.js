@@ -143,12 +143,10 @@ const getFilteredSearches = async (request, response) => {
         }
     }
 
-    // TODO: pagination
-
     query += conditions.join(' AND ');
     if (!vote_names.length && !search_locations.length && !years.length)
         query = `SELECT *, (SELECT COUNT(*) FROM (SELECT s.* FROM searches s`;
-    query += `) as subtotal) as total from searches LIMIT $1 OFFSET $2`;
+    query += `) as subtotal) as total from searches s ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
 
     pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
