@@ -38,6 +38,50 @@ const getSearchByID = (request, response) => {
 	})
 }
 
+// GET: Filter searches by vote name, search location, and year
+const getFilteredSearches = (request, response) => {
+    const { vote_names, search_locations, years } = request.query;
+    // const page = parseInt(request.query.page) || 1;
+    // const page_size = parseInt(request.query.page_size) || 100;
+    // const offset = (page-1)*page_size;
+    let query = 'SELECT * FROM votes v WHERE';
+    
+    if (vote_names) {
+        if (vote_names.length > 1) {
+            const condition = vote_names
+                .map(name => `v.vote_name = ${name}`)
+                .join(' OR ');
+            query += `(${condition})`;
+        } else {
+            query += ` v.vote_name = ${vote_names[0]}`;
+        }
+    }
+    
+    // if (search_locations) {
+    //     if (search_locations.length > 1) {
+    //         const condition = search_locations
+    //             .map(name => `s.search_location = ${name}`)
+    //             .join(' OR ');
+    //         query += `(${condition})`;
+    //     } else {
+    //         query += ` s.search_location = ${search_locations[0]}`;
+    //     }
+    // }
+    
+    // if (years) {
+    //     // TODO: search between years
+    // }
+    
+    // vote_name, search_location, 
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
 
 /********/
 /*Images*/
@@ -915,6 +959,7 @@ const saveSearchAndImages = async (request, response) => {
 module.exports = {
 	getAllSearches,
 	getSearchByID,
+    getFilteredSearches,
     getImageBinary,
     getImagesWithSearch,
 	getImagesOnlyBySearchID,

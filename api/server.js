@@ -39,6 +39,7 @@ app.listen(port, () => {
 /* Search Info Only */
 app.get('/searches', db.getAllSearches)
 app.get('/searches/search_id/:search_id', db.getSearchByID)
+app.get('/searches/filter', db.getFilteredSearches)
 
 /* Searches & Image Info */
 app.get('/searches/images', db.getImagesWithSearch)
