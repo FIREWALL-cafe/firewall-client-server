@@ -65,7 +65,7 @@ const appendImageIds = async (searchData) => {
 }
 
 const getFilteredSearches = async (request, response) => {
-    let { vote_names, search_locations, years } = request.query;
+    let { vote_names, search_locations, years, keyword } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_names = extractData(vote_names);
     search_locations = extractData(search_locations);
@@ -77,6 +77,10 @@ const getFilteredSearches = async (request, response) => {
     
     let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
     const conditions = [];
+
+    if (keyword) {
+        conditions.push(`s.search_term_initial ilike '%${keyword}%'`);
+    }
 
     if (vote_names.length) {
         if (vote_names.length > 1) {
@@ -144,7 +148,8 @@ const getFilteredSearches = async (request, response) => {
     }
 
     query += conditions.join(' AND ');
-    if (!vote_names.length && !search_locations.length && !years.length)
+    if (!vote_names.length && !search_locations.length
+        && !years.length && !keyword)
         query = `SELECT s.* FROM searches s`;
     query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
 
