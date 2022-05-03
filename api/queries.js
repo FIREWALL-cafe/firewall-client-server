@@ -39,6 +39,8 @@ const getSearchByID = (request, response) => {
 }
 
 const appendImageIds = async (searchData) => {
+    if (!searchData.length) return [];
+
     let query = `SELECT i.search_id, i.image_href, i.image_href_original, i.image_search_engine FROM images i WHERE `;
     const conditions = [];
 
