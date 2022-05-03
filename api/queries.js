@@ -38,7 +38,6 @@ const getSearchByID = (request, response) => {
 	})
 }
 
-// GET: Filter searches by vote name, search location, and year
 const getFilteredSearches = (request, response) => {
     let { vote_names, search_locations, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
@@ -50,7 +49,7 @@ const getFilteredSearches = (request, response) => {
     // const page_size = parseInt(request.query.page_size) || 100;
     // const offset = (page-1)*page_size;
     
-    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE`;
+    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE`;
     const conditions = [];
 
     if (vote_names.length) {
@@ -79,12 +78,13 @@ const getFilteredSearches = (request, response) => {
     const createTimestamp = (year) => new Date(year, 0, 1)
         .toISOString()
         .replace('T', ' ')
-        .replace('Z', '');
+        .replace('Z', '')
+        .replace(/\.[0-9]+/, '-00');
 
     // Create condition to filter for searches by year
     const buildYearCondition = (year) => {
         const parsedYear = parseInt(year);
-        return `to_timestamp(s.search_timestamp) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}'`;
+        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}'`;
     };
 
     if (years.length) {
