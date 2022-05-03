@@ -40,24 +40,27 @@ const getSearchByID = (request, response) => {
 
 // GET: Filter searches by vote name, search location, and year
 const getFilteredSearches = (request, response) => {
-    let vote_names = JSON.parse(request.query.vote_names);
-    let search_locations = JSON.parse(request.query.search_locations ? request.query.search_locations : '[]');
+    let { vote_names, search_locations, years } = request.query;
+    const extractData = (data) => JSON.parse(data ? data : '[]')
+    vote_names = extractData(vote_names);
+    search_locations = extractData(search_locations);
+    years = extractData(years);
+
     // const page = parseInt(request.query.page) || 1;
     // const page_size = parseInt(request.query.page_size) || 100;
     // const offset = (page-1)*page_size;
-    // let query = 'SELECT * FROM searches s WHERE';
-    // SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
-    // ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id
     
-    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE `
+    let query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE`;
+    const conditions = [];
+
     if (vote_names.length) {
         if (vote_names.length > 1) {
             const condition = vote_names
-                .map(name => `hv.vote_id = ${name}`)
+                .map(id => ` hv.vote_id = ${id}`)
                 .join(' OR ');
-            query += `(${condition})`;
+            conditions.push(`(${condition})`);
         } else {
-            query += ` hv.vote_id = ${parseInt(vote_names[0])}`;
+            conditions.push(` hv.vote_id = ${parseInt(vote_names[0])}`);
         }
     }
     
@@ -66,18 +69,38 @@ const getFilteredSearches = (request, response) => {
             const condition = search_locations
                 .map(name => `s.search_location = '${name}'`)
                 .join(' OR ');
-            query += ` AND (${condition})`;
+            conditions.push(` (${condition})`);
         } else {
-            query += ` AND s.search_location = '${search_locations[0]}'`;
+            conditions.push(` s.search_location = '${search_locations[0]}'`);
         }
     }
-    
-    // if (years.length) {
-    //     // TODO: search between years
-    // }
 
-    // vote_name, search_location, 
-    // pool.query(query, values, (error, results) => {
+    // Create a timestamp formatted for psql
+    const createTimestamp = (year) => new Date(year, 0, 1)
+        .toISOString()
+        .replace('T', ' ')
+        .replace('Z', '');
+
+    // Create condition to filter for searches by year
+    const buildYearCondition = (year) => {
+        const parsedYear = parseInt(year);
+        return `to_timestamp(s.search_timestamp) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}'`;
+    };
+
+    if (years.length) {
+        if (years.length > 1) {
+            const condition = search_locations
+                .map(year => buildYearCondition(year))
+                .join(' OR ');
+            conditions.push(` (${condition})`);
+        } else {
+            conditions.push(` ${buildYearCondition(years[0])}`);
+        }
+    }
+
+    query += conditions.join(' AND ');
+
+    console.log(query)
     pool.query(query, [], (error, results) => {
         if (error) {
             response.status(500).json(error);
