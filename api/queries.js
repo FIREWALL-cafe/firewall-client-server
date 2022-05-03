@@ -73,7 +73,8 @@ const getFilteredSearches = (request, response) => {
     // }
     
     // vote_name, search_location, 
-    pool.query(query, values, (error, results) => {
+    // pool.query(query, values, (error, results) => {
+    pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
