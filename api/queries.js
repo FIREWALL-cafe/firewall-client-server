@@ -40,7 +40,7 @@ const getSearchByID = (request, response) => {
 
 // GET: Filter searches by vote name, search location, and year
 const getFilteredSearches = (request, response) => {
-    const { vote_names, search_locations, years } = request.query;
+    let vote_names = JSON.parse(request.query.vote_names);
     // const page = parseInt(request.query.page) || 1;
     // const page_size = parseInt(request.query.page_size) || 100;
     // const offset = (page-1)*page_size;
@@ -53,7 +53,7 @@ const getFilteredSearches = (request, response) => {
                 .join(' OR ');
             query += `(${condition})`;
         } else {
-            query += ` v.vote_name = ${vote_names[0]}`;
+            query += ` v.vote_name = '${vote_names[0]}'`;
         }
     }
     
@@ -71,10 +71,10 @@ const getFilteredSearches = (request, response) => {
     // if (years) {
     //     // TODO: search between years
     // }
-    
+
     // vote_name, search_location, 
     // pool.query(query, values, (error, results) => {
-    pool.query(query, (error, results) => {
+    pool.query(query, [], (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
