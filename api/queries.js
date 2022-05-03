@@ -144,10 +144,9 @@ const getFilteredSearches = async (request, response) => {
     query += conditions.join(' AND ');
     if (!vote_names.length && !search_locations.length && !years.length)
         query = `SELECT s.* FROM searches s`;
-    query += ` ORDER BY s.search_id`// DESC LIMIT $1 OFFSET $2`;
+    query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
 
-    // pool.query(query, [page_size, offset], async (error, results) => {
-    pool.query(query, [], async (error, results) => {
+    pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
