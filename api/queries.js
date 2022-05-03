@@ -133,14 +133,15 @@ const getFilteredSearches = async (request, response) => {
 }
 
 const appendImageIds = async (searchData) => {
-    const queries = [];
+    let query = `SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE `;
+    const conditions = [];
 
-    searchData.map(s => queries.push(
-        pool.query(`SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE i.search_id = ${s.search_id}`, [])
-    ));
+    searchData.map(s => conditions.push(`i.search_id = ${s.search_id}`));
 
-    const results = await Promise.all(queries)
-    const imageData = results.map(r => r.rows).flat();
+    query += conditions.join(' OR ');
+
+    const results = await pool.query(query, []);
+    const imageData = results.rows;
     console.log(imageData)
 
     searchData.map(s => {
