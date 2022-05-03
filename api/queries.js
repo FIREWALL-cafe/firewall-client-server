@@ -38,7 +38,7 @@ const getSearchByID = (request, response) => {
 	})
 }
 
-const getFilteredSearches = (request, response) => {
+const getFilteredSearches = async (request, response) => {
     let { vote_names, search_locations, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_names = extractData(vote_names);
@@ -117,18 +117,45 @@ const getFilteredSearches = (request, response) => {
         }
     }
 
+    // TODO: add image data
+    // TODO: pagination
+
     query += conditions.join(' AND ');
 
-    console.log(query)
-    pool.query(query, [], (error, results) => {
+    pool.query(query, [], async (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(200).json(results.rows);
+            const dataWithImages = await appendImageIds(results.rows);
+            response.status(200).json(dataWithImages);
         }
     });
 }
 
+const appendImageIds = async (searchData) => {
+    const queries = [];
+
+    searchData.map(s => queries.push(
+        pool.query(`SELECT i.search_id, i.image_href, i.image_search_engine FROM images i WHERE i.search_id = ${s.search_id}`, [])
+    ));
+
+    const results = await Promise.all(queries)
+    const imageData = results.map(r => r.rows).flat();
+    console.log(imageData)
+
+    searchData.map(s => {
+        s.galleries = [{src: []}, {src: []}];
+        const filteredImages = imageData.filter(i => i.search_id === s.search_id);
+        console.log('filteredImages', filteredImages);
+        filteredImages.forEach(i => {
+            if (i.image_search_engine === 'Google')
+                s.galleries[0]['src'].push(i.image_href)
+            else
+                s.galleries[1]['src'].push(i.image_href)
+        })
+    })
+    return searchData;
+}
 
 /********/
 /*Images*/
