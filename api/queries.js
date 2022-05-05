@@ -1,4 +1,5 @@
 // const axios = require('axios')
+const { query } = require('express');
 const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
@@ -38,6 +39,163 @@ const getSearchByID = (request, response) => {
 	})
 }
 
+// Create a timestamp by year formatted for psql
+const createTimestamp = (year) => new Date(year, 0, 1)
+    .toISOString()
+    .replace('T', ' ')
+    .replace('Z', '')
+    .replace(/\.[0-9]+/, '-00');
+
+/*
+ * Queries for images associated with an array of objects of search data
+ * and adds the image data to each search object. This categorizes searches
+ * into images from Google or Baidu
+ * @param: searchData - an array of objects with search data
+ * @returns - an array of objects with search data and associated images
+ */
+const appendImageIds = async (searchData) => {
+    if (!searchData.length) return [];
+
+    let query = `SELECT i.search_id, i.image_href, i.image_href_original, i.image_search_engine FROM images i WHERE `;
+    const conditions = [];
+
+    searchData.map(s => conditions.push(`i.search_id = ${s.search_id}`));
+
+    query += conditions.join(' OR ');
+
+    const results = await pool.query(query, []);
+    const imageData = results.rows;
+
+    searchData.map(s => {
+        s.galleries = [{src: []}, {src: []}];
+        const filteredImages = imageData.filter(i => i.search_id === s.search_id);
+        filteredImages.forEach(i => {
+            if (i.image_search_engine.toLowerCase() === 'google')
+                s.galleries[0]['src'].push(i.image_href || i.image_href_original)
+            else
+                s.galleries[1]['src'].push(i.image_href || i.image_href_original)
+        })
+    })
+    return searchData;
+}
+
+// Builds a filtered search query
+const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
+    const conditions = [];
+
+    // Keyword searches
+    if (keyword) {
+        conditions.push(`s.search_term_initial ilike '%${keyword}%'`);
+    }
+
+    // Filter by vote ids
+    if (vote_ids.length) {
+        if (vote_ids.length > 1) {
+            const condition = vote_ids
+                .map(id => ` hv.vote_id = ${id}`)
+                .join(' OR ');
+            conditions.push(`(${condition})`);
+        } else {
+            conditions.push(` hv.vote_id = ${parseInt(vote_ids[0])}`);
+        }
+    }
+
+    // Filter locations that weren't tagged in the postgres db
+    const blacklist = ['miami_beach'];
+    const filteredLocations = search_locations.filter(location => !blacklist.includes(location));
+
+    // Approximate missing locations by using timestamps
+    const getApproximatedLocations = () => {
+        // for example, miami_beach searches took place between Oct 1 - 6, 2021
+        const time1 = '2021-10-01 20:00:00-04';
+        const time2 = '2021-10-06 20:00:00-04';
+        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${time1}' AND '${time2}'`;
+    }
+
+    // Filter by location
+    if (filteredLocations.length) {
+        // Get multiple locations
+        if (search_locations.length > 1) {
+            let condition = filteredLocations
+                .map(name => `s.search_location = '${name}'`);
+
+            if (search_locations.includes('miami_beach')) {
+                condition.push(getApproximatedLocations());
+            }
+
+            condition = condition.join(' OR ');
+            conditions.push(` (${condition})`);
+        } else {
+            // Get single location
+            conditions.push(` s.search_location = '${filteredLocations[0]}'`);
+        }
+    } else if (!filteredLocations.length && search_locations.length) {
+        // Get locations that are not in the postgres
+        conditions.push(getApproximatedLocations());
+    }
+
+    // Create condition to filter for searches by year
+    const buildYearCondition = (year) => {
+        const parsedYear = parseInt(year);
+        return `(to_timestamp(s.search_timestamp/1000) BETWEEN '${createTimestamp(parsedYear)}' AND '${createTimestamp(parsedYear+1)}')`;
+    };
+
+    // Filter by year by querying searches that were made between
+    // Jan 1 <year> and Jan 1 <year+1>
+    if (years.length) {
+        if (years.length > 1) {
+            const condition = years
+                .map(year => buildYearCondition(year))
+                .join(' OR ');
+            conditions.push(` (${condition})`);
+        } else {
+            conditions.push(` ${buildYearCondition(years[0])}`);
+        }
+    }
+
+    return conditions.join(' AND ');
+};
+
+/*
+ * Called from Search Archive page. It filters
+ * searches based on keyword OR location, vote, and year.
+ * It then collects images associated with each search.
+ */
+const getFilteredSearches = async (request, response) => {
+    let { keyword, vote_ids, search_locations, years } = request.query;
+    const extractData = (data) => JSON.parse(data ? data : '[]')
+    vote_ids = extractData(vote_ids);
+    search_locations = extractData(search_locations);
+    years = extractData(years);
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    let query;
+
+    // Get all searches
+    if (!vote_ids.length && !search_locations.length
+        && !years.length && !keyword) {
+        query = `SELECT s.* FROM searches s`;
+    } else { // Get filtered searches
+        query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
+        // Filter test searches
+        query += ` s.search_client_name != 'rowan_scraper_tests' AND `;
+        query += getFilterConditions(keyword, vote_ids, search_locations, years)
+    }
+
+    // Order by descending and paginate
+    query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+
+    pool.query(query, [page_size, offset], async (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            // Get each search's associated images
+            const dataWithImages = await appendImageIds(results.rows);
+            response.status(200).json(dataWithImages);
+        }
+    });
+}
 
 /********/
 /*Images*/
@@ -915,6 +1073,7 @@ const saveSearchAndImages = async (request, response) => {
 module.exports = {
 	getAllSearches,
 	getSearchByID,
+    getFilteredSearches,
     getImageBinary,
     getImagesWithSearch,
 	getImagesOnlyBySearchID,

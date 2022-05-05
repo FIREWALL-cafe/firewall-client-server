@@ -3,13 +3,13 @@
 ---------------------------------------
 
 INSERT INTO searches VALUES
-  (1, CURRENT_TIMESTAMP, 'Location 1', '74.56.52.35', 'testUser111', 'Google', 'Baidu', 'Bananas', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (2, CURRENT_TIMESTAMP, 'Location 1', '74.56.53.36', 'testUser222', 'Google', 'Baidu', 'Ice Cream', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
-  (3, CURRENT_TIMESTAMP, 'Location 1', '74.56.54.37', 'testUser333', 'Google', 'Baidu', 'Marist', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL ),
-  (4, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (5, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
-  (6, CURRENT_TIMESTAMP, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
-  (7, CURRENT_TIMESTAMP, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
+  (1, 1651457147437, 'Location 1', '74.56.52.35', 'testUser111', 'Google', 'Baidu', 'Bananas', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (2, 1651457147437, 'Location 1', '74.56.53.36', 'testUser222', 'Google', 'Baidu', 'Ice Cream', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (3, 1651457147437, 'Location 1', '74.56.54.37', 'testUser333', 'Google', 'Baidu', 'Marist', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL ),
+  (4, 1651457147437, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (5, 1651457147437, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
+  (6, 1651457147437, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
+  (7, NULL, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
 
 INSERT INTO images VALUES
  	(1, 1, 'Google', '/filePath/fileOne.jpg', NULL),
@@ -28,8 +28,8 @@ INSERT INTO images VALUES
   (12, 7, 'Baidu', '/filePath/fileTwelve.jpg', NULL);
 
 INSERT INTO have_votes VALUES
-  (1, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
-  (4, 2, CURRENT_TIMESTAMP, 'testUser455', '74.56.52.35'),
-  (2, 7, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
-  (1, 4, CURRENT_TIMESTAMP, 'testUser', '134.242.52.35'),
-  (6, 6, CURRENT_TIMESTAMP, 'testUser878', '78.242.52.42');
+  (1, 2, 1651457147437, 1, '74.56.52.35'),
+  (4, 2, 1651457147437, 1, '74.56.52.35'),
+  (2, 7, 1651457147437, 2, '134.242.52.35'),
+  (1, 4, 1651457147437, 2, '134.242.52.35'),
+  (6, 6, 1651457147437, 3, '78.242.52.42');
