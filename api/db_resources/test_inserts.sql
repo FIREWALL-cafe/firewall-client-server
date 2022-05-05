@@ -9,7 +9,7 @@ INSERT INTO searches VALUES
   (4, 1651457147437, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Music', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
   (5, 1651457147437, 'Location 2', '128.56.33.22', 'testUser444', 'Google', 'Baidu', 'Coffee', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'false', NULL, NULL, NULL, NULL ),
   (6, 1651457147437, 'Location 2', '128.56.33.44', 'testUser555', 'Google', 'Baidu', 'Spongebob', 'en', '.96', NULL, '香蕉', 'zh-CN', 'true', 'false', NULL, NULL, NULL, NULL ),
-  (7, 1651457147437, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
+  (7, NULL, NULL, '123.456.789.890', 'testUser777', 'Google', 'Baidu', 'Apples', 'en', '.96', NULL, '香蕉', 'zh-CN', 'false', 'true', NULL, NULL, NULL, NULL );
 
 INSERT INTO images VALUES
  	(1, 1, 'Google', '/filePath/fileOne.jpg', NULL),

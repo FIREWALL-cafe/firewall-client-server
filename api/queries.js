@@ -179,7 +179,7 @@ const getFilteredSearches = async (request, response) => {
     else { // Get filtered searches
         query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
         // Filter null search_ids
-        query += ` search_id IS NOT NULL AND `;
+        query += ` s.search_id IS NOT NULL AND `;
         query += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
