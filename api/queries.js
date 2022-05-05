@@ -39,6 +39,13 @@ const getSearchByID = (request, response) => {
 	})
 }
 
+// Create a timestamp formatted for psql
+const createTimestamp = (year) => new Date(year, 0, 1)
+    .toISOString()
+    .replace('T', ' ')
+    .replace('Z', '')
+    .replace(/\.[0-9]+/, '-00');
+
 /*
  * Queries for images associated with an array of objects of search data
  * and adds the image data to each search object. This categorizes searches
@@ -127,13 +134,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
         conditions.push(getApproximatedLocations());
     }
 
-    // Create a timestamp formatted for psql
-    const createTimestamp = (year) => new Date(year, 0, 1)
-        .toISOString()
-        .replace('T', ' ')
-        .replace('Z', '')
-        .replace(/\.[0-9]+/, '-00');
-
     // Create condition to filter for searches by year
     const buildYearCondition = (year) => {
         const parsedYear = parseInt(year);
@@ -178,8 +178,8 @@ const getFilteredSearches = async (request, response) => {
         query = `SELECT s.* FROM searches s`;
     else { // Get filtered searches
         query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
-        // Filter null search_ids
-        query += ` s.search_id IS NOT NULL AND `;
+        // Filter test searches
+        query += ` to_timestamp(s.search_timestamp/1000) > ${createTimestamp(2000)} AND `;
         query += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
