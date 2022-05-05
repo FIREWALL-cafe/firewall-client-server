@@ -179,7 +179,7 @@ const getFilteredSearches = async (request, response) => {
     else { // Get filtered searches
         query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
         // Filter test searches
-        // query += ` to_timestamp(s.search_timestamp/1000)::timestamp > ${createTimestamp(2000)}::timestamp AND `;
+        query += ` s.search_client_name != 'rowan_scraper_tests' AND `;
         query += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
