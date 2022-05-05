@@ -153,9 +153,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
         }
     }
 
-    query += conditions.join(' AND ');
-
-    return query;
+    return conditions.join(' AND ');
 };
 
 /*
