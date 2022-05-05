@@ -174,9 +174,9 @@ const getFilteredSearches = async (request, response) => {
 
     // Get all searches
     if (!vote_ids.length && !search_locations.length
-        && !years.length && !keyword)
+        && !years.length && !keyword) {
         query = `SELECT s.* FROM searches s`;
-    else { // Get filtered searches
+    } else { // Get filtered searches
         query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
         // Filter test searches
         query += ` s.search_client_name != 'rowan_scraper_tests' AND `;
