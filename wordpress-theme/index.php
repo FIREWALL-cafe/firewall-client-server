@@ -78,6 +78,7 @@ END;
 				<li class="migrate-search-archive-controls-filter-group">
 					<h3>Filter by location</h3>
 					<ul>
+						<?php $render_filter_control('has_search_location_miami_beach'); ?>
 						<?php $render_filter_control('has_search_location_new_york_city'); ?>
 						<?php $render_filter_control('has_search_location_oslo'); ?>
 						<?php $render_filter_control('has_search_location_st_polten'); ?>
@@ -103,6 +104,7 @@ END;
 				<li class="migrate-search-archive-controls-filter-group">
 					<h3>Filter by year</h3>
 					<ul>
+						<?php $render_filter_control('has_search_year_2021'); ?>
 						<?php $render_filter_control('has_search_year_2020'); ?>
 						<?php $render_filter_control('has_search_year_2019'); ?>
 						<?php $render_filter_control('has_search_year_2018'); ?>
@@ -119,8 +121,8 @@ END;
 				<p>
 					<b>
 						<span id="filtered-count">N/A</span>
-						of
-						<span id="total-count">N/A</span>
+						<!-- of -->
+						<!-- <span id="total-count">N/A</span> -->
 						<span id="mode"></span>
 						results shown
 					</b>
