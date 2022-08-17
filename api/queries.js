@@ -949,8 +949,8 @@ const uploadImagesToWordpress = async (data) => {
     wpData.google_images = data.google_images ? data.google_images : '{}';
     wpData.baidu_images = data.baidu_images ? data.baidu_images : '{}';
 
-    // TODO: figure out why clientside ajax works, but client and serverside fetch and axios
-    //       does not
+    // TODO: figure out why clientside ajax works, but client and serverside 
+    //       fetch and axios does not
     // try {
     //     console.log(`[uploading images to Wordpress...]`);
     //     const url = config.wordpress.url;
