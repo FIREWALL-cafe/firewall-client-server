@@ -749,19 +749,21 @@ const deleteSearch = async (request, response) => {
 
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
-	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
-    console.log("createVote:", vote_id, search_id, vote_client_name, vote_ip_address)
+	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body;
+  console.log("createVote:", request.body);
+  console.log("createVote:", vote_id, search_id, vote_client_name, vote_ip_address);
 
-    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
-    const values = [vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
+  response.sendStatus(200);
+  // const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
+  // const values = [vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
-	pool.query(query, values, (error, results) => {
-        if (error) {
-            response.status(500).json(error);
-        } else {
-            response.status(201).json(results.rows);
-        }
-	})
+	// pool.query(query, values, (error, results) => {
+  //       if (error) {
+  //           response.status(500).json(error);
+  //       } else {
+  //           response.status(201).json(results.rows);
+  //       }
+	// });
 }
 
 const updateImageUrl = (request, response) => {
@@ -1073,9 +1075,9 @@ const saveSearchAndImages = async (request, response) => {
 module.exports = {
 	getAllSearches,
 	getSearchByID,
-    getFilteredSearches,
-    getImageBinary,
-    getImagesWithSearch,
+  getFilteredSearches,
+  getImageBinary,
+  getImagesWithSearch,
 	getImagesOnlyBySearchID,
 	getImagesAndSearchBySearchID,
 	getAllVotes,
@@ -1091,13 +1093,13 @@ module.exports = {
 	getAllSearchesWithVoteCounts,
 	getSearchWithVoteCountsBySearchId,
 	getSearchesWithVoteCountsAndImageInfo,
-    getSearchesWithVoteCountsAndImageInfoBySearchID,
-    getSearchesByTerm,
-    getSearchesByTermWithImages,
-    getImagesByTermWithSearchInfo,
-    getAllTerms,
+  getSearchesWithVoteCountsAndImageInfoBySearchID,
+  getSearchesByTerm,
+  getSearchesByTermWithImages,
+  getImagesByTermWithSearchInfo,
+  getAllTerms,
 	getImages,
-    getImage,
+  getImage,
 	getImagesOnlyCensored,
 	getImagesOnlyUnsensored,
 	getImagesOnlyBadTranslation,
@@ -1105,14 +1107,14 @@ module.exports = {
 	getImagesOnlyLostInTranslation,
 	getImagesOnlyNSFW,
 	getImagesOnlyWTF,
-    checkSecret,
+  checkSecret,
 	createSearch,
-    deleteSearch,
+  deleteSearch,
 	createVote,
-    saveImage,
-    deleteImage,
-    updateImageUrl,
-    saveImagesEndpoint,
-    saveSearchAndImages,
-    saveImagesToWordpress,
+  saveImage,
+  deleteImage,
+  updateImageUrl,
+  saveImagesEndpoint,
+  saveSearchAndImages,
+  saveImagesToWordpress,
 }

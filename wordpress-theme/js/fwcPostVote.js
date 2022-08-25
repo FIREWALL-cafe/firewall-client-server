@@ -6,10 +6,11 @@ $(document).ready(function() {
     var key = $this.data('key');
     var post_id = $this.data('post');
 
+    console.log('$$$$$', $this, key, post_id)
     var data = {
       action: 'fwc_post_vote',
-      meta_key: key,
-      post_id: post_id,
+      meta_key: key, // votes_good_translation
+      post_id: post_id, // 239084 wordpress_search_result_post_id
       security: FWC.security,
     };
 

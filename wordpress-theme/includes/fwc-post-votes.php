@@ -54,10 +54,36 @@ function fwc_post_vote() {
   fwc_enable_cors();
   check_ajax_referer( 'fwc-post-vote-nonce', 'security' );
 
-  $key = $_POST['meta_key'];
-  $post_id = $_POST['post_id'];
+  $key = $_POST['meta_key']; // votes_good_translation
+  $post_id = $_POST['post_id']; // 239084 wordpress_search_result_post_id
+  $vote_timestamp = time();
 
-  $new = fwc_post_vote_update($post_id, $key);
+  $curl = curl_init();
+  curl_setopt_array($curl, [
+    CURLOPT_URL => 'https://api.firewallcafe.com/createVote',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_ENCODING => "",
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_POST => 1,
+    CURLOPT_POSTFIELDS => 
+      'vote_id='.$key.
+      '&search_id='.$post_id.
+      '&vote_timestamp='.$vote_timestamp.
+      '&secret=230f6c1a5174936a916280a2203fb16035156e8ded92b76aed99923501be0974'.
+  ]);
+  $response = curl_exec($curl);
+  $err = curl_error($curl);
+  curl_close($curl);
+  if ($err) {
+    echo "cURL Error while POSTing vote #:" . $err;
+  } else {
+    echo $response;
+  }
+
+  // $new = fwc_post_vote_update($post_id, $key);
 }
 
 function fwc_post_vote_update($post_id, $meta_key) {
