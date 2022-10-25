@@ -376,7 +376,12 @@ function main() {
     case states.GETTING_IMAGES:
       if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
       changeSearchesDisabled(true)
-      console.log("[main]", identity, "queryData.images?queryData.images.length", queryData.images?queryData.images.length:"no images")
+      console.log(
+        "[main]",
+        identity,
+        "queryData.images?queryData.images.length",
+        queryData.images && queryData.images.length ? queryData.images.length : "no images"
+      );
       if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
         console.log("[main] ready to submit images! queryData:", queryData)
         setState(states.SAVING_IMAGES)
@@ -711,19 +716,26 @@ function keepGettingImages() {
         }
         // console.log("[keepGettingImages] got google datastore")
         $("img.rg_i").each(function (index, element) {
+        // $("a.wXeWr").each(function (index, element) {
           try {
-            _dedupeLimitedSet(images, element, data["flatDatastore"]);
+            // _dedupeLimitedSet(images, element, data["flatDatastore"]);
+            images.push({
+              href: '',
+              src: element.src,
+            })
           } catch (err) {
             console.log(err);
           }
         });
       });
-  }
 
-  // Get Baidu image URIs
-  $(".imglist img").each(function (index, element) {
-    _dedupeLimitedSet(images, element);
-  });
+      images = images.slice(0,10);
+  } else {
+    // Get Baidu image URIs
+    $(".imglist img").each(function (index, element) {
+      _dedupeLimitedSet(images, element);
+    });
+  }
 
   queryData["images"] = images;
 
