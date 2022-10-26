@@ -24,7 +24,7 @@ const disabledColor = "rgb(180,180,180,1)"
 const numImages = 10;
 
 let state = states.WAITING
-let autocompleteEnabled = true
+let autocompleteEnabled = false;
 let queryData = { search: undefined, translation: undefined } // tracks overall information about the search that is currently happening
 let clientId = "client-name"
 let cyclesInState = 0
@@ -245,15 +245,26 @@ function getIntroHTML(identity) {
   </div>
   `;
 
-  const baiduIntroHTML = `
-  <img src="${logoURL}">
-  <div class="text">
-      <p>FIREWALL is an interactive digital art installation and research project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China.  The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>
-      <p>FIREWALL是一个社会互动性的美术研究项目, 旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>
-  </div>
-  `;
+  function getBaiduIntroHTML(version) {
+    const translation = {
+      simplified: `
+        <p>FIREWALL是一个社会互动性的美术研究项目, 旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>
+      `,
+      traditional: `
+        <p>FIREWALL是一個社會參與及非營利的互動藝術項目，目的是與公眾展開有關網絡自由的對話。此藝術項目透過比較西方國家的谷歌搜尋結果及中國的百度搜尋結果來探討網路審查的問題。我們希望以參與式藝術和發掘網絡視覺文化的過程，來批判網路審查。</p>
+      `,
+    };
+
+    return `<img src="${logoURL}">
+    <div class="text">
+        <p>FIREWALL is a not-for-profit socially engaged research and interactive art project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China. The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>
+        ${translation[version]}
+    </div>
+    `;
+  };
+
   if (identity === 'google') return googleIntroHTML;
-  else return baiduIntroHTML;
+  else return getBaiduIntroHTML('traditional'); // introduced 'simplified' for Taiwan
 }
 
 function setCurrentSearchEngine(engine) {

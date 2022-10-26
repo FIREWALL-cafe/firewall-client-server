@@ -77,7 +77,7 @@ $history = fwc_post_previous_searches_get(
 	}
 	// close window after 5 minutes
 	// clear the timeout if window is refreshed or closed before timeout ends
-	window.onbeforeunload = setTimeout(closeWindow, 5*(60)*(1000));
+	window.onbeforeunload = setTimeout(closeWindow, (30)*(1000));
 </script>
 
 <?php
