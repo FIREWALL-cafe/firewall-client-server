@@ -390,25 +390,27 @@ function main() {
       console.log(
         "[main]",
         identity,
-        "queryData.images?queryData.images.length",
-        queryData.images && queryData.images.length ? queryData.images.length : "no images"
+        "queryData.images?.length",
+        queryData.images && queryData.images.length ? queryData.images.length : "no images",
+        "queryData.googleImages?.length",
+        queryData.googleImages && queryData.googleImages.length ? queryData.googleImages.length : "no google images",
       );
-      if(queryData.googleImages !== undefined && queryData.baiduImages !== undefined) {
+      if(queryData.googleImages && queryData.googleImages.length > 0 && queryData.baiduImages) {
         console.log("[main] ready to submit images! queryData:", queryData)
         setState(states.SAVING_IMAGES)
       } else if(cyclesInState * loopInterval > 1000 * 10) {
         console.log("[main] giving up on images :(")
         queryData[identity+'Images'] = []
         setState(states.SAVING_IMAGES)
-      } else if (queryData.images && queryData.images.length >= numImages) {
+      } else if (queryData.images && queryData.images.length) {
         console.log("[main] we're good, tell storage about it")
         queryData[identity+'Images'] = [...queryData.images]
         console.log("[main] sending this object to storage:", queryData)
         queryData.images = [];
         chrome.storage.local.set({queryData})
       } else if(queryData.banned) {
-        console.log("[main] baidu says no")
-        queryData[identity+'Images'] = []
+        console.log("[main] banned in baidu")
+        // queryData[identity+'Images'] = []
         chrome.storage.local.set({queryData})
       } else {
         keepGettingImages()
@@ -568,7 +570,7 @@ function submitImages(callback) {
   if (data.search_engine.toLowerCase() === searchEngines.baidu)
     data.baidu_images = JSON.stringify(queryData.baiduImages);
   if (data.search_engine.toLowerCase() === searchEngines.google)
-    data.google_images = JSON.stringify(queryData.googleImages);
+    data.google_images = JSON.stringify(queryData.googleImages.slice(0,10));
 
   const url = config.apiBase + "/saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
@@ -593,7 +595,7 @@ function submitImages(callback) {
 }
 
 function isChinese(langCode) {
-  return ['zh-CN', 'zh-TW'].indexOf(langCode) >= 0
+  return ['zh-CN', 'zh-TW'].includes(langCode);
 }
 
 function getTranslation(searchTerm) {
@@ -603,7 +605,7 @@ function getTranslation(searchTerm) {
     url: config.serverURL + '/detect-language?query='+searchTerm
   }).then(res => {
     // todo: need to handle language detection failure
-    console.log("[getTranslation] language detected:", res.name, "confidence:", res.confidence, res)
+    console.log("[getTranslation] language detected:", res.name, res.language, "confidence:", res.confidence, res)
     const data = {
       query: searchTerm,
       searchEngine: getSearchEngine(),
@@ -726,6 +728,7 @@ function keepGettingImages() {
           return;
         }
         // console.log("[keepGettingImages] got google datastore")
+        console.log('google images', $("img.rg_i"));
         $("img.rg_i").each(function (index, element) {
         // $("a.wXeWr").each(function (index, element) {
           try {
