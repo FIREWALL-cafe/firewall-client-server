@@ -228,43 +228,71 @@ function getIntroHTML(identity) {
     path = "/icons/firewall-" + config.logoLabel + "-" + suffix + ".png";
   }
   const logoURL = chrome.extension.getURL(path);
-  const googleIntroHTML = `
-  <img src="${logoURL}">
-  <div class="text">
-      <strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later.</strong>
-      <form action="#" id="firewall-intro-form" autocomplete="off"><input id="firewall-intro-name" placeholder="Pick a name" />
-      <br><input type="submit" id="firewall-begin" value="Let’s begin!" /></form>
-      <ol>
-      <li>Type a search query into Google (in English, etc.) OR in Baidu (in simplified Chinese)</li>
-      <li>Your query will automatically translate into the opposing browser</li>
-      <li>Please be patient... the Internet in China is slow! 😉</li>
-      <li>FIREWALL will archive your search to https://firewallcafe.com/</li>
-      <li>Vote in the Search Archive whether your search is affected by censorship!</li>
-      <li>Have fun, and view your archived search session images at <a href="https://firewallcafe.com">firewallcafe.com</a>!</li>
-      </ol>
-  </div>
-  `;
 
-  function getBaiduIntroHTML(version) {
+  const getGoogleIntroHTML = (version) => {
     const translation = {
-      simplified: `
+      default: `
+        <ol>
+          <li>Type a search query into Google (in English, etc.) OR in Baidu (in simplified Chinese)</li>
+          <li>Your query will automatically translate into the opposing browser</li>
+          <li>Please be patient... the Internet in China is slow! 😉</li>
+          <li>FIREWALL will archive your search to https://firewallcafe.com/</li>
+          <li>Vote in the Search Archive whether your search is affected by censorship!</li>
+          <li>Have fun, and view your archived search session images at <a href="https://firewallcafe.com">firewallcafe.com</a>!</li>
+        </ol>
+      `,
+      taiwanese: `
+        <p>SEARCH SESSION INSTRUCTIONS</p>
+        <p>搜索流程說明</p>
+
+        <ol>
+          <li>
+            Type a search query into Google (in English) OR in Baidu (in Chinese), making sure each search engine is a separate window.<br/>在谷歌搜索以英文輸入, 或在百度以中文輸入你想搜尋的關鍵字 並請確定兩個搜索引擎在兩個獨立視窗。
+          </li>
+          <li>
+            Please be patient while your search saves (the search bar will grey out).<br/>搜索需時, 請耐心等待（搜索欄會轉灰）。
+          </li>
+          <li>
+            A voting window will pop-up after your search. Click the buttons to vote whether your results are censored.<br/>完成搜索後, 你將看見一視窗彈出, 按下視窗中的按鈕, 投選你認為你的搜索有沒有被審查。
+          </li>
+        </ol>
+      `
+    }
+
+    return `
+      <img src="${logoURL}">
+      <div class="text">
+        <strong>Welcome to FIREWALL Cafe! Type in a name that will let you look up your search session later.</strong>
+        <form action="#" id="firewall-intro-form" autocomplete="off">
+          <input id="firewall-intro-name" placeholder="Pick a name" />
+          <br>
+          <input type="submit" id="firewall-begin" value="Let's begin!" />
+        </form>
+        ${translation[version.toLowerCase()] || translation['default']}
+      </div>
+    `;
+  }
+
+  const getBaiduIntroHTML = (version) => {
+    const translation = {
+      default: `
         <p>FIREWALL是一个社会互动性的美术研究项目, 旨在培育有关网络自由的公众对话。此美术项目通过比较西方国家的谷歌搜寻结果及中国的百度搜寻结果来探讨网路审查的问题。本项目的动机来自于利用参与性的方法和网络视觉文化来对抗网路审查。</p>
       `,
-      traditional: `
-        <p>FIREWALL是一個社會參與及非營利的互動藝術項目，目的是與公眾展開有關網絡自由的對話。此藝術項目透過比較西方國家的谷歌搜尋結果及中國的百度搜尋結果來探討網路審查的問題。我們希望以參與式藝術和發掘網絡視覺文化的過程，來批判網路審查。</p>
+      taiwanese: `
+        <p>FIREWALL是一個社會參與及非營利的互動藝術項目, 目的是與公眾展開有關網絡自由的對話。此藝術項目透過比較西方國家的谷歌搜尋結果及中國的百度搜尋結果來探討網路審查的問題。我們希望以參與式藝術和發掘網絡視覺文化的過程, 來批判網路審查。</p>
       `,
     };
 
     return `<img src="${logoURL}">
     <div class="text">
         <p>FIREWALL is a not-for-profit socially engaged research and interactive art project designed to foster public dialogue about Internet freedom. The goal of this art project is to investigate online censorship by comparing the disparities of Google searches in western nations versus Baidu searches in China. The motivation behind the project is to confront censorship through a participatory discovery process of Internet visual culture.</p>
-        ${translation[version]}
+        ${translation[version.toLowerCase()] || translation['default']}
     </div>
     `;
   };
 
-  if (identity === 'google') return googleIntroHTML;
-  else return getBaiduIntroHTML('traditional'); // introduced 'simplified' for Taiwan
+  if (identity === 'google') return getGoogleIntroHTML(config.language);
+  else return getBaiduIntroHTML(config.language);
 }
 
 function setCurrentSearchEngine(engine) {
@@ -409,7 +437,7 @@ function main() {
         queryData.images = [];
         chrome.storage.local.set({queryData})
       } else if(queryData.banned) {
-        console.log("[main] banned in baidu")
+        console.log("[main] banned in " + identity)
         // queryData[identity+'Images'] = []
         chrome.storage.local.set({queryData})
       } else {
@@ -570,7 +598,7 @@ function submitImages(callback) {
   if (data.search_engine.toLowerCase() === searchEngines.baidu)
     data.baidu_images = JSON.stringify(queryData.baiduImages);
   if (data.search_engine.toLowerCase() === searchEngines.google)
-    data.google_images = JSON.stringify(queryData.googleImages.slice(0,10));
+    data.google_images = JSON.stringify(queryData.googleImages && queryData.googleImages.slice(0,10));
 
   const url = config.apiBase + "/saveSearchAndImages";
   console.log("[submitImages] sending images to API", url, data);
@@ -652,14 +680,15 @@ function keepGettingImages() {
   const identity = getSearchEngine()
 
   // If getting images from Baidu, look for the phrase indicating banned search.
-  if (identity === "baidu") {
-    const banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
-    if (banned) {
-      queryData.banned = true;
-    } else {
-      queryData.banned = false;
-    }
-  }
+  // if (identity === "baidu") {
+  //   const banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
+  //   if (banned) {
+  //     queryData.banned = true;
+  //   } else {
+  //     queryData.banned = false;
+  //   }
+  // }
+  queryData.banned = false;
 
   function _dedupeLimitedSet(imageSet, image, flatDatastore) {
     var dupe = false;
@@ -677,23 +706,6 @@ function keepGettingImages() {
           var encodedUrl = href.match(/url=([^&]+)/)[1];
           url = decodeURIComponent(encodedUrl);
         }
-      }
-    } else if (identity === "google" && typeof flatDatastore != "undefined") {
-      // The Baidu method originally worked for Google result pages too, which
-      // differed only in using the specific parameter `imgurl`. But in Feb. 2020
-      // the DOM implementation changed significantly. Now, each image node has an
-      // ancestor with a unique `data-id`, then used for lookup in a datastore
-      // that's loaded independently later on.
-      var dataId =
-        image.parentNode.parentNode.parentNode.getAttribute("data-id");
-      // Find first appearance of `data-id`
-      var dataIdFirstIndex = flatDatastore.indexOf(dataId);
-      // If available, the original image URL should occur 4 slots later
-      if (dataIdFirstIndex >= 0) {
-        // Verify that it's actually a URL
-        var urlCandidate = flatDatastore[dataIdFirstIndex + 4];
-        var result = urlCandidate.indexOf("http") === 0 ? urlCandidate : null;
-        url = result;
       }
     }
 
@@ -715,43 +727,62 @@ function keepGettingImages() {
   // load whatever half-saved image set we have
   let images = queryData.images ? queryData.images : [];
 
-  // Get Google datastore if relevant
-  if (identity === "google") {
-    getGoogleDatastore() // black magic function which extracts higher-res images from an object
-      .catch((error) => {
-        console.error(error);
-      })
-      .then((data) => {
-        // Get Google image URIs
-        if (!data) {
-          // console.log('google datastore is not defined');
-          return;
-        }
-        // console.log("[keepGettingImages] got google datastore")
-        console.log('google images', $("img.rg_i"));
-        $("img.rg_i").each(function (index, element) {
-        // $("a.wXeWr").each(function (index, element) {
-          try {
-            // _dedupeLimitedSet(images, element, data["flatDatastore"]);
-            images.push({
-              href: '',
-              src: element.src,
-            })
-          } catch (err) {
-            console.log(err);
-          }
-        });
-      });
-
-      images = images.slice(0,10);
-  } else {
+  if (identity === "baidu") {
     // Get Baidu image URIs
     $(".imglist img").each(function (index, element) {
       _dedupeLimitedSet(images, element);
     });
-  }
+  } else if (identity === 'google') {
+    fetch(window.location.href)
+      .then((response) => response.body)
+      .then((rb) => {
+        const reader = rb.getReader();
 
-  queryData["images"] = images;
+        return new ReadableStream({
+          start(controller) {
+            // The following function handles each data chunk
+            function push() {
+              // "done" is a Boolean and value a "Uint8Array"
+              reader.read().then(({ done, value }) => {
+                // If there is no more data to read
+                if (done) {
+                  console.log('done', done);
+                  controller.close();
+                  return;
+                }
+                // Get the data and send it to the browser via the controller
+                controller.enqueue(value);
+                // Check chunks by logging to the console
+                // console.log(done, value);
+                push();
+              });
+            }
+
+            push();
+          },
+        });
+      })
+      .then((stream) =>
+        // Respond with our stream
+        new Response(stream, { headers: { 'Content-Type': 'text/html' } }).text()
+      )
+      .then((result) => {
+        // Do things with result
+        const doc = $.parseHTML(result);
+        const docImgs = $(doc).find('img.rg_i');
+
+        console.log('[fetch docImgs]', docImgs)
+        Array.from(docImgs).slice(0, 5).forEach(img =>
+          images.push({
+            href: '',
+            src: img.src,
+          })
+        );
+
+        console.log('[fetch]', images)
+        queryData["images"] = images;
+      });
+  }
 
   console.log(`[keepGettingImages] ${identity} has ${images.length} images`)
 }
