@@ -216,7 +216,7 @@ function handleTranslate(req, res, headers) {
 					jsonResponse(res, search, headers, {
 						ok: 1,
 						query: search.query,
-						langFrom: search.langFrom,
+						langFrom: search.langFrom === 'zh-Latn' ? 'zh-CN' : search.langFrom,
 						langTo: search.langTo,
 						translated: translation.value,
                         sensitive: translation.sensitive,

@@ -39,7 +39,7 @@ chrome.storage.local.get([
 ], init)
 
 // runs once on page load
-function init(storage) {
+async function init(storage) {
   console.log("[init] got storage object", storage)
   console.log(storage.queryData)
 
@@ -65,7 +65,7 @@ function init(storage) {
   setupMessageListener()
 
   // begin main() loop
-  setInterval(main, loopInterval);
+  setInterval(await main, loopInterval);
 }
 
 function checkIfCorrectState() {
@@ -347,7 +347,7 @@ function setupMessageListener() {
 //////////////////////////////////
 // runs every N milliseconds
 // should be concise and direct all state changes
-function main() {
+async function main() {
   // get any necessary data that could change as page loads
   const searchTerm = extractSearchTermFromURL()
   const identity = getSearchEngine()
@@ -415,45 +415,37 @@ function main() {
     case states.GETTING_IMAGES:
       if(cyclesInState == 0) $(document.body).addClass("firewall-loading");
       changeSearchesDisabled(true)
-      console.log(
-        "[main]",
-        identity,
-        "queryData.images?.length",
-        queryData.images && queryData.images.length ? queryData.images.length : "no images",
-        "queryData.googleImages?.length",
-        queryData.googleImages && queryData.googleImages.length ? queryData.googleImages.length : "no google images",
-      );
-      if(queryData.googleImages && queryData.googleImages.length > 0 && queryData.baiduImages) {
+      if(queryData.baiduImages) {
         console.log("[main] ready to submit images! queryData:", queryData)
         setState(states.SAVING_IMAGES)
       } else if(cyclesInState * loopInterval > 1000 * 10) {
         console.log("[main] giving up on images :(")
-        queryData[identity+'Images'] = []
+        // queryData[identity+'Images'] = []
         setState(states.SAVING_IMAGES)
       } else if (queryData.images && queryData.images.length) {
         console.log("[main] we're good, tell storage about it")
         queryData[identity+'Images'] = [...queryData.images]
         console.log("[main] sending this object to storage:", queryData)
         queryData.images = [];
-        chrome.storage.local.set({queryData})
+        chrome.storage.local.set({ queryData })
       } else if(queryData.banned) {
         console.log("[main] banned in " + identity)
-        // queryData[identity+'Images'] = []
-        chrome.storage.local.set({queryData})
+        queryData[identity+'Images'] = []
+        chrome.storage.local.set({ queryData })
       } else {
-        keepGettingImages()
+        await keepGettingImages()
       }
       break
     case states.SAVING_IMAGES:
       if (cyclesInState == 0) {
         if (getSearchEngine() === searchEngines.google) {
-          console.log("[main] sending to wordpress")
-          submitImagesToWordpress(() => {
-            console.log("[main] submitImagesToWordpress callback, unlocking search boxes");
-          })
           submitImages(() => {
             console.log("[main] submitImages callback")
-            setState(states.DONE)
+            console.log("[main] sending to wordpress")
+            submitImagesToWordpress(() => {
+              console.log("[main] submitImagesToWordpress callback, unlocking search boxes");
+              setState(states.DONE)
+          })
           })
         }
       } else {
@@ -526,6 +518,7 @@ function extractSearchTermFromURL() {
 }
 
 function submitImagesToWordpress(callback) {
+  console.log('[submitImagesToWordpress] queryData', queryData)
   const wpData = {
     timestamp: queryData.timestamp,
     location: config.location,
@@ -539,7 +532,7 @@ function submitImagesToWordpress(callback) {
     lang_confidence: 1,
     lang_alternate: `${queryData.langAlternate}`,
     lang_name: `${queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom}`,
-    google_images: queryData.googleImages ? JSON.stringify(queryData.googleImages) : `[]`,
+    google_images: queryData.googleImages ? queryData.googleImages : `[]`,
     baidu_images: queryData.baiduImages ? JSON.stringify(queryData.baiduImages) : `[]`,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
@@ -576,6 +569,7 @@ function submitImagesToWordpress(callback) {
 
 function submitImages(callback) {
   // this is what a current call looks like to /saveImages, working in Postman
+  console.log('[submitImages] queryData', queryData)
   var data = {
     timestamp: queryData.timestamp,
     location: config.location,
@@ -592,6 +586,7 @@ function submitImages(callback) {
     lang_name: queryData.langName ? queryData.langName : queryData.langFrom === 'en' ? 'English' : queryData.langFrom,
     banned: queryData.banned ? queryData.banned : false,
     sensitive: queryData.sensitive ? queryData.sensitive : false,
+    queryURL: window.location.href,
   };
 
   // prevent sending too much data
@@ -607,13 +602,47 @@ function submitImages(callback) {
     method: "POST",
     body: JSON.stringify(data),
     // mode: 'no-cors',
+    // credentials: 'include',
     headers: {
       "Content-Type": "application/json",
+      // "Accept": "application/json",
     },
   })
-    .then((response) => {
+    .then(async (response) => {
       console.log("[submitImages] done");
-      console.log("response from API:", response)
+      console.log("response from API:", response);
+      // marshall the response
+      const rb = await response.body;
+      const reader = rb.getReader();
+      const stream = await new ReadableStream({
+        start(controller) {
+          // The following function handles each data chunk
+          function push() {
+            // "done" is a Boolean and value a "Uint8Array"
+            reader.read().then(({ done, value }) => {
+              // If there is no more data to read
+              if (done) {
+                console.log('done', done);
+                controller.close();
+                return;
+              }
+              // Get the data and send it to the browser via the controller
+              controller.enqueue(value);
+              // Check chunks by logging to the console
+              // console.log(done, value);
+              push();
+            });
+          }
+
+          push();
+        },
+      });
+      // Respond with our stream
+      const result = await new Response(stream, { headers: { 'Content-Type': 'text/html' } }).text()
+      // refetch images in server and return the first few results
+      // this method is more reliable for downloading images for now
+      queryData.googleImages = JSON.parse(result).googleImages;
+      console.log('[submitImages] returned. queryData', queryData)
       callback();
     })
     .catch((err) => {
@@ -676,18 +705,20 @@ function searchTranslatedQuery() {
 }
 
 // this is meant to be called each update cycle until we either give up or have the number of images we want
-function keepGettingImages() {
+async function keepGettingImages() {
   const identity = getSearchEngine()
 
   // If getting images from Baidu, look for the phrase indicating banned search.
-  // if (identity === "baidu") {
-  //   const banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
-  //   if (banned) {
-  //     queryData.banned = true;
-  //   } else {
-  //     queryData.banned = false;
-  //   }
-  // }
+  if (identity === "baidu") {
+    // const banned = $('body:contains("根据相关法律法规和政策，部分搜索结果未予显示")').length > 0;
+    const banned = $('#pnlBeforeImgList').css('display') !== 'none';
+    if (banned) {
+      console.log('banned in baidu')
+      queryData.banned = true;
+    } else {
+      queryData.banned = false;
+    }
+  }
   queryData.banned = false;
 
   function _dedupeLimitedSet(imageSet, image, flatDatastore) {
@@ -732,109 +763,11 @@ function keepGettingImages() {
     $(".imglist img").each(function (index, element) {
       _dedupeLimitedSet(images, element);
     });
-  } else if (identity === 'google') {
-    fetch(window.location.href)
-      .then((response) => response.body)
-      .then((rb) => {
-        const reader = rb.getReader();
 
-        return new ReadableStream({
-          start(controller) {
-            // The following function handles each data chunk
-            function push() {
-              // "done" is a Boolean and value a "Uint8Array"
-              reader.read().then(({ done, value }) => {
-                // If there is no more data to read
-                if (done) {
-                  console.log('done', done);
-                  controller.close();
-                  return;
-                }
-                // Get the data and send it to the browser via the controller
-                controller.enqueue(value);
-                // Check chunks by logging to the console
-                // console.log(done, value);
-                push();
-              });
-            }
-
-            push();
-          },
-        });
-      })
-      .then((stream) =>
-        // Respond with our stream
-        new Response(stream, { headers: { 'Content-Type': 'text/html' } }).text()
-      )
-      .then((result) => {
-        // Do things with result
-        const doc = $.parseHTML(result);
-        const docImgs = $(doc).find('img.rg_i');
-
-        console.log('[fetch docImgs]', docImgs)
-        Array.from(docImgs).slice(0, 5).forEach(img =>
-          images.push({
-            href: '',
-            src: img.src,
-          })
-        );
-
-        console.log('[fetch]', images)
-        queryData["images"] = images;
-      });
+    queryData.images = [...images];
   }
 
   console.log(`[keepGettingImages] ${identity} has ${images.length} images`)
-}
-
-function getGoogleDatastore() {
-  var hash = window.crypto.getRandomValues(new Uint32Array(2)).toString();
-
-  function sendVariableWithPostMessage(hash) {
-    if (
-      typeof AF_initDataChunkQueue != "undefined" &&
-      Array.isArray(AF_initDataChunkQueue)
-    ) {
-      var datastoreIndex = AF_initDataChunkQueue.findIndex(function (element) {
-        return element["key"] === "ds:1";
-      });
-      var datastore = AF_initDataChunkQueue[datastoreIndex].data;
-      // Flatten datastore for convenience
-      var flatDatastore = datastore.flat(Infinity);
-
-      var message = {
-        hash: hash,
-        flatDatastore: flatDatastore,
-      };
-    } else {
-      var message = {
-        hash: hash,
-        flatDatastore: null,
-      };
-    }
-
-    window.postMessage(message, "*");
-  }
-
-  (function injectPostMessageScript() {
-    var scriptContent =
-      "(" + sendVariableWithPostMessage.toString() + ")('" + hash + "');";
-    const scriptTag = document.createElement("script");
-    const scriptBody = document.createTextNode(scriptContent);
-
-    scriptTag.id = "getGoogleDatastore";
-    scriptTag.appendChild(scriptBody);
-    document.body.append(scriptTag);
-  })();
-  return new Promise((resolve, reject) => {
-    window.addEventListener("message", function (message) {
-      if (message["data"]["hash"] != hash) {
-        reject("Message hash mismatch");
-      } else {
-        resolve(message["data"]);
-      }
-    });
-  });
 }
 
 // slow things down so we can understand execution flow
