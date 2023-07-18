@@ -752,11 +752,11 @@ const deleteSearch = async (request, response) => {
 
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
-	const {vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
+	const { vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
     console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
 
-    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
-    const values = [vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
+    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4)';
+    const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -1093,7 +1093,7 @@ const saveSearchAndImages = async (request, response) => {
     //     return;
     // }
 
-    response.status(201).json({ results: imageResults, googleImages: fetchedGoogleImgs });
+    response.status(201).json({ results: imageResults, googleImages: fetchedGoogleImgs, searchId });
 };
 
 module.exports = {

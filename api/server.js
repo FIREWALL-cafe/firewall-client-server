@@ -88,7 +88,7 @@ app.get('/images/:image_id', db.getImageBinary)
 /* POST Routes */
 app.post('/createSearch', db.checkSecret, db.createSearch)
 app.post('/deleteSearch', db.checkSecret, db.deleteSearch)
-app.post('/createVote', db.checkSecret, db.createVote)
+app.post('/vote', db.checkSecret, db.createVote)
 app.post('/saveImage', db.checkSecret, db.saveImage)
 app.post('/deleteImage', db.checkSecret, db.deleteImage)
 app.post('/saveImages', db.checkSecret, db.saveImagesEndpoint)
