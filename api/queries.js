@@ -753,10 +753,10 @@ const deleteSearch = async (request, response) => {
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
 	const { vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
-    console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
+  console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
 
-    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4)';
-    const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
+  const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4)';
+  const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -978,7 +978,7 @@ const saveImagesToWordpress = async (request, response) => {
 // Find image results in Google Image result response and return the first 10 results
 const getGoogleImageSrcs = (results) => {
     const html = cheerio.load(results);
-    const imgs = html('.yWs4tf').toArray().slice(10);
+    const imgs = html('.DS1iW').toArray().slice(10);
     // return a stringified array of objects containing href and src
     return JSON.stringify(imgs.map((img) => ({ href: '', src: img.attribs.src })));
 };
@@ -1005,7 +1005,7 @@ const saveSearchAndImages = async (request, response) => {
     } = request.body;
     console.log(`[saveSearchAndImages for ${search_engine}]`);
 
-    let fetchedGoogleImgs;
+    let fetchedGoogleImgs = null;
     if (queryURL) {
         try {
             const response = await axios.get(queryURL)
