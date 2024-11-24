@@ -516,11 +516,12 @@ const getSearchesByTermWithImages = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
-    console.log("getSearchesByTermWithImages: ", request.query.term);
+    console.log("getSearchesByTermWithImages: ", term);
     const query =  `SELECT s.*, i.image_hrefs FROM searches s
         INNER JOIN (SELECT array_agg(image_href) as image_hrefs, search_id FROM images GROUP BY search_id) i
         ON s.search_id = i.search_id
-        WHERE s.search_term_initial = $1;`
+        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
+
     const values = [term];
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -1013,7 +1014,8 @@ const saveSearchAndImages = async (request, response) => {
         search_term_initial_language_code,
         search_term_translation,
         search_term_status_banned,
-        search_term_status_sensitive
+        search_term_status_sensitive,
+        search_location
     ) VALUES (
         $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8
     ) RETURNING search_id`;
@@ -1027,6 +1029,7 @@ const saveSearchAndImages = async (request, response) => {
         translation,
         banned ? banned : false,
         sensitive ? sensitive : false,
+        location,
     ];
 
     let searchId;

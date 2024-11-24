@@ -2,7 +2,7 @@ const { parentPort, workerData } = require('worker_threads');
 const http = require('http');
 const https = require('https');
 const config = require('./config.js');
-const { pool, secret } = config;
+const { pool } = config;
 const space = require('./spaces-interface.js');
 
 const { google_images, baidu_images, searchId } = workerData;
@@ -12,9 +12,9 @@ async function saveImages(google_images, baidu_images, searchId) {
   console.log('worker: google_images', google_images);
   console.log('worker: baidu_images', baidu_images);
 
-  if (!google_images && !baidu_images) {  
-      response.status(400).json("No images provided.")
-      return;
+  if (google_images.length === 0 && baidu_images.length === 0) {  
+    console.log("worker: No images provided.");
+    return;
   }
 
     const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
@@ -57,7 +57,6 @@ async function saveImages(google_images, baidu_images, searchId) {
     ))
   }
   console.log(imageQueries);
-    // const imagePromises = saveImages(saveImageParam, response, searchId);
   return imageQueries;
 }
 
@@ -66,14 +65,14 @@ const uploadImageContent = async (content, href) => {
     try {
         fileContent = Buffer.from(content, 'binary');
     } catch {
-        console.log("Needs an image string to convert to binary.");
+        console.log("worker: Needs an image string to convert to binary.");
         return;
     }
 
     let newUrl;
     try {
         newUrl = await space.saveImage(fileContent, href);
-        console.log('saved new image with url', newUrl);
+        console.log('worker: saved new image', newUrl);
         return newUrl;
     } catch (error) {
         console.log('worker: error:' ,err);
