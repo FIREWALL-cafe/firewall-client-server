@@ -43,7 +43,7 @@ CREATE TABLE images (
 	search_id                               serial not null references searches(search_id),
 	image_search_engine                     text,
 	image_href                              text,
-    image_href_original                     text,
+  image_href_original                     text,
 	image_rank                              text,
 	image_mime_type                         text,
 	image_data                              bytea,
@@ -80,3 +80,10 @@ CREATE TABLE have_votes (
 	vote_ip_address   text,
 	primary key(vote_serial)
 );
+
+-- Indexes --
+CREATE INDEX searches_search_timestamp_index ON searches(search_timestamp);
+CREATE INDEX searches_search_location_index ON searches(search_location);
+CREATE INDEX searches_search_ip_address_index ON searches(search_ip_address);
+CREATE INDEX searches_search_client_name_index ON searches(search_client_name);
+CREATE INDEX searches_search_engine_initial_index ON searches(search_engine_initial);

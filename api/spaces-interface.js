@@ -17,18 +17,24 @@ const filenameFromUrl = (url) => {
     if(url.slice(url.length-4, url.length) === '.jpg') url = url.slice(0, url.length-4);
 
     [...url].forEach(char => {
-        fname += charset.indexOf(char) < 0? char : '_';
+        fname += charset.indexOf(char) < 0 ? char : '_';
     })
     return fname;
+}
+
+const getFilenameFromUrl= (url) => {
+  const pathname = new URL(url).pathname;
+  return pathname.substring(pathname.lastIndexOf('/') + 1);
 }
 
 const saveImage = async (binary_data, url) => {
     // Setting up S3 upload parameters
     const params = {
         Bucket: config.bucket,
-        Key: 'images/' + filenameFromUrl(url) + '.jpg',
+        Key: 'images/' + getFilenameFromUrl(url),
         Body: binary_data, 
-        ACL: "public-read"
+        ACL: "public-read",
+        ContentType: 'image/jpeg'
     };
 
     // Uploading files to the bucket

@@ -5,6 +5,8 @@ const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
 
+const {Worker} = require('worker_threads');
+
 /*****************************/
 /*searches w/o Images & Votes*/
 /*****************************/
@@ -493,6 +495,7 @@ const getSearchesByTerm = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
+    console.log("getSearchesByTerm: ", request.query.term);
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
@@ -513,6 +516,7 @@ const getSearchesByTermWithImages = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
+    console.log("getSearchesByTermWithImages: ", request.query.term);
     const query =  `SELECT s.*, i.image_hrefs FROM searches s
         INNER JOIN (SELECT array_agg(image_href) as image_hrefs, search_id FROM images GROUP BY search_id) i
         ON s.search_id = i.search_id
@@ -860,6 +864,7 @@ const deleteImage = async (request, response) => {
 }
 
 const saveImages = (request, response, searchId) => {
+    console.log("saveImages", searchId);
     // assists endpoints by handling putting images into the database
     const {
         search_engine,
@@ -867,18 +872,14 @@ const saveImages = (request, response, searchId) => {
         baidu_images: baiduImagesString
     } = request.body
 
-    if(!searchId) {
-        return response.status(400).json("searchId not found")
+    if (!searchId || !search_engine) {
+        response.status(400).json("Requires search id and search_engine.")
+        return;
     }
 
     const images = googleImagesString
         ? JSON.parse(googleImagesString)
         : JSON.parse(baiduImagesString);
-
-    if (!searchId || !search_engine) {
-        response.status(400).json("Need a search id and search_engine.")
-        return;
-    }
 
     if (!images) {
         response.status(400).json("No images provided.")
@@ -1001,22 +1002,8 @@ const saveSearchAndImages = async (request, response) => {
         baidu_images,
         banned,
         sensitive,
-        queryURL,
     } = request.body;
     console.log(`[saveSearchAndImages for ${search_engine}]`);
-
-    let fetchedGoogleImgs = null;
-    if (queryURL) {
-        try {
-            const response = await axios.get(queryURL)
-            fetchedGoogleImgs = getGoogleImageSrcs(response.data);
-            console.log(fetchedGoogleImgs)
-          } catch (error) {
-            console.log(error);
-            response.status(500).json(error);
-            return;
-          }
-    }
 
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
@@ -1048,52 +1035,35 @@ const saveSearchAndImages = async (request, response) => {
         console.log(`[saving search for ${search_engine}...]`);
         const searchInsertResult = await pool.query(searchQuery, searchValues);
         searchId = searchInsertResult.rows[0].search_id;
-        console.log(`[saved search for ${search_engine} ${searchId}]`);
+        console.log(`[saved search for ${search_engine} searchId: ${searchId}]`);
     } catch (error) {
         console.error(error);
         response.status(500).json(error);
         return;
     }
-    console.log('searchId', searchId)
 
     console.log(`[saving images for ${search_engine}...]`);
-    const saveImageParam = fetchedGoogleImgs ? { body: { ...request.body, google_images: fetchedGoogleImgs } } : request;
-    const imagePromises = saveImages(saveImageParam, response, searchId);
-    let imageResults;
+    console.log(`[google_images]`, google_images);
+    console.log(`[baidu_images]`, baidu_images);
+    const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
+    worker.on('message', (result) => {
+        console.log('worker: saveImages args', result);
+    })
+    worker.on("error", (msg) => {
+        console.log(msg);
+    });
+    console.log('sent to worker');
 
-    try {
-        imageResults = Promise.all(imagePromises);
-        console.log(`[saved images for ${search_engine} ${searchId}]`);
-    } catch (error) {
-        response.status(500).json(error);
-        return;
-    }
-
+    // let imageResults;
     // try {
-    //     uploadImagesToWordpress({
-    //         timestamp,
-    //         location,
-    //         client,
-    //         secret,
-    //         search_engine,
-    //         query: search,
-    //         translated: translation,
-    //         lang_from,
-    //         lang_to,
-    //         lang_confidence,
-    //         lang_alternate,
-    //         lang_name,
-    //         google_images,
-    //         baidu_images,
-    //         banned,
-    //         sensitive,
-    //     });
+    //     imageResults = Promise.all(imagePromises);
+    //     console.log(`[saved images for ${search_engine} ${searchId}]`);
     // } catch (error) {
     //     response.status(500).json(error);
     //     return;
     // }
 
-    response.status(201).json({ results: imageResults, googleImages: fetchedGoogleImgs, searchId });
+    response.status(201).json({ searchId });
 };
 
 module.exports = {

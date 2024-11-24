@@ -6,7 +6,7 @@
 	"main": "server.js",
 	"private": "true",
 	"scripts": {
-		"start": "node server.js",
+		"start": "node --experimental-worker server.js",
 		"dev": "pg_ctl -D temp-data-dir -l logfile start & node server.js"
 	},
 	"repository": {
