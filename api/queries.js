@@ -989,7 +989,7 @@ const saveSearchAndImages = async (request, response) => {
     const {
         timestamp,
         location,
-        client,
+        search_client_name,
         secret,
         search_engine,
         search,
@@ -1008,6 +1008,7 @@ const saveSearchAndImages = async (request, response) => {
 
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
+        search_client_name,
         search_engine_initial,
         search_engine_translation,
         search_term_initial,
@@ -1017,11 +1018,12 @@ const saveSearchAndImages = async (request, response) => {
         search_term_status_sensitive,
         search_location
     ) VALUES (
-        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8
+        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8, $9, $10
     ) RETURNING search_id`;
 
     const searchValues = [
         timestamp,
+        search_client_name,
         search_engine,
         search_engine === 'google' ? 'baidu' : 'google',
         search,
@@ -1045,17 +1047,19 @@ const saveSearchAndImages = async (request, response) => {
         return;
     }
 
-    console.log(`[saving images for ${search_engine}...]`);
-    console.log(`[google_images]`, google_images);
-    console.log(`[baidu_images]`, baidu_images);
-    const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
-    worker.on('message', (result) => {
-        console.log('worker: saveImages args', result);
-    })
-    worker.on("error", (msg) => {
-        console.log(msg);
-    });
-    console.log('sent to worker');
+    if (google_images.length > 0 && baidu_images.length > 0) {
+        console.log(`[saving images for ${search_engine}...]`);
+        console.log(`[google_images]`, google_images);
+        console.log(`[baidu_images]`, baidu_images);
+        const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
+        worker.on('message', (result) => {
+            console.log('worker: saveImages args', result);
+        })
+        worker.on("error", (msg) => {
+            console.log(msg);
+        });
+        console.log('image urls sent to worker');
+    }
 
     // let imageResults;
     // try {
