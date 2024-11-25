@@ -81,7 +81,8 @@ const uploadImageContent = async (content, href) => {
 };
 
 const respond = async () => {
-  parentPort.postMessage(await saveImages(google_images, baidu_images, searchId));
+  const message = await saveImages(google_images, baidu_images, searchId);
+  parentPort.postMessage(message);
 }
 
 respond();

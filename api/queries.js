@@ -596,9 +596,9 @@ const getImages = (request, response) => {
 
 //GET: Image Info Only individual search result (BY search_id)
 const getImagesOnlyBySearchID = (request, response) => {
+    console.log("getImagesOnlyBySearchID: ", request.params.search_id);
     const search_id = parseInt(request.params.search_id);
     const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
-    i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
     FROM searches s FULL JOIN images i ON s.search_id = i.search_id
     WHERE s.search_id = $1`;
     const values = [search_id];
