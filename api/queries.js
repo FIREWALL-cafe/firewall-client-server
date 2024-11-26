@@ -511,16 +511,14 @@ const getSearchesByTerm = (request, response) => {
 }
 
 const getSearchesByTermWithImages = (request, response) => {
+    console.log("getSearchesByTermWithImages: ", request.query.term);
     const term = request.query.term;
     if(!term) {
         response.status(401).json("term not defined")
         return
     }
     console.log("getSearchesByTermWithImages: ", term);
-    const query =  `SELECT s.*, i.image_hrefs FROM searches s
-        INNER JOIN (SELECT array_agg(image_href) as image_hrefs, search_id FROM images GROUP BY search_id) i
-        ON s.search_id = i.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
+    const query =  `SELECT s.* FROM searches s WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
 
     const values = [term];
     pool.query(query, values, (error, results) => {
@@ -533,6 +531,7 @@ const getSearchesByTermWithImages = (request, response) => {
 }
 
 const getImagesByTermWithSearchInfo = (request, response) => {
+    console.log("getImagesByTermWithSearchInfo: ", request.query.term);
     const term = request.query.term;
     if(!term) {
         response.status(401).json("term not defined")
@@ -545,7 +544,7 @@ const getImagesByTermWithSearchInfo = (request, response) => {
         FROM searches s
         FULL OUTER JOIN images i
         ON s.search_id = i.search_id
-        WHERE s.search_term_initial = $1;`
+        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
     const values = [term];
     pool.query(query, values, (error, results) => {
         if (error) {
