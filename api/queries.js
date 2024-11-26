@@ -518,7 +518,11 @@ const getSearchesByTermWithImages = (request, response) => {
         return
     }
     console.log("getSearchesByTermWithImages: ", term);
-    const query =  `SELECT s.* FROM searches s WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
+    const query =  `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, search_client_name, search_engine_initial, 
+				search_term_initial, search_engine_translation, COUNT(*) as "total_votes"
+				FROM searches s
+        INNER JOIN have_votes hv on s.search_id = hv.search_id
+        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1) GROUP BY s.search_id;`
 
     const values = [term];
     pool.query(query, values, (error, results) => {
