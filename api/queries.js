@@ -88,7 +88,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 
     // Keyword searches
     if (keyword) {
-        conditions.push(`s.search_term_initial ilike '%${keyword}%'`);
+        conditions.push(`to_tsvector(s.search_term_initial) @@ to_tsquery(keyword)`);
     }
 
     // Filter by vote ids
@@ -165,6 +165,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
  * It then collects images associated with each search.
  */
 const getFilteredSearches = async (request, response) => {
+    console.log("getFilteredSearches: ", request.query);
     let { keyword, vote_ids, search_locations, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
