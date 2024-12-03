@@ -189,7 +189,8 @@ const getFilteredSearches = async (request, response) => {
 
     // Order by descending and paginate
     query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
-
+    console.log(query);
+    
     pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
             response.status(500).json(error);
