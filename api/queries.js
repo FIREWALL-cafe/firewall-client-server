@@ -88,7 +88,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 
     // Keyword searches
     if (keyword) {
-        conditions.push(`to_tsvector(s.search_term_initial) @@ to_tsquery(keyword)`);
+        conditions.push(`to_tsvector(s.search_term_initial) @@ to_tsquery('${keyword}')`);
     }
 
     // Filter by vote ids
@@ -190,7 +190,7 @@ const getFilteredSearches = async (request, response) => {
     // Order by descending and paginate
     query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     console.log(query);
-    
+
     pool.query(query, [page_size, offset], async (error, results) => {
         if (error) {
             response.status(500).json(error);
