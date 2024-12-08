@@ -179,16 +179,16 @@ const getFilteredSearches = async (request, response) => {
     // Get all searches
     if (!vote_ids.length && !search_locations.length
         && !years.length && !keyword) {
-        query = `SELECT s.* FROM searches s`;
+        query = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id`;
     } else { // Get filtered searches
-        query = `SELECT v.vote_name, s.*, hv.* FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id LEFT JOIN votes v ON hv.vote_id = v.vote_id WHERE `;
+        query = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id WHERE `;
         // Filter test searches
         query += ` s.search_client_name != 'rowan_scraper_tests' AND `;
         query += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
     // Order by descending and paginate
-    query += ` ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+    query += ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     console.log(query);
 
     pool.query(query, [page_size, offset], async (error, results) => {
@@ -523,7 +523,7 @@ const getSearchesByTermWithImages = (request, response) => {
     const query =  `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, search_client_name, search_engine_initial, 
 				search_term_initial, search_engine_translation, COUNT(*) as "total_votes"
 				FROM searches s
-        INNER JOIN have_votes hv on s.search_id = hv.search_id
+        LEFT JOIN have_votes hv on s.search_id = hv.search_id
         WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1) GROUP BY s.search_id;`
 
     const values = [term];

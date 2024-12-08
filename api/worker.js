@@ -17,46 +17,39 @@ async function saveImages(google_images, baidu_images, searchId) {
     return;
   }
 
-    const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
+  const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
+  
+  downloadImages('google', query, searchId, google_images);
+  downloadImages('baidu', query, searchId, baidu_images);
 
-    const imageQueries = [];
-    // for each given URL, call that psql query with that value
-  for (const url of google_images) {         
-    console.log('worker: saving google image', url);
-    let client = http;
+  console.log(imageQueries);
+  return imageQueries;
+}
+
+const downloadImages = (engine, query, searchId, images) => {
+  const imageQueries = [];
+
+  for (const url of images) {
+    console.log('worker: saving image', url);
+    let client = (url.toString().indexOf("https") === 0) ? https : http;
     let newUrl = null;
 
-    if (url.toString().indexOf("https") === 0) {
-        client = https;
-    }
+    client.request(url, function (response) {
+      var data = [];
 
-    client.request(url, function (response) {    
-      var data = [];                                                    
-
-      response.on('data', function (chunk) {     
-        data.push(chunk);                                                         
-      });                                                                         
+      response.on('data', function (chunk) {
+        data.push(chunk);
+      });
 
       response.on('end', function () {
-        console.log(
-            searchId,
-            'google',
-            url, // TODO: phashed image ref
-        )
+        console.log(searchId, engine, url)
         newUrl = uploadImageContent(Buffer.concat(data), url);
       });
-      
-    }).end();    
-    imageQueries.push(pool.query(
-        query,
-        [
-            searchId,
-            'google',
-            newUrl ? newUrl : url,
-        ]
-    ))
+    }).end();
+  
+    imageQueries.push(pool.query(query, [searchId, engine, newUrl ? newUrl : url]));
   }
-  console.log(imageQueries);
+  console.log('worker: imageQueries', imageQueries.length);
   return imageQueries;
 }
 

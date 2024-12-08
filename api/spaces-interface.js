@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const AWS = require('aws-sdk');
 // const fs = require('fs'); // Needed for example below
 const config = require('./config.js').spaces_config;
@@ -27,11 +28,15 @@ const getFilenameFromUrl= (url) => {
   return pathname.substring(pathname.lastIndexOf('/') + 1);
 }
 
+const getHashFromUrl = (url) => {
+    return crypto.createHash('md5').update(url).digest('hex');
+}
+
 const saveImage = async (binary_data, url) => {
     // Setting up S3 upload parameters
     const params = {
         Bucket: config.bucket,
-        Key: 'images/' + getFilenameFromUrl(url),
+        Key: 'images/' + getHashFromUrl(url),
         Body: binary_data, 
         ACL: "public-read",
         ContentType: 'image/jpeg'
