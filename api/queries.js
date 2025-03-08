@@ -765,7 +765,7 @@ const createVote = (request, response) => {
 	const { vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
   console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
 
-  const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4)';
+  const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
   const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
 	pool.query(query, values, (error, results) => {
@@ -773,6 +773,7 @@ const createVote = (request, response) => {
             response.status(500).json(error);
         } else {
             response.status(201).json(results.rows);
+            return results.rows;
         }
 	})
 }
@@ -958,18 +959,6 @@ const uploadImagesToWordpress = async (data) => {
 
     wpData.google_images = data.google_images ? data.google_images : '{}';
     wpData.baidu_images = data.baidu_images ? data.baidu_images : '{}';
-
-    // TODO: figure out why clientside ajax works, but client and serverside 
-    //       fetch and axios does not
-    // try {
-    //     console.log(`[uploading images to Wordpress...]`);
-    //     const url = config.wordpress.url;
-    //     const result = await axios.post(url, wpData);
-    //     console.log(`[done uploading images to Wordpress ${JSON.stringify(result.data)}]`);
-    // } catch (error) {
-    //     console.error(error);
-    //     throw new Error(error);
-    // }
 };
 
 const saveImagesToWordpress = async (request, response) => {

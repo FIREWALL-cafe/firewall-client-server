@@ -22,8 +22,7 @@ async function saveImages(google_images, baidu_images, searchId) {
   downloadImages('google', query, searchId, google_images);
   downloadImages('baidu', query, searchId, baidu_images);
 
-  console.log(imageQueries);
-  return imageQueries;
+  console.log('worker: downloading images');
 }
 
 const downloadImages = (engine, query, searchId, images) => {
