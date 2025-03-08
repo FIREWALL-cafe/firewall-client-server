@@ -88,7 +88,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 
     // Keyword searches
     if (keyword) {
-        conditions.push(`to_tsvector(s.search_term_initial) @@ to_tsquery('${keyword}')`);
+        conditions.push(`to_tsvector(s.search_term_initial) @@ plainto_tsquery('${keyword}')`);
     }
 
     // Filter by vote ids
@@ -524,9 +524,11 @@ const getSearchesByTermWithImages = (request, response) => {
 				search_term_initial, search_term_translation, search_engine_translation, COUNT(*) as "total_votes"
 				FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1) GROUP BY s.search_id;`
+        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1) GROUP BY s.search_id;`
 
     const values = [term];
+    console.log('query', query);
+    console.log('values', values);
     pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json({error, results});
@@ -550,7 +552,7 @@ const getImagesByTermWithSearchInfo = (request, response) => {
         FROM searches s
         FULL OUTER JOIN images i
         ON s.search_id = i.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ to_tsquery($1);`
+        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1);`
     const values = [term];
     pool.query(query, values, (error, results) => {
         if (error) {
