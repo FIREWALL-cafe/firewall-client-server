@@ -8,6 +8,82 @@ const space = require('./spaces-interface.js')
 const {Worker} = require('worker_threads');
 
 /*****************************/
+/*Dashboard Routes*/
+/*****************************/
+
+const getDashboardData = async (request, response) => {
+    try {
+        const [totalSearches, totalImages, totalVotes, totalUsers] = await Promise.all([
+            getTotalSearches(),
+            getTotalImages(),
+            getTotalVotes(),
+            getTotalUsers()
+        ]);
+
+        response.status(200).json({
+            totalSearches,
+            totalImages,
+            totalVotes,
+            totalUsers
+        });
+    } catch (error) {
+        response.status(500).json(error);
+    }
+}
+
+const getTotalSearches = () => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT COUNT(*) FROM searches';
+        pool.query(query, (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result.rows[0]);
+            }
+        });
+    });
+}
+
+const getTotalImages = () => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT COUNT(*) FROM images';
+        pool.query(query, (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result.rows[0]);
+            }
+        });
+    });
+}
+
+const getTotalVotes = () => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT COUNT(*) FROM have_votes';
+        pool.query(query, (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result.rows[0]);
+            }
+        });
+    });
+}
+
+const getTotalUsers = () => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT COUNT(distinct search_client_name) FROM searches';
+        pool.query(query, (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result.rows[0]);
+            }
+        });
+    });
+}
+
+/*****************************/
 /*searches w/o Images & Votes*/
 /*****************************/
 
@@ -17,14 +93,30 @@ const getAllSearches = (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
 
-    const query = `SELECT s.* FROM searches s ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+    const countQuery = `SELECT COUNT(*) FROM searches`;
+    const dataQuery = `SELECT s.* FROM searches s ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
-    pool.query(query, values, (error, results) => {
+
+    // First get total count
+    pool.query(countQuery, [], (error, countResult) => {
         if (error) {
             response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
+            return;
         }
+        
+        // Then get paginated data
+        pool.query(dataQuery, values, (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                response.status(200).json({
+                    total: parseInt(countResult.rows[0].count),
+                    page,
+                    page_size,
+                    data: results.rows
+                });
+            }
+        })
     })
 }
 
@@ -174,31 +266,43 @@ const getFilteredSearches = async (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    let query;
+    let baseQuery;
 
     // Get all searches
     if (!vote_ids.length && !search_locations.length
         && !years.length && !keyword) {
-        query = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id`;
+        baseQuery = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id`;
     } else { // Get filtered searches
-        query = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id WHERE `;
+        baseQuery = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id WHERE `;
         // Filter test searches
-        query += ` s.search_client_name != 'rowan_scraper_tests' AND `;
-        query += getFilterConditions(keyword, vote_ids, search_locations, years)
+        baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
+        baseQuery += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
-    // Order by descending and paginate
-    query += ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
-    console.log(query);
-
-    pool.query(query, [page_size, offset], async (error, results) => {
+    // Get total count first
+    const countQuery = baseQuery + ` GROUP BY s.search_id`;
+    pool.query(countQuery, [], async (error, countResult) => {
         if (error) {
             response.status(500).json(error);
-        } else {
-            // Get each search's associated images
-            const dataWithImages = await appendImageIds(results.rows);
-            response.status(200).json(dataWithImages);
+            return;
         }
+
+        // Then get paginated data
+        const dataQuery = baseQuery + ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+        pool.query(dataQuery, [page_size, offset], async (error, results) => {
+            if (error) {
+                response.status(500).json(error);
+            } else {
+                // Get each search's associated images
+                const dataWithImages = await appendImageIds(results.rows);
+                response.status(200).json({
+                    total: countResult.rows.length,
+                    page,
+                    page_size,
+                    data: dataWithImages
+                });
+            }
+        });
     });
 }
 
@@ -519,23 +623,50 @@ const getSearchesByTermWithImages = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
+    const page = parseInt(request.query.page) || 1;
+    const page_size = parseInt(request.query.page_size) || 100;
+    const offset = (page-1)*page_size;
+    
     console.log("getSearchesByTermWithImages: ", term);
-    const query =  `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, search_client_name, search_engine_initial, 
-				search_term_initial, search_term_translation, search_engine_translation, COUNT(*) as "total_votes"
-				FROM searches s
+    
+    // First get total count
+    const countQuery = `SELECT COUNT(DISTINCT s.search_id)
+        FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1) GROUP BY s.search_id;`
+        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)`;
+    
+    // Then get paginated data
+    const dataQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
+        search_client_name, search_engine_initial, search_term_initial, search_term_translation, 
+        search_engine_translation, COUNT(*) as "total_votes"
+        FROM searches s
+        LEFT JOIN have_votes hv on s.search_id = hv.search_id
+        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
+        GROUP BY s.search_id
+        ORDER BY s.search_id DESC
+        LIMIT $2 OFFSET $3`;
 
-    const values = [term];
-    console.log('query', query);
-    console.log('values', values);
-    pool.query(query, values, (error, results) => {
+    // First get the total count
+    pool.query(countQuery, [term], (error, countResult) => {
         if (error) {
-            response.status(500).json({error, results});
-        } else {
-            response.status(200).json(results.rows);
+            response.status(500).json({error, results: null});
+            return;
         }
-    })
+
+        // Then get the paginated data
+        pool.query(dataQuery, [term, page_size, offset], (error, results) => {
+            if (error) {
+                response.status(500).json({error, results: null});
+            } else {
+                response.status(200).json({
+                    total: parseInt(countResult.rows[0].count),
+                    page,
+                    page_size,
+                    data: results.rows
+                });
+            }
+        });
+    });
 }
 
 const getImagesByTermWithSearchInfo = (request, response) => {
@@ -584,21 +715,34 @@ const getImages = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    pool.query(`SELECT MAX(image_id) FROM images`, (err, res) => {
-        console.log(err, res)
-        const max_img_id = res.rows[0].max;
-        const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
+    
+    // Get total count first
+    const countQuery = `SELECT COUNT(*) FROM images`;
+    pool.query(countQuery, [], (error, countResult) => {
+        if (error) {
+            response.status(500).json(error);
+            return;
+        }
+
+        // Then get paginated data
+        const dataQuery = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
             i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
             ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
         const values = [page_size, offset];
-        pool.query(query, values, (error, results) => {
+        
+        pool.query(dataQuery, values, (error, results) => {
             if (error) {
                 response.status(500).json(error);
             } else {
-                response.status(200).json(results.rows);
+                response.status(200).json({
+                    total: parseInt(countResult.rows[0].count),
+                    page,
+                    page_size,
+                    data: results.rows
+                });
             }
         })
-    })
+    });
 }
 
 //GET: Image Info Only individual search result (BY search_id)
@@ -1070,7 +1214,9 @@ const saveSearchAndImages = async (request, response) => {
 };
 
 module.exports = {
-	getAllSearches,
+    getAllSearches,
+    getDashboardData,
+    getTotalSearches,
 	getSearchByID,
     getFilteredSearches,
     getImageBinary,

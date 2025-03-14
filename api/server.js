@@ -36,6 +36,11 @@ app.listen(port, () => {
 
 /* Routes */
 
+/* Dashboard Routes */
+app.get('/dashboard', db.getDashboardData)
+app.get('/searches/total', db.getTotalSearches)
+
+
 /* Search Info Only */
 app.get('/searches', db.getAllSearches)
 app.get('/searches/search_id/:search_id', db.getSearchByID)
