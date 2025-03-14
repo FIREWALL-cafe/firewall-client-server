@@ -176,15 +176,18 @@ const appendImageIds = async (searchData) => {
 
 // Builds a filtered search query
 const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
+    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, years);
     const conditions = [];
 
     // Keyword searches
     if (keyword) {
+        console.log("filterCondition: keyword: ", keyword);
         conditions.push(`to_tsvector(s.search_term_initial) @@ plainto_tsquery('${keyword}')`);
     }
 
     // Filter by vote ids
     if (vote_ids.length) {
+        console.log("filterCondition: vote_ids: ", vote_ids);
         if (vote_ids.length > 1) {
             const condition = vote_ids
                 .map(id => ` hv.vote_id = ${id}`)
@@ -209,6 +212,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 
     // Filter by location
     if (filteredLocations.length) {
+        console.log("filterCondition: filteredLocations: ", filteredLocations);
         // Get multiple locations
         if (search_locations.length > 1) {
             let condition = filteredLocations
@@ -238,6 +242,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
     // Filter by year by querying searches that were made between
     // Jan 1 <year> and Jan 1 <year+1>
     if (years.length) {
+        console.log("filterCondition: years: ", years);
         if (years.length > 1) {
             const condition = years
                 .map(year => buildYearCondition(year))
@@ -259,23 +264,29 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 const getFilteredSearches = async (request, response) => {
     console.log("getFilteredSearches: ", request.query);
     let { keyword, vote_ids, search_locations, years } = request.query;
+    console.log("getFilteredSearches: ", keyword, vote_ids, search_locations, years);
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
-    search_locations = extractData(search_locations);
-    years = extractData(years);
+    search_locations = request.query.search_locations ? [search_locations] : [];
+    years = request.query.years ? [extractData(years)] : [];
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
     let baseQuery;
 
     // Get all searches
-    if (!vote_ids.length && !search_locations.length
-        && !years.length && !keyword) {
-        baseQuery = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id`;
+    // Count votes sql
+    // COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id
+
+    if ((vote_ids.length == 0) && (search_locations.length == 0)
+        && (years.length == 0) && !keyword) {
+        console.log("getFilteredSearches: NO FILTERING", years, years.length == 0);
+        baseQuery = `SELECT s.* FROM searches s`;
     } else { // Get filtered searches
-        baseQuery = `SELECT s.*, COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id WHERE `;
+        console.log("getFilteredSearches: WE FILTERING", keyword, vote_ids, search_locations, years);
+        baseQuery = `SELECT s.* FROM searches s WHERE `;
         // Filter test searches
-        baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
+        // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
         baseQuery += getFilterConditions(keyword, vote_ids, search_locations, years)
     }
 
@@ -290,16 +301,18 @@ const getFilteredSearches = async (request, response) => {
         // Then get paginated data
         const dataQuery = baseQuery + ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
         pool.query(dataQuery, [page_size, offset], async (error, results) => {
+            console.log("dataQuery: ", dataQuery);
+            console.log("values: ", [page_size, offset]);
             if (error) {
                 response.status(500).json(error);
             } else {
                 // Get each search's associated images
-                const dataWithImages = await appendImageIds(results.rows);
+                // const dataWithImages = await appendImageIds(results.rows);
                 response.status(200).json({
                     total: countResult.rows.length,
                     page,
                     page_size,
-                    data: dataWithImages
+                    data: results.rows
                 });
             }
         });
