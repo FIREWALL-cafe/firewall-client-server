@@ -272,26 +272,26 @@ const getFilteredSearches = async (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    let baseQuery;
-
+    let baseQuery = `SELECT s.* FROM searches s`;
+    let countQuery = `SELECT COUNT(*) FROM searches s`;
+    
     // Get all searches
     // Count votes sql
     // COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id
-
     if ((vote_ids.length == 0) && (search_locations.length == 0)
         && (years.length == 0) && !keyword) {
-        console.log("getFilteredSearches: NO FILTERING", years, years.length == 0);
-        baseQuery = `SELECT s.* FROM searches s`;
+        console.log("getFilteredSearches:", years, years.length == 0);
     } else { // Get filtered searches
-        console.log("getFilteredSearches: WE FILTERING", keyword, vote_ids, search_locations, years);
-        baseQuery = `SELECT s.* FROM searches s WHERE `;
+        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, years);
         // Filter test searches
         // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
-        baseQuery += getFilterConditions(keyword, vote_ids, search_locations, years)
+        const whereClause = ` WHERE ` + getFilterConditions(keyword, vote_ids, search_locations, years)
+        countQuery += whereClause;
+        baseQuery += whereClause;
     }
 
     // Get total count first
-    const countQuery = baseQuery + ` GROUP BY s.search_id`;
+    // const countQuery = baseQuery + ` GROUP BY s.search_id`;
     pool.query(countQuery, [], async (error, countResult) => {
         if (error) {
             response.status(500).json(error);
@@ -309,7 +309,7 @@ const getFilteredSearches = async (request, response) => {
                 // Get each search's associated images
                 // const dataWithImages = await appendImageIds(results.rows);
                 response.status(200).json({
-                    total: countResult.rows.length,
+                    total: countResult.rows[0].count,
                     page,
                     page_size,
                     data: results.rows
