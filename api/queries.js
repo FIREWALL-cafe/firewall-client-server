@@ -202,12 +202,84 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
     const blacklist = ['miami_beach'];
     const filteredLocations = search_locations.filter(location => !blacklist.includes(location));
 
+    const locationByTimeRange = {
+    'taiwan': {
+        time1: '2022-11-03 08:00:00-00',
+        time2: '2022-11-04 08:00:00-00'
+    },
+    'new_jersey': {
+        time1: '2022-08-31 08:00:00-00',
+        time2: '2022-09-30 08:00:00-00'
+    },
+    'miami_beach': {
+        time1: '2021-10-04 08:00:00-00',
+        time2: '2021-10-06 08:00:00-00'
+    },
+    'asheville': {
+        time1: '2020-01-24 08:00:00-00',
+        time2: '2020-02-25 08:00:00-00'
+    },
+    'poughkeepsie': {
+        time1: '2020-02-26 08:00:00-00',
+        time2: '2020-02-27 08:00:00-00'
+    },
+    'vienna': {
+        time1: '2020-01-10 08:00:00-00',
+        time2: '2020-02-02 08:00:00-00'
+    },
+    'ann_arbor': {
+        time1: '2019-09-21 08:00:00-00',
+        time2: '2019-09-22 08:00:00-00'
+    },
+    'hong_kong': {
+        time1: '2019-01-12 08:00:00-00',
+        time2: '2019-01-24 08:00:00-00'
+    },
+    'oslo': {
+        time1: '2018-05-28 08:00:00-00',
+        time2: '2018-05-29 08:00:00-00'
+    },
+    'nyc_expo_2017': {
+        time1: '2017-09-19 08:00:00-00',
+        time2: '2017-09-19 08:00:00-00'
+    },
+    'oslo_2017': {
+        time1: '2017-05-20 08:00:00-00',
+        time2: '2017-05-24 08:00:00-00'
+    },
+    'serendipity_austria': {
+        time1: '2016-12-03 08:00:00-00',
+        time2: '2016-12-31 08:00:00-00'
+    },
+    'marymount_field_trip': {
+        time1: '2016-02-29 08:00:00-00',
+        time2: '2016-02-29 08:00:00-00'
+    },
+    'hacktivism_roundtable': {
+        time1: '2016-02-26 19:30:00-05',
+        time2: '2016-02-26 21:30:00-05'
+    },
+    'apex_field_trip': {
+        time1: '2016-02-25 16:00:00-05',
+        time2: '2016-03-03 18:00:00-05'
+    },
+    'proxy_pals': {
+        time1: '2016-02-25 20:00:00-05',
+        time2: '2016-02-25 22:00:00-05'
+    },
+    'networked_feminism': {
+        time1: '2016-02-19 19:30:00-05',
+        time2: '2016-02-19 21:30:00-05'
+    },
+    'inaugural_popup': {
+        time1: '2016-02-08 09:00:00-05',
+        time2: '2016-03-06 17:00:00-05'
+    }
+    };
+
     // Approximate missing locations by using timestamps
-    const getApproximatedLocations = () => {
-        // for example, miami_beach searches took place between Oct 1 - 6, 2021
-        const time1 = '2021-10-01 20:00:00-04';
-        const time2 = '2021-10-06 20:00:00-04';
-        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${time1}' AND '${time2}'`;
+    const getApproximatedLocations = (location) => {
+        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`;
     }
 
     // Filter by location
@@ -218,9 +290,11 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             let condition = filteredLocations
                 .map(name => `s.search_location = '${name}'`);
 
-            if (search_locations.includes('miami_beach')) {
-                condition.push(getApproximatedLocations());
-            }
+            search_locations.forEach(location => {
+                if (locationByTimeRange[location]) {
+                    condition.push(getApproximatedLocations(locationByTimeRange[location]));
+                }
+            });
 
             condition = condition.join(' OR ');
             conditions.push(` (${condition})`);
@@ -274,7 +348,7 @@ const getFilteredSearches = async (request, response) => {
     const offset = (page-1)*page_size;
     let baseQuery = `SELECT s.* FROM searches s`;
     let countQuery = `SELECT COUNT(*) FROM searches s`;
-    
+
     // Get all searches
     // Count votes sql
     // COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id
