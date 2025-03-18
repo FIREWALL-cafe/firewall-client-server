@@ -199,8 +199,8 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
     }
 
     // Filter locations that weren't tagged in the postgres db
-    const blacklist = ['miami_beach'];
-    const filteredLocations = search_locations.filter(location => !blacklist.includes(location));
+    const syntheticLocations = ['miami_beach', 'taiwan', 'new_jersey'];
+    const filteredLocations = search_locations.filter(location => !syntheticLocations.includes(location));
 
     const locationByTimeRange = {
     'taiwan': {
@@ -279,6 +279,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 
     // Approximate missing locations by using timestamps
     const getApproximatedLocations = (location) => {
+        console.log("getApproximatedLocations: ", search_locations, location);
         return `to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`;
     }
 
@@ -300,11 +301,16 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             conditions.push(` (${condition})`);
         } else {
             // Get single location
+            console.log("filterCondition: single location", filteredLocations);
             conditions.push(` s.search_location = '${filteredLocations[0]}'`);
         }
     } else if (!filteredLocations.length && search_locations.length) {
         // Get locations that are not in the postgres
-        conditions.push(getApproximatedLocations());
+        search_locations.forEach(location => {
+            if (locationByTimeRange[location]) {
+                conditions.push(getApproximatedLocations(locationByTimeRange[location]));
+            }
+        });
     }
 
     // Create condition to filter for searches by year
@@ -338,7 +344,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
 const getFilteredSearches = async (request, response) => {
     console.log("getFilteredSearches: ", request.query);
     let { keyword, vote_ids, search_locations, years } = request.query;
-    console.log("getFilteredSearches: ", keyword, vote_ids, search_locations, years);
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
     search_locations = request.query.search_locations ? [search_locations] : [];
