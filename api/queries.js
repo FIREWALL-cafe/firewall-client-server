@@ -298,6 +298,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             });
 
             condition = condition.join(' OR ');
+            condition += ` AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
             conditions.push(` (${condition})`);
         } else {
             // Get single location
