@@ -346,7 +346,16 @@ const getFilteredSearches = async (request, response) => {
     let { keyword, vote_ids, search_locations, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
-    search_locations = request.query.search_locations ? [search_locations] : [];
+    if (getType(request.query.search_locations) === 'string') {
+        console.log("search_locations is a string");
+        search_locations = [search_locations];
+    } else if (getType(request.query.search_locations) === 'array') {
+        console.log("search_locations is an array");
+        search_locations = request.query.search_locations;
+    } else {
+        console.log("search_locations is not a string or array");
+        search_locations = [];
+    }
     years = request.query.years ? [extractData(years)] : [];
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
@@ -1304,6 +1313,13 @@ const saveSearchAndImages = async (request, response) => {
 
     response.status(201).json({ searchId });
 };
+
+function getType(value) {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return 'array';
+    if (value instanceof Date) return 'date';
+    return typeof value;
+}
 
 module.exports = {
     getAllSearches,
