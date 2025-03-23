@@ -225,7 +225,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
     },
     'vienna': {
         time1: '2020-01-10 08:00:00-00',
-        time2: '2020-02-02 08:00:00-00'
+        time2: '2020-01-23 08:00:00-00'
     },
     'ann_arbor': {
         time1: '2019-09-21 08:00:00-00',
