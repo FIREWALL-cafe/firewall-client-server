@@ -285,7 +285,10 @@ const getFilteredSearches = async (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    let baseQuery = `SELECT s.* FROM searches s`;
+    let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
+        search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code, search_term_translation, 
+        search_engine_translation, COUNT(*) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id`;
+    
     let countQuery = `SELECT COUNT(*) FROM searches s`;
 
     // Get all searches
@@ -684,12 +687,13 @@ const getSearchesByTermWithImages = (request, response) => {
             if (error) {
                 response.status(500).json({error, results: null});
             } else {
-                response.status(200).json({
+                const data = {
                     total: parseInt(countResult.rows[0].count),
                     page,
                     page_size,
                     data: results.rows
-                });
+                }
+                response.status(200).json(data);
             }
         });
     });
