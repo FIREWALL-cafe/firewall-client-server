@@ -4,6 +4,7 @@ const { query } = require('express');
 const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
+const locationByTimeRange = require('./location-time-ranges.js');
 
 const {Worker} = require('worker_threads');
 
@@ -202,81 +203,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
     const syntheticLocations = ['miami_beach', 'taiwan', 'new_jersey'];
     const filteredLocations = search_locations.filter(location => !syntheticLocations.includes(location));
 
-    const locationByTimeRange = {
-    'taiwan': {
-        time1: '2022-11-03 08:00:00-00',
-        time2: '2022-11-04 08:00:00-00'
-    },
-    'new_jersey': {
-        time1: '2022-08-31 08:00:00-00',
-        time2: '2022-09-30 08:00:00-00'
-    },
-    'miami_beach': {
-        time1: '2021-10-04 08:00:00-00',
-        time2: '2021-10-06 08:00:00-00'
-    },
-    'asheville': {
-        time1: '2020-01-24 08:00:00-00',
-        time2: '2020-02-25 08:00:00-00'
-    },
-    'poughkeepsie': {
-        time1: '2020-02-26 08:00:00-00',
-        time2: '2020-02-27 08:00:00-00'
-    },
-    'vienna': {
-        time1: '2020-01-10 08:00:00-00',
-        time2: '2020-01-23 08:00:00-00'
-    },
-    'ann_arbor': {
-        time1: '2019-09-21 08:00:00-00',
-        time2: '2019-09-22 08:00:00-00'
-    },
-    'hong_kong': {
-        time1: '2019-01-12 08:00:00-00',
-        time2: '2019-01-24 08:00:00-00'
-    },
-    'oslo': {
-        time1: '2018-05-28 08:00:00-00',
-        time2: '2018-05-29 08:00:00-00'
-    },
-    'nyc_expo_2017': {
-        time1: '2017-09-19 08:00:00-00',
-        time2: '2017-09-19 08:00:00-00'
-    },
-    'oslo_2017': {
-        time1: '2017-05-20 08:00:00-00',
-        time2: '2017-05-24 08:00:00-00'
-    },
-    'serendipity_austria': {
-        time1: '2016-12-03 08:00:00-00',
-        time2: '2016-12-31 08:00:00-00'
-    },
-    'marymount_field_trip': {
-        time1: '2016-02-29 08:00:00-00',
-        time2: '2016-02-29 08:00:00-00'
-    },
-    'hacktivism_roundtable': {
-        time1: '2016-02-26 19:30:00-05',
-        time2: '2016-02-26 21:30:00-05'
-    },
-    'apex_field_trip': {
-        time1: '2016-02-25 16:00:00-05',
-        time2: '2016-03-03 18:00:00-05'
-    },
-    'proxy_pals': {
-        time1: '2016-02-25 20:00:00-05',
-        time2: '2016-02-25 22:00:00-05'
-    },
-    'networked_feminism': {
-        time1: '2016-02-19 19:30:00-05',
-        time2: '2016-02-19 21:30:00-05'
-    },
-    'inaugural_popup': {
-        time1: '2016-02-08 09:00:00-05',
-        time2: '2016-03-06 17:00:00-05'
-    }
-    };
-
     // Approximate missing locations by using timestamps
     const getApproximatedLocations = (location) => {
         console.log("getApproximatedLocations: ", search_locations, location);
@@ -348,10 +274,8 @@ const getFilteredSearches = async (request, response) => {
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
     if (getType(request.query.search_locations) === 'string') {
-        console.log("search_locations is a string");
         search_locations = [search_locations];
     } else if (getType(request.query.search_locations) === 'array') {
-        console.log("search_locations is an array");
         search_locations = request.query.search_locations;
     } else {
         console.log("search_locations is not a string or array");

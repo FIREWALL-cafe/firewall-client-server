@@ -44,7 +44,6 @@ app.get('/searches/total', db.getTotalSearches)
 /* Search Info Only */
 app.get('/searches', db.getAllSearches)
 app.get('/searches/search_id/:search_id', db.getSearchByID)
-app.get('/searches/filter', db.getFilteredSearches)
 
 /* Searches & Image Info */
 app.get('/searches/images', db.getImagesWithSearch)
@@ -65,6 +64,9 @@ app.get('/searches/votes/wtf_searches', db.getWTFSearches)
 /* Searches With Vote Counts */
 app.get('/searches/votecounts', db.getAllSearchesWithVoteCounts)
 app.get('/searches/:search_id/votecounts', db.getSearchWithVoteCountsBySearchId)
+
+/* Query searches by filters: location, vote, year, and term */
+app.get('/searches/filter', db.getFilteredSearches)
 
 /* Query searches by search term */
 app.get('/searches/terms', db.getSearchesByTermWithImages)
