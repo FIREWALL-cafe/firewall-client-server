@@ -287,13 +287,12 @@ const getFilteredSearches = async (request, response) => {
     const offset = (page-1)*page_size;
     let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
         search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code, search_term_translation, 
-        search_engine_translation, COUNT(*) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id`;
+        search_engine_translation, COUNT(hv.vote_id) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id`;
     
     let countQuery = `SELECT COUNT(*) FROM searches s`;
 
     // Get all searches
     // Count votes sql
-    // COUNT(hv.*) as "total_votes" FROM searches s LEFT JOIN have_votes hv ON s.search_id = hv.search_id
     if ((vote_ids.length == 0) && (search_locations.length == 0)
         && (years.length == 0) && !keyword) {
         console.log("getFilteredSearches:", years, years.length == 0);
@@ -667,7 +666,7 @@ const getSearchesByTermWithImages = (request, response) => {
     // Then get paginated data
     const dataQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
         search_client_name, search_engine_initial, search_term_initial, search_term_translation, 
-        search_engine_translation, COUNT(*) as "total_votes"
+        search_engine_translation, COUNT(hv.vote_id) as "total_votes"
         FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
         WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
