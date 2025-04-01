@@ -938,20 +938,35 @@ const deleteSearch = async (request, response) => {
 
 //POST: createVote -- Add searches
 const createVote = (request, response) => {
-	const { vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
-  console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
+    const { vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address} = request.body
+    console.log("createVote:", vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address)
 
-  const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
-  const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
+    const query = 'INSERT INTO have_votes (vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address) VALUES ($1, $2, $3, $4, $5)';
+    const values = [ vote_id, search_id, vote_timestamp, vote_client_name, vote_ip_address];
 
-	pool.query(query, values, (error, results) => {
+	pool.query(query, values, (error, insertResults) => {
         if (error) {
             response.status(500).json(error);
         } else {
-            response.status(201).json(results.rows);
-            return results.rows;
+            console.log("createVote insertResults:", insertResults.rows);
         }
-	})
+        
+        const countQuery = `SELECT hv.vote_id, v.vote_name, COUNT(hv.vote_id) as vote_count FROM votes v
+                                LEFT JOIN have_votes hv ON v.vote_id = hv.vote_id AND hv.search_id = $1
+                                WHERE v.vote_id = $2
+                            GROUP BY hv.vote_id, v.vote_name
+                            ORDER BY v.vote_name`;
+        pool.query(countQuery, [search_id, vote_id], async (error, countResults) => {
+            if (error) {
+                console.log("createVote countQuery error:", error);
+                response.status(500).json(error);
+            } else {
+                console.log("createVote countResults:", countResults.rows[0]);
+                response.status(201).json(countResults.rows[0]);
+                return countResults.rows[0];
+            }
+        });
+    })
 }
 
 const updateImageUrl = (request, response) => {
@@ -1250,6 +1265,31 @@ function getType(value) {
     return typeof value;
 }
 
+const getVoteCountsBySearchId = (request, response) => {
+    console.log("getVoteCountsBySearchId", request.params.search_id);
+    const search_id = parseInt(request.params.search_id);
+    
+    const query = `
+        SELECT 
+            v.vote_name,
+            COUNT(hv.vote_id) as vote_count
+        FROM votes v
+        LEFT JOIN have_votes hv ON v.vote_id = hv.vote_id AND hv.search_id = $1
+        GROUP BY v.vote_name
+        ORDER BY v.vote_name
+    `;
+    
+    const values = [search_id];
+
+    pool.query(query, values, (error, results) => {
+        if (error) {
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
 module.exports = {
     getAllSearches,
     getDashboardData,
@@ -1297,4 +1337,5 @@ module.exports = {
     saveImagesEndpoint,
     saveSearchAndImages,
     saveImagesToWordpress,
+    getVoteCountsBySearchId,
 }

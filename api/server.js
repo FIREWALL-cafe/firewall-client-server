@@ -53,6 +53,7 @@ app.get('/searches/images/search_id/:search_id', db.getImagesAndSearchBySearchID
 app.get('/searches/votes', db.getAllVotes)
 app.get('/searches/votes/search_id/:search_id', db.getVoteBySearchID)
 app.get('/searches/votes/vote_id/:vote_id', db.getVoteByVoteID)
+app.get('/searches/votes/counts/:search_id', db.getVoteCountsBySearchId)
 app.get('/searches/votes/censored_searches', db.getCensoredSearches)
 app.get('/searches/votes/uncensored_searches', db.getUncensoredSearches)
 app.get('/searches/votes/bad_translation_searches', db.getBadTranslationSearches)
