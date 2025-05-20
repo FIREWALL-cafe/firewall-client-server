@@ -224,7 +224,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             });
 
             condition = condition.join(' OR ');
-            condition += ` AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
             conditions.push(` (${condition})`);
         } else {
             // Get single location
@@ -239,7 +238,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             }
         });
     }
-
     // Create condition to filter for searches by year
     const buildYearCondition = (year) => {
         const parsedYear = parseInt(year);
@@ -287,12 +285,12 @@ const getFilteredSearches = async (request, response) => {
     const offset = (page-1)*page_size;
     let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
         search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code, search_term_translation, 
-        search_engine_translation, COUNT(hv.vote_id) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id`;
+        search_engine_translation, COUNT(hv.vote_id) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id
+        WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
     
-    let countQuery = `SELECT COUNT(*) FROM searches s`;
+    let countQuery = `SELECT COUNT(*) FROM searches s WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
 
     // Get all searches
-    // Count votes sql
     if ((vote_ids.length == 0) && (search_locations.length == 0)
         && (years.length == 0) && !keyword) {
         console.log("getFilteredSearches:", years, years.length == 0);
@@ -300,13 +298,12 @@ const getFilteredSearches = async (request, response) => {
         console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, years);
         // Filter test searches
         // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
-        const whereClause = ` WHERE ` + getFilterConditions(keyword, vote_ids, search_locations, years)
-        countQuery += whereClause;
-        baseQuery += whereClause;
+        const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, years);
+        countQuery += conditionClause;
+        baseQuery += conditionClause;
     }
 
     // Get total count first
-    // const countQuery = baseQuery + ` GROUP BY s.search_id`;
     pool.query(countQuery, [], async (error, countResult) => {
         if (error) {
             response.status(500).json(error);
@@ -661,7 +658,8 @@ const getSearchesByTermWithImages = (request, response) => {
     const countQuery = `SELECT COUNT(DISTINCT s.search_id)
         FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)`;
+        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
+          AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
     
     // Then get paginated data
     const dataQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
@@ -670,6 +668,7 @@ const getSearchesByTermWithImages = (request, response) => {
         FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
         WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
+        AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'
         GROUP BY s.search_id
         ORDER BY s.search_id DESC
         LIMIT $2 OFFSET $3`;
@@ -1244,15 +1243,6 @@ const saveSearchAndImages = async (request, response) => {
         });
         console.log('image urls sent to worker');
     }
-
-    // let imageResults;
-    // try {
-    //     imageResults = Promise.all(imagePromises);
-    //     console.log(`[saved images for ${search_engine} ${searchId}]`);
-    // } catch (error) {
-    //     response.status(500).json(error);
-    //     return;
-    // }
 
     response.status(201).json({ searchId });
 };
