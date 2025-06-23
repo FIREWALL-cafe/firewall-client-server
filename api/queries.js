@@ -85,6 +85,300 @@ const getTotalUsers = () => {
 }
 
 /*****************************/
+/*Analytics Routes*/
+/*****************************/
+
+const getGeographicAnalytics = (request, response) => {
+    const query = `
+        SELECT 
+            search_location as location,
+            COUNT(*) as search_count,
+            ROUND(
+                (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_location IS NOT NULL AND search_location != 'automated_scraper' AND search_location != 'nyc3')), 
+                1
+            ) as percentage
+        FROM searches 
+        WHERE search_location IS NOT NULL 
+        AND search_location != 'automated_scraper'
+        AND search_location != 'nyc3'
+        GROUP BY search_location 
+        ORDER BY search_count DESC 
+        LIMIT 15
+    `;
+    
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('Geographic analytics query error:', error);
+            response.status(500).json(error);
+        } else {
+            console.log('Geographic analytics results:', results.rows.length, 'locations');
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
+const getSearchAnalytics = async (request, response) => {
+    try {
+        // Execute all queries in parallel
+        const [searchVolumeResult, topTermsResult, languagesResult, searchEnginesResult] = await Promise.all([
+            // Search volume over the last 30 days
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        DATE(TO_TIMESTAMP(search_timestamp::bigint / 1000)) as search_date,
+                        COUNT(*) as search_count
+                    FROM searches 
+                    WHERE search_location != 'automated_scraper' 
+                    AND search_location != 'nyc3'
+                    AND TO_TIMESTAMP(search_timestamp::bigint / 1000) >= NOW() - INTERVAL '30 days'
+                    GROUP BY DATE(TO_TIMESTAMP(search_timestamp::bigint / 1000))
+                    ORDER BY search_date DESC
+                    LIMIT 30
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            }),
+
+            // Top 10 search terms
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        search_term_initial as term,
+                        COUNT(*) as search_count
+                    FROM searches 
+                    WHERE search_location != 'automated_scraper' 
+                    AND search_location != 'nyc3'
+                    AND search_term_initial IS NOT NULL
+                    AND search_term_initial != ''
+                    GROUP BY search_term_initial 
+                    ORDER BY search_count DESC 
+                    LIMIT 10
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            }),
+
+            // Language distribution
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        COALESCE(search_term_initial_language_code, 'unknown') as language,
+                        COUNT(*) as search_count,
+                        ROUND(
+                            (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_location != 'automated_scraper' AND search_location != 'nyc3')), 
+                            1
+                        ) as percentage
+                    FROM searches 
+                    WHERE search_location != 'automated_scraper' 
+                    AND search_location != 'nyc3'
+                    GROUP BY search_term_initial_language_code 
+                    ORDER BY search_count DESC
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            }),
+
+            // Search engine usage
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        search_engine_initial as engine,
+                        COUNT(*) as search_count,
+                        ROUND(
+                            (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_location != 'automated_scraper' AND search_location != 'nyc3')), 
+                            1
+                        ) as percentage
+                    FROM searches 
+                    WHERE search_location != 'automated_scraper' 
+                    AND search_location != 'nyc3'
+                    AND search_engine_initial IS NOT NULL
+                    GROUP BY search_engine_initial 
+                    ORDER BY search_count DESC
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            })
+        ]);
+
+        const analyticsData = {
+            searchVolume: searchVolumeResult,
+            topTerms: topTermsResult,
+            languages: languagesResult,
+            searchEngines: searchEnginesResult
+        };
+
+        console.log('Search analytics results:', {
+            searchVolume: searchVolumeResult.length,
+            topTerms: topTermsResult.length,
+            languages: languagesResult.length,
+            searchEngines: searchEnginesResult.length
+        });
+
+        response.status(200).json(analyticsData);
+    } catch (error) {
+        console.error('Search analytics query error:', error);
+        response.status(500).json(error);
+    }
+}
+
+const getVoteAnalytics = async (request, response) => {
+    try {
+        // Vote categories mapping based on existing code
+        const voteCategories = [
+            { id: 1, name: 'Censored', color: '#ef4444' },
+            { id: 2, name: 'Uncensored', color: '#22c55e' },
+            { id: 3, name: 'Bad Translation', color: '#f97316' },
+            { id: 4, name: 'Good Translation', color: '#3b82f6' },
+            { id: 5, name: 'Lost in Translation', color: '#8b5cf6' },
+            { id: 6, name: 'NSFW', color: '#ec4899' },
+            { id: 7, name: 'WTF', color: '#6b7280' }
+        ];
+
+        // Execute all queries in parallel
+        const [voteCategoryResult, voteTimelineResult, topVotedSearchesResult] = await Promise.all([
+            // Vote category breakdown
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        vote_id,
+                        COUNT(*) as vote_count
+                    FROM have_votes hv
+                    JOIN searches s ON hv.search_id = s.search_id
+                    WHERE s.search_location != 'automated_scraper' 
+                    AND s.search_location != 'nyc3'
+                    GROUP BY vote_id 
+                    ORDER BY vote_id
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            }),
+
+            // Vote timeline over last 30 days
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        DATE(TO_TIMESTAMP(s.search_timestamp::bigint / 1000)) as vote_date,
+                        COUNT(*) as vote_count
+                    FROM have_votes hv
+                    JOIN searches s ON hv.search_id = s.search_id
+                    WHERE s.search_location != 'automated_scraper' 
+                    AND s.search_location != 'nyc3'
+                    AND TO_TIMESTAMP(s.search_timestamp::bigint / 1000) >= NOW() - INTERVAL '30 days'
+                    GROUP BY DATE(TO_TIMESTAMP(s.search_timestamp::bigint / 1000))
+                    ORDER BY vote_date DESC
+                    LIMIT 30
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            }),
+
+            // Top voted searches (most controversial)
+            new Promise((resolve, reject) => {
+                const query = `
+                    SELECT 
+                        s.search_term_initial,
+                        COUNT(hv.vote_id) as total_votes,
+                        s.search_location
+                    FROM searches s
+                    JOIN have_votes hv ON s.search_id = hv.search_id
+                    WHERE s.search_location != 'automated_scraper' 
+                    AND s.search_location != 'nyc3'
+                    AND s.search_term_initial IS NOT NULL
+                    GROUP BY s.search_id, s.search_term_initial, s.search_location
+                    ORDER BY total_votes DESC
+                    LIMIT 10
+                `;
+                pool.query(query, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result.rows);
+                });
+            })
+        ]);
+
+        // Process vote categories with names and percentages
+        const totalVotes = voteCategoryResult.reduce((sum, vote) => sum + parseInt(vote.vote_count), 0);
+        const voteCategories_processed = voteCategories.map(category => {
+            const voteData = voteCategoryResult.find(v => parseInt(v.vote_id) === category.id);
+            const count = voteData ? parseInt(voteData.vote_count) : 0;
+            const percentage = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(1) : '0.0';
+            
+            return {
+                ...category,
+                count,
+                percentage: parseFloat(percentage)
+            };
+        });
+
+        const analyticsData = {
+            voteCategories: voteCategories_processed,
+            voteTimeline: voteTimelineResult,
+            topVotedSearches: topVotedSearchesResult,
+            totalVotes
+        };
+
+        console.log('Vote analytics results:', {
+            voteCategories: voteCategories_processed.length,
+            voteTimeline: voteTimelineResult.length,
+            topVotedSearches: topVotedSearchesResult.length,
+            totalVotes
+        });
+
+        response.status(200).json(analyticsData);
+    } catch (error) {
+        console.error('Vote analytics query error:', error);
+        response.status(500).json(error);
+    }
+}
+
+const getRecentActivity = (request, response) => {
+    const query = `
+        SELECT 
+            s.search_id,
+            s.search_timestamp,
+            s.search_location,
+            s.search_client_name,
+            s.search_term_initial,
+            s.search_term_translation,
+            s.search_term_initial_language_code,
+            s.search_engine_initial,
+            COUNT(hv.vote_id) as vote_count
+        FROM searches s
+        LEFT JOIN have_votes hv ON s.search_id = hv.search_id
+        WHERE s.search_location != 'automated_scraper' 
+        AND s.search_location != 'nyc3'
+        AND s.search_term_initial IS NOT NULL
+        AND s.search_term_initial != ''
+        GROUP BY s.search_id, s.search_timestamp, s.search_location, 
+                 s.search_client_name, s.search_term_initial, s.search_term_translation,
+                 s.search_term_initial_language_code, s.search_engine_initial
+        ORDER BY s.search_timestamp DESC 
+        LIMIT 20
+    `;
+    
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('Recent activity query error:', error);
+            response.status(500).json(error);
+        } else {
+            console.log('Recent activity results:', results.rows.length, 'searches');
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
+/*****************************/
 /*searches w/o Images & Votes*/
 /*****************************/
 
@@ -1327,4 +1621,8 @@ module.exports = {
     saveSearchAndImages,
     saveImagesToWordpress,
     getVoteCountsBySearchId,
+    getGeographicAnalytics,
+    getSearchAnalytics,
+    getVoteAnalytics,
+    getRecentActivity,
 }
