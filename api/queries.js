@@ -353,6 +353,7 @@ const getRecentActivity = (request, response) => {
             s.search_term_translation,
             s.search_term_initial_language_code,
             s.search_engine_initial,
+            s.search_ip_address,
             COUNT(hv.vote_id) as vote_count
         FROM searches s
         LEFT JOIN have_votes hv ON s.search_id = hv.search_id
@@ -362,7 +363,7 @@ const getRecentActivity = (request, response) => {
         AND s.search_term_initial != ''
         GROUP BY s.search_id, s.search_timestamp, s.search_location, 
                  s.search_client_name, s.search_term_initial, s.search_term_translation,
-                 s.search_term_initial_language_code, s.search_engine_initial
+                 s.search_term_initial_language_code, s.search_engine_initial, s.search_ip_address
         ORDER BY s.search_timestamp DESC 
         LIMIT 20
     `;
@@ -373,6 +374,38 @@ const getRecentActivity = (request, response) => {
             response.status(500).json(error);
         } else {
             console.log('Recent activity results:', results.rows.length, 'searches');
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
+const getIPDistribution = (request, response) => {
+    const query = `
+        SELECT 'search' as type, search_ip_address as ip_address, search_timestamp as timestamp
+        FROM searches 
+        WHERE search_ip_address IS NOT NULL 
+        AND search_location != 'automated_scraper' 
+        AND search_location != 'nyc3'
+        
+        UNION ALL
+        
+        SELECT 'vote' as type, hv.vote_ip_address as ip_address, hv.vote_timestamp as timestamp
+        FROM have_votes hv
+        JOIN searches s ON hv.search_id = s.search_id
+        WHERE hv.vote_ip_address IS NOT NULL
+        AND s.search_location != 'automated_scraper' 
+        AND s.search_location != 'nyc3'
+        
+        ORDER BY timestamp DESC
+        LIMIT 1000
+    `;
+    
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('IP distribution query error:', error);
+            response.status(500).json(error);
+        } else {
+            console.log('IP distribution results:', results.rows.length, 'records');
             response.status(200).json(results.rows);
         }
     });
@@ -1625,4 +1658,5 @@ module.exports = {
     getSearchAnalytics,
     getVoteAnalytics,
     getRecentActivity,
+    getIPDistribution,
 }

@@ -45,6 +45,7 @@ app.get('/analytics/geographic', db.getGeographicAnalytics)
 app.get('/analytics/searches', db.getSearchAnalytics)
 app.get('/analytics/votes', db.getVoteAnalytics)
 app.get('/analytics/recent-activity', db.getRecentActivity)
+app.get('/analytics/ip-distribution', db.getIPDistribution)
 
 
 /* Search Info Only */
