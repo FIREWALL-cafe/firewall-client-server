@@ -1500,6 +1500,7 @@ const saveSearchAndImages = async (request, response) => {
         timestamp,
         location,
         search_client_name,
+        search_ip_address,
         secret,
         search_engine,
         search,
@@ -1515,10 +1516,12 @@ const saveSearchAndImages = async (request, response) => {
         sensitive,
     } = request.body;
     console.log(`[saveSearchAndImages for ${search_engine}]`);
+    console.log(`[IP address received: ${search_ip_address}]`);
 
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
         search_client_name,
+        search_ip_address,
         search_engine_initial,
         search_engine_translation,
         search_term_initial,
@@ -1528,12 +1531,13 @@ const saveSearchAndImages = async (request, response) => {
         search_term_status_sensitive,
         search_location
     ) VALUES (
-        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8, $9, $10
+        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9, $10, $11
     ) RETURNING search_id`;
 
     const searchValues = [
         timestamp,
         search_client_name,
+        search_ip_address,
         search_engine,
         search_engine === 'google' ? 'baidu' : 'google',
         search,
