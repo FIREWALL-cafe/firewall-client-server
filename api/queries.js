@@ -5,8 +5,40 @@ const config = require('./config.js')
 const {pool,secret} = config
 const space = require('./spaces-interface.js')
 const locationByTimeRange = require('./location-time-ranges.js');
+const ipGeolocationService = require('./services/ipGeolocation');
 
 const {Worker} = require('worker_threads');
+
+/*****************************/
+/* Helper Functions          */
+/*****************************/
+
+/**
+ * Detects the language of a search term and returns the appropriate PostgreSQL text search configuration
+ * @param {string} term - The search term to analyze
+ * @returns {string} - The PostgreSQL text search configuration ('simple' for Chinese/Japanese/Korean, 'english' for others)
+ */
+const getSearchConfig = (term) => {
+    if (!term) return 'simple';
+    
+    // Check for Chinese characters (CJK Unified Ideographs)
+    const hasChinese = /[\u4e00-\u9fff]/.test(term);
+    
+    // Check for Japanese characters (Hiragana, Katakana)
+    const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff]/.test(term);
+    
+    // Check for Korean characters (Hangul)
+    const hasKorean = /[\uac00-\ud7af\u1100-\u11ff]/.test(term);
+    
+    // Use 'simple' configuration for CJK languages, 'english' for others
+    if (hasChinese || hasJapanese || hasKorean) {
+        console.log(`Using 'simple' search config for CJK term: ${term}`);
+        return 'simple';
+    }
+    
+    console.log(`Using 'english' search config for term: ${term}`);
+    return 'english';
+};
 
 /*****************************/
 /*Dashboard Routes*/
@@ -89,19 +121,19 @@ const getTotalUsers = () => {
 /*****************************/
 
 const getGeographicAnalytics = (request, response) => {
-    const query = `
+    // First try IP-based geographic data
+    let query = `
         SELECT 
-            search_location as location,
+            search_country as location,
+            search_country_code as country_code,
             COUNT(*) as search_count,
             ROUND(
-                (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_location IS NOT NULL AND search_location != 'automated_scraper' AND search_location != 'nyc3')), 
+                (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_country IS NOT NULL)), 
                 1
             ) as percentage
         FROM searches 
-        WHERE search_location IS NOT NULL 
-        AND search_location != 'automated_scraper'
-        AND search_location != 'nyc3'
-        GROUP BY search_location 
+        WHERE search_country IS NOT NULL
+        GROUP BY search_country, search_country_code
         ORDER BY search_count DESC 
         LIMIT 15
     `;
@@ -111,7 +143,62 @@ const getGeographicAnalytics = (request, response) => {
             console.error('Geographic analytics query error:', error);
             response.status(500).json(error);
         } else {
-            console.log('Geographic analytics results:', results.rows.length, 'locations');
+            // If no IP-based data, fall back to location-based
+            if (results.rows.length === 0) {
+                const fallbackQuery = `
+                    SELECT 
+                        search_location as location,
+                        COUNT(*) as search_count,
+                        ROUND(
+                            (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_location IS NOT NULL AND search_location != 'automated_scraper' AND search_location != 'nyc3')), 
+                            1
+                        ) as percentage
+                    FROM searches 
+                    WHERE search_location IS NOT NULL 
+                    AND search_location != 'automated_scraper'
+                    AND search_location != 'nyc3'
+                    GROUP BY search_location 
+                    ORDER BY search_count DESC 
+                    LIMIT 15
+                `;
+                
+                pool.query(fallbackQuery, (error, fallbackResults) => {
+                    if (error) {
+                        response.status(500).json(error);
+                    } else {
+                        response.status(200).json(fallbackResults.rows);
+                    }
+                });
+            } else {
+                response.status(200).json(results.rows);
+            }
+        }
+    });
+}
+
+const getUSStatesAnalytics = (request, response) => {
+    // Query US states data from search_region field
+    const query = `
+        SELECT 
+            search_region as state,
+            COUNT(*) as search_count,
+            ROUND(
+                (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM searches WHERE search_country = 'United States' AND search_region IS NOT NULL)), 
+                1
+            ) as percentage
+        FROM searches 
+        WHERE search_country = 'United States' 
+        AND search_region IS NOT NULL
+        AND search_region != ''
+        GROUP BY search_region
+        ORDER BY search_count DESC
+    `;
+    
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('US States analytics query error:', error);
+            response.status(500).json(error);
+        } else {
             response.status(200).json(results.rows);
         }
     });
@@ -981,21 +1068,48 @@ const getSearchesByTermWithImages = (request, response) => {
     
     console.log("getSearchesByTermWithImages: ", term);
     
-    // First get total count
-    const countQuery = `SELECT COUNT(DISTINCT s.search_id)
-        FROM searches s
-        LEFT JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
-          AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
+    // Detect if the search term contains CJK characters
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/.test(term);
     
-    // Then get paginated data
-    const dataQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
-        search_client_name, search_engine_initial, search_term_initial, search_term_translation, 
-        search_engine_translation, COUNT(hv.vote_id) as "total_votes"
+    // Build WHERE clause based on language detection
+    // Search only in search_term_initial and filter by the appropriate language code
+    let whereClause;
+    if (hasCJK) {
+        // CJK input: search for Chinese/Japanese/Korean original searches
+        console.log(`Searching for CJK original searches: ${term}`);
+        whereClause = `(
+            s.search_term_initial LIKE '%' || $1 || '%'
+            AND s.search_term_initial_language_code IN ('zh', 'ja', 'ko')
+        )`;
+    } else {
+        // English input: search for English original searches
+        console.log(`Searching for English original searches: ${term}`);
+        whereClause = `(
+            (to_tsvector('english', COALESCE(s.search_term_initial, '')) @@ plainto_tsquery('english', $1)
+             OR s.search_term_initial ILIKE '%' || $1 || '%')
+            AND s.search_term_initial_language_code = 'en'
+        )`;
+    }
+    
+    // Common filter for excluding automated data
+    const excludeFilter = `AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
+    
+    // Build queries using common components
+    const countQuery = `
+        SELECT COUNT(DISTINCT s.search_id)
         FROM searches s
         LEFT JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1)
-        AND s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'
+        WHERE ${whereClause}
+        ${excludeFilter}`;
+    
+    const dataQuery = `
+        SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
+            search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code,
+            search_term_translation, search_engine_translation, COUNT(hv.vote_id) as "total_votes"
+        FROM searches s
+        LEFT JOIN have_votes hv on s.search_id = hv.search_id
+        WHERE ${whereClause}
+        ${excludeFilter}
         GROUP BY s.search_id
         ORDER BY s.search_id DESC
         LIMIT $2 OFFSET $3`;
@@ -1003,6 +1117,7 @@ const getSearchesByTermWithImages = (request, response) => {
     // First get the total count
     pool.query(countQuery, [term], (error, countResult) => {
         if (error) {
+            console.error('Count query error:', error);
             response.status(500).json({error, results: null});
             return;
         }
@@ -1010,6 +1125,7 @@ const getSearchesByTermWithImages = (request, response) => {
         // Then get the paginated data
         pool.query(dataQuery, [term, page_size, offset], (error, results) => {
             if (error) {
+                console.error('Data query error:', error);
                 response.status(500).json({error, results: null});
             } else {
                 const data = {
@@ -1031,17 +1147,44 @@ const getImagesByTermWithSearchInfo = (request, response) => {
         response.status(401).json("term not defined")
         return
     }
-    const query =  `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
-        s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
-        s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href,
-        i.image_href_original, i.image_id
-        FROM searches s
-        FULL OUTER JOIN images i
-        ON s.search_id = i.search_id
-        WHERE to_tsvector(s.search_term_initial) @@ plainto_tsquery($1);`
+    
+    // Detect if the search term contains CJK characters
+    const hasCJK = /[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/.test(term);
+    
+    let query;
+    
+    if (hasCJK) {
+        // For CJK text, use LIKE pattern matching
+        console.log(`Using LIKE pattern matching for CJK term in images query: ${term}`);
+        query = `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
+            s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
+            s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href,
+            i.image_href_original, i.image_id
+            FROM searches s
+            FULL OUTER JOIN images i
+            ON s.search_id = i.search_id
+            WHERE s.search_term_translation LIKE '%' || $1 || '%'
+               OR s.search_term_initial LIKE '%' || $1 || '%';`
+    } else {
+        // For English text, use hybrid approach
+        console.log(`Using hybrid search for English term in images query: ${term}`);
+        query = `SELECT s.search_id, s.search_timestamp, s.search_client_name, 
+            s.search_engine_initial, s.search_engine_translation, s.search_term_initial, 
+            s.search_term_translation, i.image_search_engine, i.image_rank, i.image_href,
+            i.image_href_original, i.image_id
+            FROM searches s
+            FULL OUTER JOIN images i
+            ON s.search_id = i.search_id
+            WHERE to_tsvector('english', COALESCE(s.search_term_initial, '')) @@ plainto_tsquery('english', $1)
+               OR to_tsvector('english', COALESCE(s.search_term_translation, '')) @@ plainto_tsquery('english', $1)
+               OR s.search_term_initial ILIKE '%' || $1 || '%'
+               OR s.search_term_translation ILIKE '%' || $1 || '%';`
+    }
+    
     const values = [term];
     pool.query(query, values, (error, results) => {
         if (error) {
+            console.error('Images query error:', error);
             response.status(500).json({error, results});
         } else {
             response.status(200).json(results.rows);
@@ -1518,10 +1661,24 @@ const saveSearchAndImages = async (request, response) => {
     console.log(`[saveSearchAndImages for ${search_engine}]`);
     console.log(`[IP address received: ${search_ip_address}]`);
 
+    // Get geolocation data (don't wait if it fails)
+    let geoData = null;
+    try {
+        geoData = await ipGeolocationService.getLocation(search_ip_address);
+    } catch (error) {
+        console.log('Geolocation failed, continuing without it');
+    }
+
     const searchQuery = `INSERT INTO searches (
         search_timestamp,
         search_client_name,
         search_ip_address,
+        search_country,
+        search_country_code,
+        search_region,
+        search_city,
+        search_latitude,
+        search_longitude,
         search_engine_initial,
         search_engine_translation,
         search_term_initial,
@@ -1531,13 +1688,19 @@ const saveSearchAndImages = async (request, response) => {
         search_term_status_sensitive,
         search_location
     ) VALUES (
-        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9, $10, $11
+        $1,  $2,  $3,  $4,  $5,  $6,  $7,  $8,  $9, $10, $11, $12, $13, $14, $15, $16, $17
     ) RETURNING search_id`;
 
     const searchValues = [
         timestamp,
         search_client_name,
         search_ip_address,
+        geoData?.country || null,
+        geoData?.countryCode || null,
+        geoData?.region || null,
+        geoData?.city || null,
+        geoData?.latitude || null,
+        geoData?.longitude || null,
         search_engine,
         search_engine === 'google' ? 'baidu' : 'google',
         search,
@@ -1659,6 +1822,7 @@ module.exports = {
     saveImagesToWordpress,
     getVoteCountsBySearchId,
     getGeographicAnalytics,
+    getUSStatesAnalytics,
     getSearchAnalytics,
     getVoteAnalytics,
     getRecentActivity,

@@ -42,6 +42,7 @@ app.get('/searches/total', db.getTotalSearches)
 
 /* Analytics Routes */
 app.get('/analytics/geographic', db.getGeographicAnalytics)
+app.get('/analytics/geographic/us-states', db.getUSStatesAnalytics)
 app.get('/analytics/searches', db.getSearchAnalytics)
 app.get('/analytics/votes', db.getVoteAnalytics)
 app.get('/analytics/recent-activity', db.getRecentActivity)
