@@ -590,8 +590,8 @@ const appendImageIds = async (searchData) => {
 }
 
 // Builds a filtered search query
-const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
-    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, years);
+const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filter, countries_filter, years) => {
+    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
     const conditions = [];
 
     // Keyword searches
@@ -623,13 +623,13 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
         return `to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`;
     }
 
-    // Filter by location
+    // Filter by location (using search_city column)
     if (filteredLocations.length) {
         console.log("filterCondition: filteredLocations: ", filteredLocations);
         // Get multiple locations
         if (search_locations.length > 1) {
             let condition = filteredLocations
-                .map(name => `s.search_location = '${name}'`);
+                .map(name => `s.search_city = '${name}'`);
 
             search_locations.forEach(location => {
                 if (locationByTimeRange[location]) {
@@ -642,7 +642,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
         } else {
             // Get single location
             console.log("filterCondition: single location", filteredLocations);
-            conditions.push(` s.search_location = '${filteredLocations[0]}'`);
+            conditions.push(` s.search_city = '${filteredLocations[0]}'`);
         }
     } else if (!filteredLocations.length && search_locations.length) {
         // Get locations that are not in the postgres
@@ -652,6 +652,53 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
             }
         });
     }
+    
+    // Filter by US states (using search_region field)
+    if (us_states_filter && us_states_filter.length) {
+        console.log("filterCondition: us_states_filter: ", us_states_filter);
+        if (us_states_filter.length > 1) {
+            const condition = us_states_filter
+                .map(state => `s.search_region = '${state}'`)
+                .join(' OR ');
+            conditions.push(`(${condition})`);
+        } else {
+            conditions.push(`s.search_region = '${us_states_filter[0]}'`);
+        }
+    }
+    
+    // Filter by countries (using search_country field)
+    if (countries_filter && countries_filter.length) {
+        console.log("filterCondition: countries_filter: ", countries_filter);
+        if (countries_filter.length > 1) {
+            const condition = countries_filter
+                .map(country => {
+                    // Map country codes to country names for filtering
+                    const countryNameMap = {
+                        'US': 'United States',
+                        'AT': 'Austria', 
+                        'HK': 'Hong Kong',
+                        'NO': 'Norway',
+                        'TW': 'Taiwan'
+                    };
+                    const countryName = countryNameMap[country] || country;
+                    return `s.search_country = '${countryName}'`;
+                })
+                .join(' OR ');
+            conditions.push(`(${condition})`);
+        } else {
+            // Map country codes to country names for filtering
+            const countryNameMap = {
+                'US': 'United States',
+                'AT': 'Austria', 
+                'HK': 'Hong Kong',
+                'NO': 'Norway',
+                'TW': 'Taiwan'
+            };
+            const countryName = countryNameMap[countries_filter[0]] || countries_filter[0];
+            conditions.push(`s.search_country = '${countryName}'`);
+        }
+    }
+    
     // Create condition to filter for searches by year
     const buildYearCondition = (year) => {
         const parsedYear = parseInt(year);
@@ -682,7 +729,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, years) => {
  */
 const getFilteredSearches = async (request, response) => {
     console.log("getFilteredSearches: ", request.query);
-    let { keyword, vote_ids, search_locations, years } = request.query;
+    let { keyword, vote_ids, search_locations, cities, us_states, countries, years } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
     if (getType(request.query.search_locations) === 'string') {
@@ -693,11 +740,41 @@ const getFilteredSearches = async (request, response) => {
         console.log("search_locations is not a string or array");
         search_locations = [];
     }
+    
+    // Handle cities parameter (legacy support)
+    if (cities && !search_locations.length) {
+        if (getType(cities) === 'string') {
+            search_locations = [cities];
+        } else if (getType(cities) === 'array') {
+            search_locations = cities;
+        }
+    }
+    
+    // Handle us_states parameter for geographic filtering
+    let us_states_filter = [];
+    if (us_states) {
+        if (getType(us_states) === 'string') {
+            us_states_filter = [us_states];
+        } else if (getType(us_states) === 'array') {
+            us_states_filter = us_states;
+        }
+    }
+    
+    // Handle countries parameter for geographic filtering
+    let countries_filter = [];
+    if (countries) {
+        if (getType(countries) === 'string') {
+            countries_filter = [countries];
+        } else if (getType(countries) === 'array') {
+            countries_filter = countries;
+        }
+    }
+    
     years = request.query.years ? [extractData(years)] : [];
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_ip_address, 
+    let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_country, search_region, search_city, search_ip_address, 
         search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code, search_term_translation, 
         search_engine_translation, COUNT(hv.vote_id) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id
         WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
@@ -705,14 +782,14 @@ const getFilteredSearches = async (request, response) => {
     let countQuery = `SELECT COUNT(*) FROM searches s WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
 
     // Get all searches
-    if ((vote_ids.length == 0) && (search_locations.length == 0)
+    if ((vote_ids.length == 0) && (search_locations.length == 0) && (us_states_filter.length == 0) && (countries_filter.length == 0)
         && (years.length == 0) && !keyword) {
         console.log("getFilteredSearches:", years, years.length == 0);
     } else { // Get filtered searches
-        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, years);
+        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
         // Filter test searches
         // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
-        const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, years);
+        const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
         countQuery += conditionClause;
         baseQuery += conditionClause;
     }
