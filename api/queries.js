@@ -121,7 +121,7 @@ const getTotalUsers = () => {
 /*****************************/
 
 const getGeographicAnalytics = (request, response) => {
-    // First try IP-based geographic data
+    // Query geographic data from search_country field
     let query = `
         SELECT 
             search_country as location,
@@ -197,6 +197,30 @@ const getUSStatesAnalytics = (request, response) => {
     pool.query(query, (error, results) => {
         if (error) {
             console.error('US States analytics query error:', error);
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
+const getCountriesList = (request, response) => {
+    // Get distinct countries with their codes and search counts
+    const query = `
+        SELECT DISTINCT
+            search_country as name,
+            search_country_code as code,
+            COUNT(*) as search_count
+        FROM searches 
+        WHERE search_country IS NOT NULL
+        AND search_country != ''
+        GROUP BY search_country, search_country_code
+        ORDER BY search_count DESC
+    `;
+    
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('Countries list query error:', error);
             response.status(500).json(error);
         } else {
             response.status(200).json(results.rows);
@@ -1900,6 +1924,7 @@ module.exports = {
     getVoteCountsBySearchId,
     getGeographicAnalytics,
     getUSStatesAnalytics,
+    getCountriesList,
     getSearchAnalytics,
     getVoteAnalytics,
     getRecentActivity,
