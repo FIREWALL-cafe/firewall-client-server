@@ -187,7 +187,7 @@ const getUSStatesAnalytics = (request, response) => {
                 1
             ) as percentage
         FROM searches 
-        WHERE search_country = 'United States' 
+        WHERE search_country_code = 'US' 
         AND search_region IS NOT NULL
         AND search_region != ''
         GROUP BY search_region
@@ -696,30 +696,12 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
         if (countries_filter.length > 1) {
             const condition = countries_filter
                 .map(country => {
-                    // Map country codes to country names for filtering
-                    const countryNameMap = {
-                        'US': 'United States',
-                        'AT': 'Austria', 
-                        'HK': 'Hong Kong',
-                        'NO': 'Norway',
-                        'TW': 'Taiwan'
-                    };
-                    const countryName = countryNameMap[country] || country;
-                    return `s.search_country = '${countryName}'`;
+                    return `s.search_country_code = '${country}'`;
                 })
                 .join(' OR ');
             conditions.push(`(${condition})`);
         } else {
-            // Map country codes to country names for filtering
-            const countryNameMap = {
-                'US': 'United States',
-                'AT': 'Austria', 
-                'HK': 'Hong Kong',
-                'NO': 'Norway',
-                'TW': 'Taiwan'
-            };
-            const countryName = countryNameMap[countries_filter[0]] || countries_filter[0];
-            conditions.push(`s.search_country = '${countryName}'`);
+            conditions.push(`s.search_country_code = '${countries_filter[0]}'`);
         }
     }
     
