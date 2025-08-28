@@ -780,9 +780,10 @@ const getFilteredSearches = async (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_country, search_region, search_city, search_ip_address, 
-        search_client_name, search_engine_initial, search_term_initial, search_term_initial_language_code, search_term_translation, 
-        search_engine_translation, COUNT(hv.vote_id) as "total_votes" FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id
+    let baseQuery = `SELECT s.search_id, s.search_timestamp, search_location, search_country, search_country_code, search_region, search_city, 
+        search_latitude, search_longitude, search_ip_address, search_client_name, search_engine_initial, search_term_initial, 
+        search_term_initial_language_code, search_term_translation, search_engine_translation, COUNT(hv.vote_id) as "total_votes" 
+        FROM searches s LEFT JOIN have_votes hv on s.search_id = hv.search_id
         WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
     
     let countQuery = `SELECT COUNT(*) FROM searches s WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
