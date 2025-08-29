@@ -155,7 +155,7 @@ SELECT
 SELECT 
     search_location,
     COUNT(*) as count,
-    STRING_AGG(DISTINCT COALESCE(search_country, '[NULL]'), ', ' ORDER BY search_country) as country_distribution
+    STRING_AGG(DISTINCT COALESCE(search_country, '[NULL]'), ', ') as country_distribution
 FROM searches 
 WHERE search_location IS NOT NULL 
 AND search_location != 'automated_scraper' 
