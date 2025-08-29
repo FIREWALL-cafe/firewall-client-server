@@ -228,6 +228,32 @@ const getCountriesList = (request, response) => {
     });
 }
 
+const getSearchLocationsList = (request, response) => {
+    // Get distinct search locations with their search counts
+    const query = `
+        SELECT DISTINCT
+            search_location,
+            COUNT(*) as search_count
+        FROM searches 
+        WHERE search_location IS NOT NULL
+        AND search_location != ''
+        AND search_location != 'automated_scraper'
+        AND search_location != 'nyc3'
+        GROUP BY search_location
+        HAVING COUNT(*) > 0
+        ORDER BY search_count DESC, search_location ASC
+    `;
+
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error('Search locations list query error:', error);
+            response.status(500).json(error);
+        } else {
+            response.status(200).json(results.rows);
+        }
+    });
+}
+
 const getSearchAnalytics = async (request, response) => {
     try {
         // Execute all queries in parallel
@@ -1908,6 +1934,7 @@ module.exports = {
     getGeographicAnalytics,
     getUSStatesAnalytics,
     getCountriesList,
+    getSearchLocationsList,
     getSearchAnalytics,
     getVoteAnalytics,
     getRecentActivity,
