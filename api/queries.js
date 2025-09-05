@@ -1,4 +1,3 @@
-const axios = require('axios');
 const cheerio = require('cheerio');
 const { query } = require('express');
 const config = require('./config.js')
@@ -6,6 +5,7 @@ const {pool,secret} = config
 const space = require('./spaces-interface.js')
 const locationByTimeRange = require('./location-time-ranges.js');
 const ipGeolocationService = require('./services/ipGeolocation');
+const eventData = require('./event-data.js');
 
 const {Worker} = require('worker_threads');
 
@@ -205,7 +205,6 @@ const getUSStatesAnalytics = (request, response) => {
 }
 
 const getCountriesList = (request, response) => {
-    // Get distinct countries with their codes and search counts
     const query = `
         SELECT DISTINCT
             search_country as name,
@@ -228,30 +227,39 @@ const getCountriesList = (request, response) => {
     });
 }
 
-const getSearchLocationsList = (request, response) => {
-    // Get distinct search locations with their search counts
-    const query = `
-        SELECT DISTINCT
-            search_location,
-            COUNT(*) as search_count
-        FROM searches 
-        WHERE search_location IS NOT NULL
-        AND search_location != ''
-        AND search_location != 'automated_scraper'
-        AND search_location != 'nyc3'
-        GROUP BY search_location
-        HAVING COUNT(*) > 0
-        ORDER BY search_count DESC, search_location ASC
-    `;
-
-    pool.query(query, (error, results) => {
-        if (error) {
-            console.error('Search locations list query error:', error);
-            response.status(500).json(error);
-        } else {
-            response.status(200).json(results.rows);
+const getSearchLocationsList = async (request, response) => {
+    try {
+        const searchLocations = eventData.map(event => event.search_location);
+        if (searchLocations.length === 0) {
+            console.log('No search locations found');
+            return response.status(200).json([]);
         }
-    });
+
+        const query = `
+            WITH locations AS (
+                SELECT unnest($1::text[]) as search_location
+            )
+            SELECT 
+                l.search_location,
+                COALESCE(COUNT(s.search_id), 0) as search_count
+            FROM locations l
+            LEFT JOIN searches s ON s.search_location = l.search_location
+            GROUP BY l.search_location
+            ORDER BY search_count DESC, l.search_location ASC
+        `;
+
+        pool.query(query, [searchLocations], (error, results) => {
+            if (error) {
+                console.error('Search locations query error:', error);
+                response.status(500).json(error);
+            } else {
+                response.status(200).json(results.rows);
+            }
+        });
+    } catch (error) {
+        console.error('Search locations function error:', error);
+        return response.status(500).json(error);
+    }
 }
 
 const getSearchAnalytics = async (request, response) => {
@@ -640,8 +648,8 @@ const appendImageIds = async (searchData) => {
 }
 
 // Builds a filtered search query
-const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filter, countries_filter, years) => {
-    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
+const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date) => {
+    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
     const conditions = [];
 
     // Keyword searches
@@ -673,13 +681,13 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
         return `to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`;
     }
 
-    // Filter by location (using search_city column)
+    // Filter by location (using search_location column)
     if (filteredLocations.length) {
         console.log("filterCondition: filteredLocations: ", filteredLocations);
         // Get multiple locations
         if (search_locations.length > 1) {
             let condition = filteredLocations
-                .map(name => `s.search_city = '${name}'`);
+                .map(name => `s.search_location = '${name}'`);
 
             search_locations.forEach(location => {
                 if (locationByTimeRange[location]) {
@@ -692,7 +700,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
         } else {
             // Get single location
             console.log("filterCondition: single location", filteredLocations);
-            conditions.push(` s.search_city = '${filteredLocations[0]}'`);
+            conditions.push(` s.search_location = '${filteredLocations[0]}'`);
         }
     } else if (!filteredLocations.length && search_locations.length) {
         // Get locations that are not in the postgres
@@ -750,6 +758,19 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
             conditions.push(` ${buildYearCondition(years[0])}`);
         }
     }
+    
+    // Filter by date range
+    if (start_date) {
+        console.log("filterCondition: start_date: ", start_date);
+        // Convert date to timestamp and filter searches after start_date
+        conditions.push(`to_timestamp(s.search_timestamp/1000) >= '${start_date} 00:00:00'::timestamp`);
+    }
+    
+    if (end_date) {
+        console.log("filterCondition: end_date: ", end_date);
+        // Convert date to timestamp and filter searches before end_date (end of day)
+        conditions.push(`to_timestamp(s.search_timestamp/1000) <= '${end_date} 23:59:59'::timestamp`);
+    }
 
     return conditions.join(' AND ');
 };
@@ -761,7 +782,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
  */
 const getFilteredSearches = async (request, response) => {
     console.log("getFilteredSearches: ", request.query);
-    let { keyword, vote_ids, search_locations, cities, us_states, countries, years } = request.query;
+    let { keyword, vote_ids, search_locations, cities, us_states, countries, years, start_date, end_date } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
     if (getType(request.query.search_locations) === 'string') {
@@ -814,15 +835,18 @@ const getFilteredSearches = async (request, response) => {
     
     let countQuery = `SELECT COUNT(*) FROM searches s WHERE s.search_location != 'nyc3' AND s.search_location != 'automated_scraper'`;
 
-    // Get all searches
-    if ((vote_ids.length == 0) && (search_locations.length == 0) && (us_states_filter.length == 0) && (countries_filter.length == 0)
-        && (years.length == 0) && !keyword) {
-        console.log("getFilteredSearches:", years, years.length == 0);
+    // Check if any filters are applied
+    const hasFilters = (vote_ids.length > 0) || (search_locations.length > 0) || (us_states_filter.length > 0) || 
+                      (countries_filter.length > 0) || (years.length > 0) || keyword || start_date || end_date;
+    
+    // Get all searches (no filters)
+    if (!hasFilters) {
+        console.log("getFilteredSearches: no filters applied");
     } else { // Get filtered searches
-        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
+        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
         // Filter test searches
         // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
-        const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, us_states_filter, countries_filter, years);
+        const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
         countQuery += conditionClause;
         baseQuery += conditionClause;
     }

@@ -30,6 +30,27 @@ app.get('/', (request, response) => {
 	response.json({ info: 'Firewall-Cafe API'})
 })
 
+// Health check endpoint for deployment monitoring
+app.get('/health', (request, response) => {
+	// Basic health check - verify database connection
+	db.pool.query('SELECT 1', (error, results) => {
+		if (error) {
+			response.status(503).json({ 
+				status: 'unhealthy',
+				error: 'Database connection failed',
+				timestamp: new Date().toISOString()
+			})
+		} else {
+			response.status(200).json({ 
+				status: 'healthy',
+				uptime: process.uptime(),
+				timestamp: new Date().toISOString(),
+				environment: process.env.NODE_ENV || 'development'
+			})
+		}
+	})
+})
+
 app.listen(port, () => {
 	 console.log(`App running on port ${port}.`)
 })
