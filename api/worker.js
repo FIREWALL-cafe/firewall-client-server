@@ -31,7 +31,6 @@ const downloadImages = (engine, query, searchId, images) => {
   for (const url of images) {
     console.log('worker: saving image', url);
     let client = (url.toString().indexOf("https") === 0) ? https : http;
-    let newUrl = null;
 
     client.request(url, function (response) {
       var data = [];
@@ -40,12 +39,18 @@ const downloadImages = (engine, query, searchId, images) => {
         data.push(chunk);
       });
 
-      response.on('end', function () {
-        newUrl = uploadImageContent(Buffer.concat(data), url);
+      response.on('end', async function () {
+        try {
+          const newUrl = await uploadImageContent(Buffer.concat(data), url);
+          const dbQuery = pool.query(query, [searchId, engine, newUrl ? newUrl : url]);
+          imageQueries.push(dbQuery);
+        } catch (error) {
+          console.log('worker: error uploading image:', error);
+          const dbQuery = pool.query(query, [searchId, engine, url]);
+          imageQueries.push(dbQuery);
+        }
       });
     }).end();
-  
-    imageQueries.push(pool.query(query, [searchId, engine, newUrl ? newUrl : url]));
   }
   console.log('worker: imageQueries', imageQueries.length);
   return imageQueries;
