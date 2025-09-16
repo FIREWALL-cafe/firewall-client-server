@@ -1452,11 +1452,35 @@ const getImagesOnlyWTF = (request, response) => {
 /****************/
 
 const checkSecret = (request, response, next) => {
-    if(request.body.secret !== secret) {
-        console.log("wrong secret")
-        response.status(401).json("wrong secret")
+    console.log('=== SECRET CHECK START ===');
+    console.log('🔐 Request method:', request.method);
+    console.log('🔐 Request URL:', request.url);
+    console.log('🔐 Request headers:', JSON.stringify(request.headers, null, 2));
+    console.log('🔐 Request body keys:', Object.keys(request.body || {}));
+    console.log('🔐 Request body (full):', JSON.stringify(request.body, null, 2));
+
+    const receivedSecret = request.body.secret;
+    const expectedSecret = secret;
+
+    console.log('🔐 Received secret:', receivedSecret ? `${receivedSecret.substring(0, 8)}...` : 'undefined');
+    console.log('🔐 Expected secret:', expectedSecret ? `${expectedSecret.substring(0, 8)}...` : 'undefined');
+    console.log('🔐 Secrets match:', receivedSecret === expectedSecret);
+
+    if(receivedSecret !== expectedSecret) {
+        console.log("❌ Wrong secret - authentication failed");
+        console.log('❌ Received:', receivedSecret);
+        console.log('❌ Expected:', expectedSecret);
+        response.status(401).json({
+            error: "wrong secret",
+            timestamp: new Date().toISOString(),
+            receivedSecretLength: receivedSecret ? receivedSecret.length : 0,
+            expectedSecretLength: expectedSecret ? expectedSecret.length : 0
+        });
+        console.log('=== SECRET CHECK END (FAILED) ===');
     } else {
-        next()
+        console.log("✅ Secret validation passed");
+        console.log('=== SECRET CHECK END (SUCCESS) ===');
+        next();
     }
 }
 
@@ -1705,6 +1729,12 @@ const getGoogleImageSrcs = (results) => {
 };
 
 const saveSearchAndImages = async (request, response) => {
+    console.log('=== SAVE SEARCH AND IMAGES START ===');
+    console.log('💾 Request method:', request.method);
+    console.log('💾 Request URL:', request.url);
+    console.log('💾 Request headers:', JSON.stringify(request.headers, null, 2));
+    console.log('💾 Request body (full):', JSON.stringify(request.body, null, 2));
+
     const {
         timestamp,
         location,
@@ -1724,15 +1754,37 @@ const saveSearchAndImages = async (request, response) => {
         banned,
         sensitive,
     } = request.body;
-    console.log(`[saveSearchAndImages for ${search_engine}]`);
-    console.log(`[IP address received: ${search_ip_address}]`);
+
+    console.log('💾 Extracted parameters:');
+    console.log('  - timestamp:', timestamp);
+    console.log('  - location:', location);
+    console.log('  - search_client_name:', search_client_name);
+    console.log('  - search_ip_address:', search_ip_address);
+    console.log('  - secret:', secret ? `${secret.substring(0, 8)}...` : 'undefined');
+    console.log('  - search_engine:', search_engine);
+    console.log('  - search:', search);
+    console.log('  - translation:', translation);
+    console.log('  - lang_from:', lang_from);
+    console.log('  - lang_to:', lang_to);
+    console.log('  - lang_confidence:', lang_confidence);
+    console.log('  - lang_alternate:', lang_alternate);
+    console.log('  - lang_name:', lang_name);
+    console.log('  - google_images count:', google_images ? google_images.length : 0);
+    console.log('  - baidu_images count:', baidu_images ? baidu_images.length : 0);
+    console.log('  - banned:', banned);
+    console.log('  - sensitive:', sensitive);
+
+    console.log(`💾 [saveSearchAndImages for ${search_engine}]`);
+    console.log(`💾 [IP address received: ${search_ip_address}]`);
 
     // Get geolocation data (don't wait if it fails)
+    console.log('🌍 Starting geolocation lookup for IP:', search_ip_address);
     let geoData = null;
     try {
         geoData = await ipGeolocationService.getLocation(search_ip_address);
+        console.log('🌍 Geolocation data retrieved:', JSON.stringify(geoData, null, 2));
     } catch (error) {
-        console.log('Geolocation failed, continuing without it');
+        console.log('🌍 Geolocation failed, continuing without it:', error.message);
     }
 
     const searchQuery = `INSERT INTO searches (
@@ -1777,34 +1829,80 @@ const saveSearchAndImages = async (request, response) => {
         location,
     ];
 
+    console.log('🗄️ Preparing database insertion...');
+    console.log('🗄️ Search query:', searchQuery);
+    console.log('🗄️ Search values:', JSON.stringify(searchValues, null, 2));
+
     let searchId;
     try {
-        console.log('[searchValues]', searchValues);
-        console.log(`[saving search for ${search_engine}...]`);
+        console.log('🗄️ [searchValues]', searchValues);
+        console.log(`🗄️ [saving search for ${search_engine}...]`);
+
         const searchInsertResult = await pool.query(searchQuery, searchValues);
-        searchId = searchInsertResult.rows[0].search_id;
-        console.log(`[saved search for ${search_engine} searchId: ${searchId}]`);
+        console.log('🗄️ Database insert result:', JSON.stringify(searchInsertResult, null, 2));
+
+        if (searchInsertResult.rows && searchInsertResult.rows.length > 0) {
+            searchId = searchInsertResult.rows[0].search_id;
+            console.log(`✅ [saved search for ${search_engine} searchId: ${searchId}]`);
+        } else {
+            console.log('❌ No rows returned from database insert');
+            throw new Error('No search ID returned from database');
+        }
     } catch (error) {
-        console.error(error);
-        response.status(500).json(error);
+        console.error('❌ Database insertion failed:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            hint: error.hint,
+            position: error.position,
+            stack: error.stack
+        });
+
+        const errorResponse = {
+            error: 'Database insertion failed',
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            timestamp: new Date().toISOString()
+        };
+
+        response.status(500).json(errorResponse);
+        console.log('=== SAVE SEARCH AND IMAGES END (DB ERROR) ===');
         return;
     }
 
-    if (google_images.length > 0 && baidu_images.length > 0) {
-        console.log(`[saving images for ${search_engine}...]`);
-        console.log(`[google_images]`, google_images);
-        console.log(`[baidu_images]`, baidu_images);
-        const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
-        worker.on('message', (result) => {
-            console.log('worker: saveImages args', result);
-        })
-        worker.on("error", (msg) => {
-            console.log(msg);
-        });
-        console.log('image urls sent to worker');
+    console.log('🖼️ Processing images...');
+    console.log('🖼️ Google images count:', google_images ? google_images.length : 0);
+    console.log('🖼️ Baidu images count:', baidu_images ? baidu_images.length : 0);
+
+    if (google_images && google_images.length > 0 && baidu_images && baidu_images.length > 0) {
+        console.log(`🖼️ [saving images for ${search_engine}...]`);
+        console.log(`🖼️ [google_images]`, google_images);
+        console.log(`🖼️ [baidu_images]`, baidu_images);
+
+        try {
+            const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
+            worker.on('message', (result) => {
+                console.log('🖼️ worker: saveImages args', result);
+            });
+            worker.on("error", (msg) => {
+                console.log('🖼️ worker error:', msg);
+            });
+            console.log('🖼️ image urls sent to worker');
+        } catch (workerError) {
+            console.log('🖼️ Failed to start worker:', workerError.message);
+        }
+    } else {
+        console.log('🖼️ Skipping image processing - insufficient images');
+        console.log('🖼️ Google images available:', google_images ? google_images.length : 0);
+        console.log('🖼️ Baidu images available:', baidu_images ? baidu_images.length : 0);
     }
 
-    response.status(201).json({ searchId });
+    const finalResponse = { searchId };
+    console.log('✅ Sending successful response:', JSON.stringify(finalResponse, null, 2));
+    response.status(201).json(finalResponse);
+    console.log('=== SAVE SEARCH AND IMAGES END (SUCCESS) ===');
 };
 
 function getType(value) {
