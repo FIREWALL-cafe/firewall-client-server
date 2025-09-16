@@ -41,7 +41,6 @@ const downloadImages = (engine, query, searchId, images) => {
       });
 
       response.on('end', function () {
-        console.log(searchId, engine, url)
         newUrl = uploadImageContent(Buffer.concat(data), url);
       });
     }).end();
@@ -67,7 +66,7 @@ const uploadImageContent = async (content, href) => {
         console.log('worker: saved new image', newUrl);
         return newUrl;
     } catch (error) {
-        console.log('worker: error:' ,err);
+        console.log('worker: error:' , error);
         return;
     }
 };
