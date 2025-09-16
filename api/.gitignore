@@ -16,5 +16,8 @@ build/Release
 #db secrets
 config.js
 
+.github/
+
 # Development scripts
 tmp/
+scripts/
