@@ -1705,20 +1705,18 @@ const getGoogleImageSrcs = (results) => {
 };
 
 const saveSearchAndImages = async (request, response) => {
+    // Log the entire request body first
+    console.log('[saveSearchAndImages] Full request body:', JSON.stringify(request.body, null, 2));
+
     const {
         timestamp,
         location,
         search_client_name,
         search_ip_address,
-        secret,
         search_engine,
         search,
         translation,
         lang_from,
-        lang_to,
-        lang_confidence,
-        lang_alternate,
-        lang_name,
         google_images,
         baidu_images,
         banned,
@@ -1726,6 +1724,21 @@ const saveSearchAndImages = async (request, response) => {
     } = request.body;
     console.log(`[saveSearchAndImages for ${search_engine}]`);
     console.log(`[IP address received: ${search_ip_address}]`);
+    console.log(`[Search term: ${search}]`);
+    console.log(`[Translation: ${translation}]`);
+
+    // Validate required fields
+    if (!search || !timestamp) {
+        console.error('[saveSearchAndImages] Missing required fields - search:', search, 'timestamp:', timestamp);
+        response.status(400).json({
+            error: 'Missing required fields',
+            missing: {
+                search: !search,
+                timestamp: !timestamp
+            }
+        });
+        return;
+    }
 
     // Get geolocation data (don't wait if it fails)
     let geoData = null;
