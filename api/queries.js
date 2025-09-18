@@ -6,6 +6,7 @@ const space = require('./spaces-interface.js')
 const locationByTimeRange = require('./location-time-ranges.js');
 const ipGeolocationService = require('./services/ipGeolocation');
 const eventData = require('./event-data.js');
+const { selectFields, getFieldSet } = require('./queryBuilder');
 
 const {Worker} = require('worker_threads');
 
@@ -519,8 +520,10 @@ const getAllSearches = (request, response) => {
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
 
+    const fields = getFieldSet('all', 's');
+
     const countQuery = `SELECT COUNT(*) FROM searches`;
-    const dataQuery = `SELECT s.* FROM searches s ORDER BY s.search_timestamp DESC  LIMIT $1 OFFSET $2`;
+    const dataQuery = `SELECT ${fields} FROM searches s ORDER BY s.search_timestamp DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
 
     // First get total count
@@ -529,7 +532,7 @@ const getAllSearches = (request, response) => {
             response.status(500).json(error);
             return;
         }
-        
+
         // Then get paginated data
         pool.query(dataQuery, values, (error, results) => {
             if (error) {
@@ -1138,7 +1141,23 @@ const getSearchesByTerm = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.* FROM searches s WHERE s.search_term_initial = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
+
+    // Parse field groups from query parameters
+    const requestedFields = request.query.fields;
+    let fieldGroups = ['core', 'extended', 'geographic']; // default groups
+
+    if (requestedFields) {
+        if (requestedFields === 'all') {
+            fieldGroups = ['core', 'extended', 'geographic', 'wordpress'];
+        } else if (requestedFields === 'minimal') {
+            fieldGroups = ['core'];
+        } else {
+            fieldGroups = requestedFields.split(',').filter(group => SEARCH_FIELDS[group]);
+        }
+    }
+
+    const fields = buildSearchFields(fieldGroups, 's');
+    const query = `SELECT ${fields} FROM searches s WHERE s.search_term_initial = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
     const values = [term, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
