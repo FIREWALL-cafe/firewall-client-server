@@ -10,37 +10,6 @@ const eventData = require('./event-data.js');
 const {Worker} = require('worker_threads');
 
 /*****************************/
-/* Helper Functions          */
-/*****************************/
-
-/**
- * Detects the language of a search term and returns the appropriate PostgreSQL text search configuration
- * @param {string} term - The search term to analyze
- * @returns {string} - The PostgreSQL text search configuration ('simple' for Chinese/Japanese/Korean, 'english' for others)
- */
-const getSearchConfig = (term) => {
-    if (!term) return 'simple';
-    
-    // Check for Chinese characters (CJK Unified Ideographs)
-    const hasChinese = /[\u4e00-\u9fff]/.test(term);
-    
-    // Check for Japanese characters (Hiragana, Katakana)
-    const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff]/.test(term);
-    
-    // Check for Korean characters (Hangul)
-    const hasKorean = /[\uac00-\ud7af\u1100-\u11ff]/.test(term);
-    
-    // Use 'simple' configuration for CJK languages, 'english' for others
-    if (hasChinese || hasJapanese || hasKorean) {
-        console.log(`Using 'simple' search config for CJK term: ${term}`);
-        return 'simple';
-    }
-    
-    console.log(`Using 'english' search config for term: ${term}`);
-    return 'english';
-};
-
-/*****************************/
 /*Dashboard Routes*/
 /*****************************/
 
@@ -360,13 +329,6 @@ const getSearchAnalytics = async (request, response) => {
             searchEngines: searchEnginesResult
         };
 
-        console.log('Search analytics results:', {
-            searchVolume: searchVolumeResult.length,
-            topTerms: topTermsResult.length,
-            languages: languagesResult.length,
-            searchEngines: searchEnginesResult.length
-        });
-
         response.status(200).json(analyticsData);
     } catch (error) {
         console.error('Search analytics query error:', error);
@@ -473,13 +435,6 @@ const getVoteAnalytics = async (request, response) => {
             totalVotes
         };
 
-        console.log('Vote analytics results:', {
-            voteCategories: voteCategories_processed.length,
-            voteTimeline: voteTimelineResult.length,
-            topVotedSearches: topVotedSearchesResult.length,
-            totalVotes
-        });
-
         response.status(200).json(analyticsData);
     } catch (error) {
         console.error('Vote analytics query error:', error);
@@ -518,7 +473,6 @@ const getRecentActivity = (request, response) => {
             console.error('Recent activity query error:', error);
             response.status(500).json(error);
         } else {
-            console.log('Recent activity results:', results.rows.length, 'searches');
             response.status(200).json(results.rows);
         }
     });
@@ -550,7 +504,6 @@ const getIPDistribution = (request, response) => {
             console.error('IP distribution query error:', error);
             response.status(500).json(error);
         } else {
-            console.log('IP distribution results:', results.rows.length, 'records');
             response.status(200).json(results.rows);
         }
     });
@@ -649,18 +602,15 @@ const appendImageIds = async (searchData) => {
 
 // Builds a filtered search query
 const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date) => {
-    console.log("getFilterConditions: ", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
     const conditions = [];
 
     // Keyword searches
     if (keyword) {
-        console.log("filterCondition: keyword: ", keyword);
         conditions.push(`to_tsvector(s.search_term_initial) @@ plainto_tsquery('${keyword}')`);
     }
 
     // Filter by vote ids
     if (vote_ids.length) {
-        console.log("filterCondition: vote_ids: ", vote_ids);
         if (vote_ids.length > 1) {
             const condition = vote_ids
                 .map(id => ` hv.vote_id = ${id}`)
@@ -671,71 +621,54 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
         }
     }
 
-    // Filter locations that weren't tagged in the postgres db
-    const syntheticLocations = ['miami_beach', 'taiwan', 'new_jersey'];
-    const filteredLocations = search_locations.filter(location => !syntheticLocations.includes(location));
+    // Handle search_location - only one can be selected and is mutually exclusive with geographic filters
+    if (search_locations.length > 0) {
 
-    // Approximate missing locations by using timestamps
-    const getApproximatedLocations = (location) => {
-        console.log("getApproximatedLocations: ", search_locations, location);
-        return `to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`;
-    }
+        // Take only the first search_location (only one allowed)
+        const selectedLocation = search_locations[0];
 
-    // Filter by location (using search_location column)
-    if (filteredLocations.length) {
-        console.log("filterCondition: filteredLocations: ", filteredLocations);
-        // Get multiple locations
-        if (search_locations.length > 1) {
-            let condition = filteredLocations
-                .map(name => `s.search_location = '${name}'`);
+        // Check if it's a synthetic location that needs timestamp approximation
+        const syntheticLocations = ['miami_beach', 'taiwan', 'new_jersey'];
 
-            search_locations.forEach(location => {
-                if (locationByTimeRange[location]) {
-                    condition.push(getApproximatedLocations(locationByTimeRange[location]));
-                }
-            });
-
-            condition = condition.join(' OR ');
-            conditions.push(` (${condition})`);
-        } else {
-            // Get single location
-            console.log("filterCondition: single location", filteredLocations);
-            conditions.push(` s.search_location = '${filteredLocations[0]}'`);
-        }
-    } else if (!filteredLocations.length && search_locations.length) {
-        // Get locations that are not in the postgres
-        search_locations.forEach(location => {
-            if (locationByTimeRange[location]) {
-                conditions.push(getApproximatedLocations(locationByTimeRange[location]));
+        if (syntheticLocations.includes(selectedLocation)) {
+            // Handle synthetic locations using time range
+            if (locationByTimeRange[selectedLocation]) {
+                const location = locationByTimeRange[selectedLocation];
+                conditions.push(`to_timestamp(s.search_timestamp/1000) BETWEEN '${location.time1}' AND '${location.time2}'`);
             }
-        });
-    }
-    
-    // Filter by US states (using search_region field)
-    if (us_states_filter && us_states_filter.length) {
-        console.log("filterCondition: us_states_filter: ", us_states_filter);
-        if (us_states_filter.length > 1) {
-            const condition = us_states_filter
-                .map(state => `s.search_region = '${state}'`)
-                .join(' OR ');
-            conditions.push(`(${condition})`);
         } else {
-            conditions.push(`s.search_region = '${us_states_filter[0]}'`);
+            // Handle regular locations using search_location column
+            conditions.push(`s.search_location = '${selectedLocation}'`);
         }
-    }
-    
-    // Filter by countries (using search_country field)
-    if (countries_filter && countries_filter.length) {
-        console.log("filterCondition: countries_filter: ", countries_filter);
-        if (countries_filter.length > 1) {
-            const condition = countries_filter
-                .map(country => {
-                    return `s.search_country_code = '${country}'`;
-                })
-                .join(' OR ');
-            conditions.push(`(${condition})`);
-        } else {
-            conditions.push(`s.search_country_code = '${countries_filter[0]}'`);
+
+        // Skip geographic filters when search_location is selected
+    } else {
+        // Only apply geographic filters if no search_location is selected
+
+        // Filter by US states (using search_region field)
+        if (us_states_filter && us_states_filter.length) {
+            if (us_states_filter.length > 1) {
+                const condition = us_states_filter
+                    .map(state => `s.search_region = '${state}'`)
+                    .join(' OR ');
+                conditions.push(`(${condition})`);
+            } else {
+                conditions.push(`s.search_region = '${us_states_filter[0]}'`);
+            }
+        }
+
+        // Filter by countries (using search_country field)
+        if (countries_filter && countries_filter.length) {
+            if (countries_filter.length > 1) {
+                const condition = countries_filter
+                    .map(country => {
+                        return `s.search_country_code = '${country}'`;
+                    })
+                    .join(' OR ');
+                conditions.push(`(${condition})`);
+            } else {
+                conditions.push(`s.search_country_code = '${countries_filter[0]}'`);
+            }
         }
     }
     
@@ -748,7 +681,6 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
     // Filter by year by querying searches that were made between
     // Jan 1 <year> and Jan 1 <year+1>
     if (years.length) {
-        console.log("filterCondition: years: ", years);
         if (years.length > 1) {
             const condition = years
                 .map(year => buildYearCondition(year))
@@ -761,13 +693,11 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
     
     // Filter by date range
     if (start_date) {
-        console.log("filterCondition: start_date: ", start_date);
         // Convert date to timestamp and filter searches after start_date
         conditions.push(`to_timestamp(s.search_timestamp/1000) >= '${start_date} 00:00:00'::timestamp`);
     }
     
     if (end_date) {
-        console.log("filterCondition: end_date: ", end_date);
         // Convert date to timestamp and filter searches before end_date (end of day)
         conditions.push(`to_timestamp(s.search_timestamp/1000) <= '${end_date} 23:59:59'::timestamp`);
     }
@@ -781,24 +711,45 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
  * It then collects images associated with each search.
  */
 const getFilteredSearches = async (request, response) => {
-    console.log("getFilteredSearches: ", request.query);
     let { keyword, vote_ids, search_locations, cities, us_states, countries, years, start_date, end_date } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
+    // Handle search_locations - only one allowed, throw error if multiple
     if (getType(request.query.search_locations) === 'string') {
         search_locations = [search_locations];
     } else if (getType(request.query.search_locations) === 'array') {
+        if (request.query.search_locations.length > 1) {
+            // Throw error if multiple search_locations provided
+            const error = {
+                error: 'Multiple search_locations not allowed',
+                message: 'Only one search_location can be selected at a time',
+                provided: request.query.search_locations
+            };
+            console.error('getFilteredSearches error:', error);
+            response.status(400).json(error);
+            return;
+        }
         search_locations = request.query.search_locations;
     } else {
-        console.log("search_locations is not a string or array");
         search_locations = [];
     }
-    
-    // Handle cities parameter (legacy support)
+
+    // Handle cities parameter (legacy support) - only one allowed, throw error if multiple
     if (cities && !search_locations.length) {
         if (getType(cities) === 'string') {
             search_locations = [cities];
         } else if (getType(cities) === 'array') {
+            if (cities.length > 1) {
+                // Throw error if multiple cities provided
+                const error = {
+                    error: 'Multiple cities not allowed',
+                    message: 'Only one city/search_location can be selected at a time',
+                    provided: cities
+                };
+                console.error('getFilteredSearches error:', error);
+                response.status(400).json(error);
+                return;
+            }
             search_locations = cities;
         }
     }
@@ -812,7 +763,7 @@ const getFilteredSearches = async (request, response) => {
             us_states_filter = us_states;
         }
     }
-    
+
     // Handle countries parameter for geographic filtering
     let countries_filter = [];
     if (countries) {
@@ -821,6 +772,20 @@ const getFilteredSearches = async (request, response) => {
         } else if (getType(countries) === 'array') {
             countries_filter = countries;
         }
+    }
+
+    // Ensure search_location and geographic filters are mutually exclusive
+    if (search_locations.length > 0 && (us_states_filter.length > 0 || countries_filter.length > 0)) {
+        const error = {
+            error: 'Conflicting filters',
+            message: 'Cannot use search_location with geographic filters (us_states or countries). Use either search_location OR geographic filters, not both.',
+            search_location: search_locations[0],
+            us_states: us_states_filter,
+            countries: countries_filter
+        };
+        console.error('getFilteredSearches error:', error);
+        response.status(400).json(error);
+        return;
     }
     
     years = request.query.years ? [extractData(years)] : [];
@@ -841,9 +806,7 @@ const getFilteredSearches = async (request, response) => {
     
     // Get all searches (no filters)
     if (!hasFilters) {
-        console.log("getFilteredSearches: no filters applied");
     } else { // Get filtered searches
-        console.log("getFilteredSearches: FILTERING", keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
         // Filter test searches
         // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
         const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
@@ -861,8 +824,6 @@ const getFilteredSearches = async (request, response) => {
         // Then get paginated data
         const dataQuery = baseQuery + ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
         pool.query(dataQuery, [page_size, offset], async (error, results) => {
-            console.log("dataQuery: ", dataQuery);
-            console.log("values: ", [page_size, offset]);
             if (error) {
                 response.status(500).json(error);
             } else {
@@ -925,8 +886,7 @@ const getImagesWithSearch = (request, response) => {
 const getImage = (request, response) => {
     const image_id = parseInt(request.params.image_id);
     const query = `SELECT image_id, search_id, image_search_engine,
-        image_href, image_href_original, image_rank, image_mime_type, wordpress_attachment_post_id,
-        wordpress_attachment_file_path
+        image_href, image_href_original, image_rank, image_mime_type
         FROM images WHERE image_id = $1`;
     const values = [image_id];
 
@@ -1357,8 +1317,8 @@ const getImages = (request, response) => {
         }
 
         // Then get paginated data
-        const dataQuery = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
-            i.wordpress_attachment_post_id, i.wordpress_attachment_file_path FROM images i
+        const dataQuery = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
+            FROM images i
             ORDER BY i.image_id DESC LIMIT $1 OFFSET $2`;
         const values = [page_size, offset];
         
@@ -1398,8 +1358,7 @@ const getImagesVoteCategory = (request, response, category) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type, 
-        i.wordpress_attachment_post_id, i.wordpress_attachment_file_path
+    const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
         WHERE hv.vote_id = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
@@ -1696,14 +1655,6 @@ const saveImagesToWordpress = async (request, response) => {
     response.sendStatus(200);
 };
 
-// Find image results in Google Image result response and return the first 10 results
-const getGoogleImageSrcs = (results) => {
-    const html = cheerio.load(results);
-    const imgs = html('.DS1iW').toArray().slice(10);
-    // return a stringified array of objects containing href and src
-    return JSON.stringify(imgs.map((img) => ({ href: '', src: img.attribs.src })));
-};
-
 const saveSearchAndImages = async (request, response) => {
     // Log the entire request body first
     console.log('[saveSearchAndImages] Full request body:', JSON.stringify(request.body, null, 2));
@@ -1722,10 +1673,6 @@ const saveSearchAndImages = async (request, response) => {
         banned,
         sensitive,
     } = request.body;
-    console.log(`[saveSearchAndImages for ${search_engine}]`);
-    console.log(`[IP address received: ${search_ip_address}]`);
-    console.log(`[Search term: ${search}]`);
-    console.log(`[Translation: ${translation}]`);
 
     // Validate required fields
     if (!search || !timestamp) {
@@ -1806,8 +1753,8 @@ const saveSearchAndImages = async (request, response) => {
     // Save images if at least one search engine returned results
     if (google_images.length > 0 || baidu_images.length > 0) {
         console.log(`[saving images for ${search_engine}...]`);
-        console.log(`[google_images]`, google_images);
-        console.log(`[baidu_images]`, baidu_images);
+        console.log(`[google_images #]`, google_images.length);
+        console.log(`[baidu_images #]`, baidu_images.length);
         const worker = new Worker('./worker.js', {workerData: { baidu_images, google_images, searchId }});
         worker.on('message', (result) => {
             console.log('worker: saveImages args', result);
@@ -1815,7 +1762,6 @@ const saveSearchAndImages = async (request, response) => {
         worker.on("error", (msg) => {
             console.log(msg);
         });
-        console.log('image urls sent to worker');
     } else {
         console.log('[No images to save - both search engines returned empty results]');
     }
