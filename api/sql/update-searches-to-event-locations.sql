@@ -1,7 +1,21 @@
 -- Find searches created during events and update their search_location
 -- Also identifies searches that fall within multiple events
 
--- Main query to find and report on searches during events
+-- ============================================================
+-- STEP 1: Verify timestamp format (run this separately first)
+-- ============================================================
+SELECT
+  search_id,
+  search_timestamp,
+  TO_TIMESTAMP(search_timestamp/1000) as human_readable_time
+FROM searches
+WHERE search_timestamp IS NOT NULL
+LIMIT 5;
+
+-- ============================================================
+-- STEP 2: Main query to find and report on searches during events
+-- Run everything from here until "ORDER BY status DESC, created_at;" as one query
+-- ============================================================
 WITH events AS (
   SELECT 
     'firewall-pop-up-with-inside-chinas-surveillance-state-a-lecture-by-megha-rajagopalan' as event_name,
@@ -124,18 +138,18 @@ WITH events AS (
     '2016-03-09 23:59:59'::timestamp
 ),
 searches_during_events AS (
-  SELECT 
+  SELECT
     s.search_id,
     s.search_term_initial,
-    TO_TIMESTAMP(s.search_timestamp) as created_at,
+    TO_TIMESTAMP(s.search_timestamp/1000) as created_at,
     s.search_location as current_location,
     e.event_name,
     e.event_location as new_location,
     COUNT(*) OVER (PARTITION BY s.search_id) as event_count
   FROM searches s
-  INNER JOIN events e 
-    ON TO_TIMESTAMP(s.search_timestamp) >= e.start_time 
-    AND TO_TIMESTAMP(s.search_timestamp) <= e.end_time
+  INNER JOIN events e
+    ON TO_TIMESTAMP(s.search_timestamp/1000) >= e.start_time
+    AND TO_TIMESTAMP(s.search_timestamp/1000) <= e.end_time
   WHERE s.search_location != 'automated_scraper'
 )
 -- Searches that fall within multiple events (conflicts)
@@ -164,22 +178,167 @@ FROM searches_during_events
 WHERE event_count = 1
 
 ORDER BY status DESC, created_at;
+-- ============================================================
+-- END OF STEP 2 QUERY
+-- ============================================================
 
--- Update statement for searches within single events (commented out for safety)
--- Uncomment and run after reviewing the results above
-/*
-UPDATE searches s
-SET search_location = sde.new_location
-FROM (
-  SELECT DISTINCT
-    search_id,
-    new_location
-  FROM searches_during_events
-  WHERE event_count = 1
-) sde
-WHERE s.search_id = sde.search_id
-  AND s.search_location != sde.new_location;
-*/
+-- ============================================================
+-- STEP 3: Update statement for searches within single events
+-- ============================================================
+-- IMPORTANT: Run the SELECT query above first to review what will be updated!
+
+-- Option 1: Update searches that fall within exactly one event
+WITH events AS (
+  SELECT
+    'firewall-pop-up-with-inside-chinas-surveillance-state-a-lecture-by-megha-rajagopalan' as event_name,
+    'china_surveillance_marist' as event_location,
+    '2020-02-23 00:00:00'::timestamp as start_time,
+    '2020-02-29 23:59:59'::timestamp as end_time
+  UNION ALL
+  SELECT
+    'marymount-manhattan-digital-media-society-class-field-trip',
+    'digital_media_chinatown',
+    '2016-02-26 00:00:00'::timestamp,
+    '2016-03-03 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'oslo-freedom-forum-2022-taiwan-interactive-expo',
+    'oslo_freedom_taiwan',
+    '2022-10-31 00:00:00'::timestamp,
+    '2022-11-06 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'reactions-to-the-great-chinese-firewall',
+    'chinese_firewall_vbko',
+    '2020-01-13 00:00:00'::timestamp,
+    '2020-01-19 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'firewall-featured-on-bbc-the-real-story',
+    'bbc_real_story_russia',
+    '2019-10-29 00:00:00'::timestamp,
+    '2019-11-04 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'apex-for-youth-after-school-field-trip',
+    'apex_youth_after_school',
+    '2016-02-22 00:00:00'::timestamp,
+    '2016-03-06 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'creative-hacktivism-roundtable',
+    'creative_hacktivism_roundtable',
+    '2016-02-23 00:00:00'::timestamp,
+    '2016-02-29 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'proxy-pals-trial-by-firewall',
+    'proxy_pals_trial_by_firewall',
+    '2016-02-15 00:00:00'::timestamp,
+    '2016-02-21 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'networked-feminism-in-china',
+    'networked_feminism_in_china',
+    '2016-02-16 00:00:00'::timestamp,
+    '2016-02-22 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'firewall-pop-up-group-show-in-rvcc',
+    'rvcc_group_show',
+    '2022-08-28 00:00:00'::timestamp,
+    '2022-10-03 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'oslo-freedom-forum-2021-miami-interactive-expo',
+    'oslo_freedom_miami',
+    '2021-10-01 00:00:00'::timestamp,
+    '2021-10-07 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'redirect-at-ramp-gallery-asheville-nc',
+    'redirect_at_ramp_gallery',
+    '2020-01-21 00:00:00'::timestamp,
+    '2020-02-27 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'search-for-feminism-at-vbko-vienna-austria',
+    'search_for_feminism_vbko',
+    '2020-01-07 00:00:00'::timestamp,
+    '2020-02-04 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'new-media-caucus-border-control-symposium',
+    'border_control_symposium',
+    '2019-09-18 00:00:00'::timestamp,
+    '2019-09-24 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'hknotfound',
+    'hong_kong_not_found',
+    '2015-12-09 00:00:00'::timestamp,
+    '2015-12-16 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'off-2018',
+    'oslo_freedom_forum_2018',
+    '2018-05-25 00:00:00'::timestamp,
+    '2018-05-31 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'off-nyc-2017',
+    'oslo_freedom_forum_nyc',
+    '2017-09-16 00:00:00'::timestamp,
+    '2017-09-22 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'off2017',
+    'oslo_freedom_forum_2017',
+    '2017-05-17 00:00:00'::timestamp,
+    '2017-05-27 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'search-for-serendipity-in-austria',
+    'search_for_serendipity',
+    '2016-11-30 00:00:00'::timestamp,
+    '2017-01-03 23:59:59'::timestamp
+  UNION ALL
+  SELECT
+    'inaugural-new-york-2016-pop-up',
+    'inaugural_new_york_pop_up',
+    '2016-02-05 00:00:00'::timestamp,
+    '2016-03-09 23:59:59'::timestamp
+),
+searches_to_update AS (
+  -- First check which searches will be updated (to avoid conflicts)
+  SELECT
+    s.search_id,
+    e.event_location,
+    COUNT(*) OVER (PARTITION BY s.search_id) as event_count
+  FROM searches s
+  INNER JOIN events e
+    ON TO_TIMESTAMP(s.search_timestamp/1000) >= e.start_time
+    AND TO_TIMESTAMP(s.search_timestamp/1000) <= e.end_time
+  WHERE s.search_location != 'automated_scraper'
+    AND (s.search_location IS NULL OR s.search_location = '' OR s.search_location != e.event_location)
+)
+UPDATE searches
+SET search_location = stu.event_location
+FROM searches_to_update stu
+WHERE searches.search_id = stu.search_id
+  AND stu.event_count = 1;  -- Only update if search falls within exactly one event
+
+-- Option 2: Simple update to set timestamp to a specific date
+-- This converts 2016-02-16 00:00:00 to milliseconds
+UPDATE searches
+SET search_timestamp = EXTRACT(EPOCH FROM '2016-02-16 00:00:00'::timestamp) * 1000
+WHERE search_id = 12345;  -- Replace with actual search_id
+
+-- Option 3: Update searches within a date range to 2016-02-16
+UPDATE searches
+SET search_timestamp = 1455580800000  -- 2016-02-16 00:00:00 in milliseconds
+WHERE search_timestamp >= EXTRACT(EPOCH FROM '2016-02-15 00:00:00'::timestamp) * 1000
+  AND search_timestamp <= EXTRACT(EPOCH FROM '2016-02-21 23:59:59'::timestamp) * 1000;
 
 -- Summary statistics (run as a separate query)
 WITH events AS (
@@ -304,13 +463,13 @@ WITH events AS (
     '2016-03-09 23:59:59'::timestamp
 ),
 searches_during_events AS (
-  SELECT 
+  SELECT
     s.search_id,
     COUNT(*) OVER (PARTITION BY s.search_id) as event_count
   FROM searches s
-  INNER JOIN events e 
-    ON TO_TIMESTAMP(s.search_timestamp) >= e.start_time 
-    AND TO_TIMESTAMP(s.search_timestamp) <= e.end_time
+  INNER JOIN events e
+    ON TO_TIMESTAMP(s.search_timestamp/1000) >= e.start_time
+    AND TO_TIMESTAMP(s.search_timestamp/1000) <= e.end_time
   WHERE s.search_location != 'automated_scraper'
 )
 SELECT 
