@@ -7,7 +7,9 @@
 	"private": "true",
 	"scripts": {
 		"start": "node --experimental-worker server.js",
-		"dev": "pg_ctl -D temp-data-dir -l logfile start & node server.js"
+		"dev": "pg_ctl -D temp-data-dir -l logfile start & node server.js",
+		"test": "jest",
+		"test:watch": "jest --watch"
 	},
 	"repository": {
 		"type": "git",
@@ -21,5 +23,8 @@
 		"express": "*",
 		"express-fileupload": "^1.2.1",
 		"pg": "*"
+	},
+	"devDependencies": {
+		"jest": "^30.1.3"
 	}
 }
