@@ -310,35 +310,23 @@ WITH events AS (
     '2016-03-09 23:59:59'::timestamp
 ),
 searches_to_update AS (
-  -- First check which searches will be updated (to avoid conflicts)
-  SELECT
+  -- For each search, select the event with the latest start_time if multiple events match
+  SELECT DISTINCT ON (s.search_id)
     s.search_id,
     e.event_location,
-    COUNT(*) OVER (PARTITION BY s.search_id) as event_count
+    e.start_time
   FROM searches s
   INNER JOIN events e
     ON TO_TIMESTAMP(s.search_timestamp/1000) >= e.start_time
     AND TO_TIMESTAMP(s.search_timestamp/1000) <= e.end_time
   WHERE s.search_location != 'automated_scraper'
     AND (s.search_location IS NULL OR s.search_location = '' OR s.search_location != e.event_location)
+  ORDER BY s.search_id, e.start_time DESC  -- Select event with latest start_time for each search
 )
 UPDATE searches
 SET search_location = stu.event_location
 FROM searches_to_update stu
-WHERE searches.search_id = stu.search_id
-  AND stu.event_count = 1;  -- Only update if search falls within exactly one event
-
--- Option 2: Simple update to set timestamp to a specific date
--- This converts 2016-02-16 00:00:00 to milliseconds
-UPDATE searches
-SET search_timestamp = EXTRACT(EPOCH FROM '2016-02-16 00:00:00'::timestamp) * 1000
-WHERE search_id = 12345;  -- Replace with actual search_id
-
--- Option 3: Update searches within a date range to 2016-02-16
-UPDATE searches
-SET search_timestamp = 1455580800000  -- 2016-02-16 00:00:00 in milliseconds
-WHERE search_timestamp >= EXTRACT(EPOCH FROM '2016-02-15 00:00:00'::timestamp) * 1000
-  AND search_timestamp <= EXTRACT(EPOCH FROM '2016-02-21 23:59:59'::timestamp) * 1000;
+WHERE searches.search_id = stu.search_id;
 
 -- Summary statistics (run as a separate query)
 WITH events AS (
