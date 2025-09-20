@@ -17,15 +17,13 @@ async function saveImages(google_images, baidu_images, searchId) {
     return;
   }
 
-  const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
-  
-  downloadImages('google', query, searchId, google_images);
-  downloadImages('baidu', query, searchId, baidu_images);
+  downloadImages('google', searchId, google_images);
+  downloadImages('baidu', searchId, baidu_images);
 
   console.log('worker: downloading images');
 }
 
-const downloadImages = (engine, query, searchId, images) => {
+const downloadImages = (engine, searchId, images) => {
   const imageQueries = [];
 
   for (const url of images) {
@@ -42,10 +40,20 @@ const downloadImages = (engine, query, searchId, images) => {
       response.on('end', async function () {
         try {
           const newUrl = await uploadImageContent(Buffer.concat(data), url);
-          const dbQuery = pool.query(query, [searchId, engine, newUrl ? newUrl : url]);
-          imageQueries.push(dbQuery);
+          if (newUrl) {
+            const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_href_original) VALUES ($1, $2, $3, $4)`;
+            const values = [searchId, engine, newUrl, url];
+            const dbQuery = pool.query(query, values);
+            imageQueries.push(dbQuery);
+          } else {
+            const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
+            const values = [searchId, engine, url];
+            const dbQuery = pool.query(query, values);
+            imageQueries.push(dbQuery);
+          }
         } catch (error) {
           console.log('worker: error uploading image:', error);
+          const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
           const dbQuery = pool.query(query, [searchId, engine, url]);
           imageQueries.push(dbQuery);
         }
