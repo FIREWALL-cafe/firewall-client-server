@@ -38,23 +38,24 @@ const downloadImages = (engine, searchId, images) => {
       });
 
       response.on('end', async function () {
+        const timestamp = Date.now(); // Get current timestamp in milliseconds
         try {
           const newUrl = await uploadImageContent(Buffer.concat(data), url);
           if (newUrl) {
-            const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_href_original) VALUES ($1, $2, $3, $4)`;
-            const values = [searchId, engine, newUrl, url];
+            const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_href_original, image_timestamp) VALUES ($1, $2, $3, $4, $5)`;
+            const values = [searchId, engine, newUrl, url, timestamp];
             const dbQuery = pool.query(query, values);
             imageQueries.push(dbQuery);
           } else {
-            const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
-            const values = [searchId, engine, url];
+            const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_timestamp) VALUES ($1, $2, $3, $4)`;
+            const values = [searchId, engine, url, timestamp];
             const dbQuery = pool.query(query, values);
             imageQueries.push(dbQuery);
           }
         } catch (error) {
           console.log('worker: error uploading image:', error);
-          const query = `INSERT INTO images (search_id, image_search_engine, image_href) VALUES ($1, $2, $3)`;
-          const dbQuery = pool.query(query, [searchId, engine, url]);
+          const query = `INSERT INTO images (search_id, image_search_engine, image_href, image_timestamp) VALUES ($1, $2, $3, $4)`;
+          const dbQuery = pool.query(query, [searchId, engine, url, timestamp]);
           imageQueries.push(dbQuery);
         }
       });

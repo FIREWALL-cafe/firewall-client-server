@@ -1623,8 +1623,9 @@ const saveImage = async (request, response) => {
         }
     }
     
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
-    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_href_original? image_href_original : "", image_rank];
+    const timestamp = Date.now(); // Get current timestamp in milliseconds
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_href_original, image_rank, image_timestamp) VALUES (DEFAULT, $1, $2, $3, $4, $5, $6)`;
+    const values = [parseInt(search_id), image_search_engine, new_url ? new_url : image_href, image_href_original? image_href_original : "", image_rank, timestamp];
 	pool.query(query, values, (error, results) => {
         if (error) {
             response.status(500).json(error);
@@ -1657,11 +1658,12 @@ const saveImagesEndpoint = (request, response) => {
         response.status(400).json("arrays 'urls' and 'image_ranks' must be the same length")        
         return;
     }
-    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank) VALUES (DEFAULT, $1, $2, $3, $4)`;
+    const timestamp = Date.now(); // Get current timestamp in milliseconds
+    const query = `INSERT INTO images (image_id, search_id, image_search_engine, image_href, image_rank, image_timestamp) VALUES (DEFAULT, $1, $2, $3, $4, $5)`;
     let promises = [];
     // for each given URL, call that SQL query with that value
     for(let i=0; i<urls.length; i++)
-        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i]]))
+        promises.push(pool.query(query, [parseInt(search_id), image_search_engine, urls[i], image_ranks[i], timestamp]))
     // don't respond before all promises have resolved
     Promise.all(promises).then(results => response.status(201).json(results)).catch(err => response.status(500).json(err));
 }
