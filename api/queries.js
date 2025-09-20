@@ -714,7 +714,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
  * It then collects images associated with each search.
  */
 const getFilteredSearches = async (request, response) => {
-    let { keyword, vote_ids, search_locations, cities, us_states, countries, years, start_date, end_date } = request.query;
+    let { keyword, vote_ids, search_locations, us_states, countries, years, start_date, end_date } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
     // Handle search_locations - only one allowed, throw error if multiple
@@ -735,26 +735,6 @@ const getFilteredSearches = async (request, response) => {
         search_locations = request.query.search_locations;
     } else {
         search_locations = [];
-    }
-
-    // Handle cities parameter (legacy support) - only one allowed, throw error if multiple
-    if (cities && !search_locations.length) {
-        if (getType(cities) === 'string') {
-            search_locations = [cities];
-        } else if (getType(cities) === 'array') {
-            if (cities.length > 1) {
-                // Throw error if multiple cities provided
-                const error = {
-                    error: 'Multiple cities not allowed',
-                    message: 'Only one city/search_location can be selected at a time',
-                    provided: cities
-                };
-                console.error('getFilteredSearches error:', error);
-                response.status(400).json(error);
-                return;
-            }
-            search_locations = cities;
-        }
     }
     
     // Handle us_states parameter for geographic filtering
@@ -786,7 +766,6 @@ const getFilteredSearches = async (request, response) => {
             us_states: us_states_filter,
             countries: countries_filter
         };
-        console.error('getFilteredSearches error:', error);
         response.status(400).json(error);
         return;
     }
@@ -807,11 +786,7 @@ const getFilteredSearches = async (request, response) => {
     const hasFilters = (vote_ids.length > 0) || (search_locations.length > 0) || (us_states_filter.length > 0) || 
                       (countries_filter.length > 0) || (years.length > 0) || keyword || start_date || end_date;
     
-    // Get all searches (no filters)
-    if (!hasFilters) {
-    } else { // Get filtered searches
-        // Filter test searches
-        // baseQuery += ` s.search_client_name != 'rowan_scraper_tests' AND `;
+    if (hasFilters) {
         const conditionClause = ` AND ` + getFilterConditions(keyword, vote_ids, search_locations, us_states_filter, countries_filter, years, start_date, end_date);
         countQuery += conditionClause;
         baseQuery += conditionClause;
@@ -830,8 +805,6 @@ const getFilteredSearches = async (request, response) => {
             if (error) {
                 response.status(500).json(error);
             } else {
-                // Get each search's associated images
-                // const dataWithImages = await appendImageIds(results.rows);
                 response.status(200).json({
                     total: countResult.rows[0].count,
                     page,

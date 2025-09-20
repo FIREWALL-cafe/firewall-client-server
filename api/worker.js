@@ -9,8 +9,6 @@ const { google_images, baidu_images, searchId } = workerData;
 
 async function saveImages(google_images, baidu_images, searchId) {
   console.log('worker: saving images for: ', searchId);
-  console.log('worker: google_images', google_images);
-  console.log('worker: baidu_images', baidu_images);
 
   if (google_images.length === 0 && baidu_images.length === 0) {  
     console.log("worker: No images provided.");
@@ -19,15 +17,12 @@ async function saveImages(google_images, baidu_images, searchId) {
 
   downloadImages('google', searchId, google_images);
   downloadImages('baidu', searchId, baidu_images);
-
-  console.log('worker: downloading images');
 }
 
 const downloadImages = (engine, searchId, images) => {
   const imageQueries = [];
 
   for (const url of images) {
-    console.log('worker: saving image', url);
     let client = (url.toString().indexOf("https") === 0) ? https : http;
 
     client.request(url, function (response) {
@@ -38,7 +33,7 @@ const downloadImages = (engine, searchId, images) => {
       });
 
       response.on('end', async function () {
-        const timestamp = Date.now(); // Get current timestamp in milliseconds
+        const timestamp = Date.now();
         try {
           const newUrl = await uploadImageContent(Buffer.concat(data), url);
           if (newUrl) {
@@ -61,7 +56,6 @@ const downloadImages = (engine, searchId, images) => {
       });
     }).end();
   }
-  console.log('worker: imageQueries', imageQueries.length);
   return imageQueries;
 }
 
@@ -77,7 +71,6 @@ const uploadImageContent = async (content, href) => {
     let newUrl;
     try {
         newUrl = await space.saveImage(fileContent, href);
-        console.log('worker: saved new image', newUrl);
         return newUrl;
     } catch (error) {
         console.log('worker: error:' , error);
