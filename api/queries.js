@@ -853,7 +853,10 @@ const getImagesAndSearchBySearchID = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
+    // Use 'archive' field set for comprehensive search data with images
+    const searchFields = getFieldSet('archive', 's');
+
+    const query = `SELECT ${searchFields}, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
         WHERE s.search_id = $1 ORDER BY i.image_id DESC LIMIT $2 OFFSET $3`;
     const values = [search_id, page_size, offset];
@@ -872,7 +875,9 @@ const getImagesWithSearch = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
+
+    const fields = getFieldSet('all', 's');
+    const query = `SELECT ${fields}, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
         ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
@@ -925,7 +930,9 @@ const getAllVotes = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT v.vote_name, s.*, hv.* FROM searches s INNER JOIN have_votes hv 
+
+    const fields = getFieldSet('all', 's');
+    const query = `SELECT v.vote_name, ${fields}, hv.* FROM searches s INNER JOIN have_votes hv
         ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id
         ORDER BY s.search_id DESC LIMIT $1 OFFSET $2;`;
     const values = [page_size, offset];
@@ -941,7 +948,9 @@ const getAllVotes = (request, response) => {
 //GET: Individual votes for a given search (BY Search_ID)
 const getVoteBySearchID = (request, response) => {
     const search_id = parseInt(request.params.search_id);
-    const query = `SELECT v.vote_name, hv.*, s.*
+
+    const fields = getFieldSet('all', 's');
+    const query = `SELECT v.vote_name, hv.*, ${fields}
         FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
         INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE s.search_id = $1`;
     const values = [search_id];
@@ -958,7 +967,9 @@ const getVoteBySearchID = (request, response) => {
 //GET: Individual votes for a given vote category (BY Vote_ID)
 const getVoteByVoteID = (request, response) => {
     const vote_id = parseInt(request.params.vote_id);
-    const query = `SELECT  v.vote_name, hv.*, s.*
+
+    const fields = getFieldSet('all', 's');
+    const query = `SELECT v.vote_name, hv.*, ${fields}
         FROM searches s INNER JOIN have_votes hv ON s.search_id = hv.search_id
         INNER JOIN votes v ON hv.vote_id = v.vote_id WHERE hv.vote_id = $1`;
     const values = [vote_id];
@@ -974,9 +985,12 @@ const getVoteByVoteID = (request, response) => {
 
 // GET: Searches by vote category
 const getSearchesByCategory = (request, response, category, title) => {
-    const query = `SELECT s.*, COUNT(*) as "votes"
+    // Use 'withVotes' field set for searches with vote data
+    const fields = getFieldSet('withVotes', 's');
+
+    const query = `SELECT ${fields}, COUNT(*) as "votes"
         FROM searches s INNER JOIN have_votes hv on s.search_id = hv.search_id
-        WHERE hv.vote_id = $1 GROUP BY s.search_id;`
+        WHERE hv.vote_id = $1 GROUP BY s.search_id`;
     const values = [category];
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -1028,29 +1042,36 @@ const getWTFSearches = (request, response) => {
 
 //GET: Consolidated Counts for each type of vote_id (for ALL SEARCHES)
 const getAllSearchesWithVoteCounts = (request, response) => {
-	pool.query(`SELECT s.*,
-								COUNT(hv.*) total,
-								COUNT(case when vote_id = '1' then 1 end) AS Censored,
-								COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
-								COUNT(case when vote_id = '3' then 1 end) AS BadTranslation,
-								COUNT(case when vote_id = '4' then 1 end) AS GoodTranslation,
-								COUNT(case when vote_id = '5' then 1 end) AS LostInTranslation,
-								COUNT(case when vote_id = '6' then 1 end) AS NSFW,
-								COUNT(case when vote_id = '7' then 1 end) AS WTF
-						 FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
-						 GROUP BY s.search_id`, (error, results) => {
+    // Use 'all' field set for comprehensive search data with votes
+    const fields = getFieldSet('all', 's');
+
+    const query = `SELECT ${fields},
+                            COUNT(hv.*) total,
+                            COUNT(case when vote_id = '1' then 1 end) AS Censored,
+                            COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
+                            COUNT(case when vote_id = '3' then 1 end) AS BadTranslation,
+                            COUNT(case when vote_id = '4' then 1 end) AS GoodTranslation,
+                            COUNT(case when vote_id = '5' then 1 end) AS LostInTranslation,
+                            COUNT(case when vote_id = '6' then 1 end) AS NSFW,
+                            COUNT(case when vote_id = '7' then 1 end) AS WTF
+                   FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
+                   GROUP BY s.search_id`;
+
+    pool.query(query, (error, results) => {
         if (error) {
             response.status(500).json(error);
         } else {
             response.status(200).json(results.rows);
         }
-	})
+    })
 }
 
 //GET: Consolidated Counts for each type of vote_id (for Individual Search BY search_id)
 const getSearchWithVoteCountsBySearchId = (request, response) => {
 	const search_id = parseInt(request.params.search_id)
-	pool.query(`SELECT s.*,
+
+	const fields = getFieldSet('all', 's');
+	pool.query(`SELECT ${fields},
 								COUNT(hv.*) total,
 								COUNT(case when vote_id = '1' then 1 end) AS Censored,
 								COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -1079,7 +1100,10 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
     const page = parseInt(request.query.page) || 1;
     const page_size = parseInt(request.query.page_size) || 100;
     const offset = (page-1)*page_size;
-    const query = `SELECT s.*, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
+    // Use 'all' field set for comprehensive search data with images and votes
+    const searchFields = getFieldSet('all', 's');
+
+    const query = `SELECT ${searchFields}, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
         COUNT(hv.*) total,
         COUNT(case when vote_id = '1' then 1 end) AS Censored,
         COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
@@ -1106,7 +1130,9 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
 //GET: All Search Results With Vote Counts & Image Info
 const getSearchesWithVoteCountsAndImageInfoBySearchID = (request, response) => {
 	const search_id = parseInt(request.params.search_id)
-	pool.query(`SELECT s.*, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
+
+	const fields = getFieldSet('all', 's');
+	pool.query(`SELECT ${fields}, i.image_id, i.image_href, i.image_href_original, i.image_search_engine, i.image_rank,
 							COUNT(hv.*) total,
 							COUNT(case when vote_id = '1' then 1 end) AS Censored,
 							COUNT(case when vote_id = '2' then 1 end) AS Uncensored,
