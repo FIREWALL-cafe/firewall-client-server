@@ -714,6 +714,7 @@ const getFilterConditions = (keyword, vote_ids, search_locations, us_states_filt
  * It then collects images associated with each search.
  */
 const getFilteredSearches = async (request, response) => {
+    console.log('getFilteredSearches: ', request.query);
     let { keyword, vote_ids, search_locations, us_states, countries, years, start_date, end_date } = request.query;
     const extractData = (data) => JSON.parse(data ? data : '[]')
     vote_ids = extractData(vote_ids);
@@ -800,7 +801,7 @@ const getFilteredSearches = async (request, response) => {
         }
 
         // Then get paginated data
-        const dataQuery = baseQuery + ` GROUP BY s.search_id ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+        const dataQuery = baseQuery + ` GROUP BY s.search_id ORDER BY s.search_timestamp DESC LIMIT $1 OFFSET $2`;
         pool.query(dataQuery, [page_size, offset], async (error, results) => {
             if (error) {
                 response.status(500).json(error);
@@ -852,7 +853,7 @@ const getImagesWithSearch = (request, response) => {
     const fields = getFieldSet('all', 's');
     const query = `SELECT ${fields}, i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM searches s FULL JOIN images i ON s.search_id = i.search_id
-        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+        ORDER BY s.search_timestamp DESC LIMIT $1 OFFSET $2`;
     const values = [page_size, offset];
 
     pool.query(query, values, (error, results) => {
@@ -907,7 +908,7 @@ const getAllVotes = (request, response) => {
     const fields = getFieldSet('all', 's');
     const query = `SELECT v.vote_name, ${fields}, hv.* FROM searches s INNER JOIN have_votes hv
         ON s.search_id = hv.search_id INNER JOIN votes v ON hv.vote_id = v.vote_id
-        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2;`;
+        ORDER BY s.search_timestamp DESC LIMIT $1 OFFSET $2;`;
     const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
         if (error) {
@@ -1088,7 +1089,7 @@ const getSearchesWithVoteCountsAndImageInfo = (request, response) => {
         FROM searches s FULL OUTER JOIN have_votes hv ON s.search_id = hv.search_id
         FULL OUTER JOIN images i on s.search_id = i.search_id
         GROUP BY s.search_id, i.image_id, i.image_href, i.image_search_engine, i.image_rank
-        ORDER BY s.search_id DESC LIMIT $1 OFFSET $2`;
+        ORDER BY s.search_timestamp DESC LIMIT $1 OFFSET $2`;
         // if pagination is broken, can limit it to the first 10k results
     const values = [page_size, offset];
 	pool.query(query, values, (error, results) => {
@@ -1156,7 +1157,7 @@ const getSearchesByTerm = (request, response) => {
     }
 
     const fields = buildSearchFields(fieldGroups, 's');
-    const query = `SELECT ${fields} FROM searches s WHERE s.search_term_initial = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
+    const query = `SELECT ${fields} FROM searches s WHERE s.search_term_initial = $1 ORDER BY s.search_timestamp DESC LIMIT $2 OFFSET $3`;
     const values = [term, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
@@ -1223,7 +1224,7 @@ const getSearchesByTermWithImages = (request, response) => {
         WHERE ${whereClause}
         ${excludeFilter}
         GROUP BY s.search_id
-        ORDER BY s.search_id DESC
+        ORDER BY s.search_timestamp DESC
         LIMIT $2 OFFSET $3`;
 
     // First get the total count
@@ -1379,7 +1380,7 @@ const getImagesVoteCategory = (request, response, category) => {
     const query = `SELECT i.image_id, i.image_search_engine, i.image_href, i.image_href_original, i.image_rank, i.image_mime_type
         FROM images i FULL JOIN searches S ON s.search_id = i.search_id
         INNER JOIN have_votes hv ON s.search_id = hv.search_id
-        WHERE hv.vote_id = $1 ORDER BY s.search_id DESC LIMIT $2 OFFSET $3`;
+        WHERE hv.vote_id = $1 ORDER BY s.search_timestamp DESC LIMIT $2 OFFSET $3`;
     const values = [category, page_size, offset];
     pool.query(query, values, (error, results) => {
         if (error) {
